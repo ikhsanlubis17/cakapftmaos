@@ -1,0 +1,57 @@
+# KONFIGURASI EMAIL UNTUK .env FILE
+# Copy konfigurasi ini ke file .env Anda
+
+# ========================================
+# KONFIGURASI EMAIL GMAIL (RECOMMENDED)
+# ========================================
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-gmail@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your-gmail@gmail.com
+MAIL_FROM_NAME="CAKAP FT MAOS"
+
+# ========================================
+# KONFIGURASI EMAIL MAILTRAP (UNTUK TESTING)
+# ========================================
+# MAIL_MAILER=smtp
+# MAIL_HOST=smtp.mailtrap.io
+# MAIL_PORT=2525
+# MAIL_USERNAME=your-mailtrap-username
+# MAIL_PASSWORD=your-mailtrap-password
+# MAIL_ENCRYPTION=tls
+# MAIL_FROM_ADDRESS=from@example.com
+# MAIL_FROM_NAME="CAKAP FT MAOS"
+
+# ========================================
+# KONFIGURASI EMAIL LOCAL (UNTUK DEVELOPMENT)
+# ========================================
+# MAIL_MAILER=log
+# MAIL_FROM_ADDRESS=test@example.com
+# MAIL_FROM_NAME="CAKAP FT MAOS"
+
+# ========================================
+# INSTRUKSI SETUP GMAIL
+# ========================================
+# 1. Buka Gmail Settings > Security
+# 2. Aktifkan 2-Step Verification
+# 3. Generate App Password
+# 4. Gunakan App Password (bukan password Gmail biasa)
+# 5. Pastikan Gmail mengizinkan "Less secure app access"
+
+# ========================================
+# INSTRUKSI SETUP MAILTRAP
+# ========================================
+# 1. Daftar di mailtrap.io
+# 2. Buat inbox baru
+# 3. Copy SMTP credentials dari inbox
+# 4. Semua email akan masuk ke inbox Mailtrap
+
+# ========================================
+# TESTING EMAIL
+# ========================================
+# Setelah setup, test dengan:
+# php artisan tinker
+# Mail::raw('Test email', function($message) { $message->to('test@example.com')->subject('Test'); });

@@ -1,0 +1,72 @@
+/* Exception Fixes CSS */
+/* This file contains fixes for error pages and exception handling */
+
+/* Error page styling */
+.error-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.error-container {
+    text-align: center;
+    color: white;
+    max-width: 600px;
+    padding: 2rem;
+}
+
+.error-code {
+    font-size: 8rem;
+    font-weight: bold;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.error-message {
+    font-size: 1.5rem;
+    margin: 1rem 0;
+    opacity: 0.9;
+}
+
+.error-description {
+    font-size: 1rem;
+    margin: 1rem 0;
+    opacity: 0.7;
+}
+
+/* 404 specific styling */
+.error-404 .error-code {
+    color: #ff6b6b;
+}
+
+/* 500 specific styling */
+.error-500 .error-code {
+    color: #feca57;
+}
+
+/* 403 specific styling */
+.error-403 .error-code {
+    color: #ff9ff3;
+}
+
+/* Back to home button */
+.error-back-btn {
+    display: inline-block;
+    margin-top: 2rem;
+    padding: 1rem 2rem;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.error-back-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}

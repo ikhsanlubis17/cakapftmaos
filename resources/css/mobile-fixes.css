@@ -1,0 +1,141 @@
+/* Mobile-specific fixes for Schedules Management Page */
+
+/* Ensure proper touch targets on mobile */
+@media (max-width: 640px) {
+  /* Increase touch target size for buttons */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form input sizing on mobile */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better spacing for mobile cards */
+  .schedule-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Optimize modal for mobile */
+  .modal-content {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  /* Improve button layout on mobile */
+  .mobile-button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Better text sizing for mobile */
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-text-xs {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Ensure proper scrolling on mobile */
+@media (max-width: 640px) {
+  .mobile-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+  }
+  
+  /* Prevent horizontal scroll on mobile */
+  .mobile-no-horizontal-scroll {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+}
+
+/* Mobile-specific spacing adjustments */
+@media (max-width: 640px) {
+  .mobile-p-2 {
+    padding: 0.5rem;
+  }
+  
+  .mobile-p-3 {
+    padding: 0.75rem;
+  }
+  
+  .mobile-p-4 {
+    padding: 1rem;
+  }
+  
+  .mobile-mb-2 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .mobile-mb-3 {
+    margin-bottom: 0.75rem;
+  }
+  
+  .mobile-mb-4 {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Improve mobile form layout */
+@media (max-width: 640px) {
+  .mobile-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .mobile-form-field {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Mobile navigation improvements */
+@media (max-width: 640px) {
+  .mobile-nav-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .mobile-nav-item {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Mobile status badge improvements */
+@media (max-width: 640px) {
+  .mobile-status-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Mobile icon sizing */
+@media (max-width: 640px) {
+  .mobile-icon-sm {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .mobile-icon-md {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .mobile-icon-lg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}

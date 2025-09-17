@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Test Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .qr-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .qr-code img {
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        .info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffe6e6;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QR Code Test Generator</h1>
+        <p>Generate QR codes for testing APAR scanning functionality</p>
+        
+        <div class="info">
+            <h3>Available QR Codes in Database:</h3>
+            <ul>
+                <li><strong>APAR-aEigu2OsY6</strong> - APAR-STATIS-001</li>
+                <li><strong>APAR-2hZn5kNJUY</strong> - APAR-STATIS-002</li>
+                <li><strong>APAR-ugMqz1S52q</strong> - APAR-STATIS-003</li>
+                <li><strong>APAR-P14KSVAMXY</strong> - APAR-STATIS-004</li>
+                <li><strong>APAR-MJtYbXSQzL</strong> - APAR-MOBILE-001</li>
+                <li><strong>APAR-EidjSXNRfK</strong> - APAR-MOBILE-002</li>
+                <li><strong>APAR-c2LFmF7BEO</strong> - APAR-STATIS-005</li>
+                <li><strong>APAR-zRFD8Qujjv</strong> - APAR-STATIS-006</li>
+                <li><strong>APAR-U2CZYtHJA5</strong> - APAR-TEST-001 (Newly Created)</li>
+            </ul>
+        </div>
+
+        <div class="qr-section">
+            <h3>Generate Custom QR Code</h3>
+            <input type="text" id="customText" placeholder="Enter text for QR code" value="APAR-U2CZYtHJA5">
+            <button onclick="generateCustomQR()">Generate QR Code</button>
+            <div id="customQR" class="qr-code"></div>
+        </div>
+
+        <div class="qr-section">
+            <h3>Quick Test QR Codes</h3>
+            <button onclick="generateQR('APAR-U2CZYtHJA5')">Generate APAR-U2CZYtHJA5</button>
+            <button onclick="generateQR('APAR-aEigu2OsY6')">Generate APAR-aEigu2OsY6</button>
+            <button onclick="generateQR('APAR-2hZn5kNJUY')">Generate APAR-2hZn5kNJUY</button>
+            <div id="quickQR" class="qr-code"></div>
+        </div>
+
+        <div class="info">
+            <h3>Testing Instructions:</h3>
+            <ol>
+                <li>Generate a QR code using one of the buttons above</li>
+                <li>Open the mobile app or scan page</li>
+                <li>Scan the generated QR code</li>
+                <li>Check if the APAR data loads correctly</li>
+            </ol>
+        </div>
+
+        <div class="error">
+            <h3>Current Issue:</h3>
+            <p>The original endpoint <code>/api/apar/qr/{qrCode}</code> requires JWT authentication, but there seems to be an issue with the JWT middleware. We've created a temporary test endpoint <code>/api/test-apar/qr/{qrCode}</code> that bypasses authentication for debugging purposes.</p>
+        </div>
+    </div>
+
+    <script>
+        function generateQR(text) {
+            const container = document.getElementById('quickQR');
+            container.innerHTML = '';
+            
+            QRCode.toCanvas(container, text, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function (error) {
+                if (error) {
+                    container.innerHTML = '<p style="color: red;">Error generating QR code: ' + error + '</p>';
+                }
+            });
+        }
+
+        function generateCustomQR() {
+            const text = document.getElementById('customText').value;
+            if (!text) {
+                alert('Please enter text for QR code');
+                return;
+            }
+            
+            const container = document.getElementById('customQR');
+            container.innerHTML = '';
+            
+            QRCode.toCanvas(container, text, {
+                width: 200,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function (error) {
+                if (error) {
+                    container.innerHTML = '<p style="color: red;">Error generating QR code: ' + error + '</p>';
+                }
+            });
+        }
+
+        // Generate default QR code on page load
+        window.onload = function() {
+            generateQR('APAR-U2CZYtHJA5');
+        };
+    </script>
+</body>
+</html>
