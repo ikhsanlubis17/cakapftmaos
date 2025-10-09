@@ -10,6 +10,7 @@ const Toast = ({
     isOpen, 
     onClose, 
     type = 'success', 
+    title,
     message, 
     duration = 4000,
     position = 'top-right'
@@ -118,9 +119,16 @@ const Toast = ({
                         <IconComponent className={`h-5 w-5 ${config.iconColor} flex-shrink-0 mt-0.5`} />
                         
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-relaxed break-words">
-                                {message}
-                            </p>
+                            {title && (
+                                <p className="text-sm font-semibold leading-relaxed break-words">
+                                    {title}
+                                </p>
+                            )}
+                            {message && (
+                                <p className="text-sm leading-relaxed break-words">
+                                    {message}
+                                </p>
+                            )}
                         </div>
 
                         <button

@@ -14,6 +14,10 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
 
+    const removeToast = useCallback((id) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    }, []);
+
     const addToast = useCallback(({ type, title, message, duration = 5000 }) => {
         const id = Date.now() + Math.random();
         const newToast = { id, type, title, message, duration, show: true };
@@ -28,11 +32,7 @@ export const ToastProvider = ({ children }) => {
         }
 
         return id;
-    }, []);
-
-    const removeToast = useCallback((id) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-    }, []);
+    }, [removeToast]);
 
     const showSuccess = useCallback((message, title = 'Berhasil', duration = 5000) => {
         return addToast({ type: 'success', title, message, duration });
@@ -78,7 +78,7 @@ export const ToastProvider = ({ children }) => {
                         title={toast.title}
                         message={toast.message}
                         duration={toast.duration}
-                        show={toast.show}
+                        isOpen={toast.show}
                         onClose={() => removeToast(toast.id)}
                     />
                 ))}
