@@ -846,7 +846,7 @@ const InspectionFormEnhanced = () => {
                         >
                             <option value="good">Baik</option>
                             <option value="needs_refill">Perlu Isi Ulang</option>
-                            <option value="expired">Kadaluwarsa</option>
+                            {/* <option value="expired">Kadaluwarsa</option> */}
                             <option value="damaged">Rusak</option>
                         </select>
                     </div>
