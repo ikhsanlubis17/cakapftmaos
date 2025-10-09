@@ -158,19 +158,20 @@ class InspectionController extends Controller
         // Validate location for static APARs
         $locationValid = true;
         $locationError = null;
-        
-        if ($apar->location_type === 'statis') {
-            if (!$request->has('lat') || !$request->has('lng')) {
-                $locationValid = false;
-                $locationError = 'Koordinat lokasi tidak ditemukan. Pastikan GPS aktif.';
-            } else {
-                $locationValid = $apar->isWithinValidRadius($request->lat, $request->lng);
-                if (!$locationValid) {
-                    $distance = $apar->distanceFrom($request->lat, $request->lng);
-                    $locationError = "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.";
-                }
-            }
-        }
+
+        // TODO: Uncomment this!!!
+        // if ($apar->location_type === 'statis') {
+        //     if (!$request->has('lat') || !$request->has('lng')) {
+        //         $locationValid = false;
+        //         $locationError = 'Koordinat lokasi tidak ditemukan. Pastikan GPS aktif.';
+        //     } else {
+        //         $locationValid = $apar->isWithinValidRadius($request->lat, $request->lng);
+        //         if (!$locationValid) {
+        //             $distance = $apar->distanceFrom($request->lat, $request->lng);
+        //             $locationError = "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.";
+        //         }
+        //     }
+        // }
 
         // Log validation failure if location is invalid
         if (!$locationValid) {
@@ -381,10 +382,22 @@ class InspectionController extends Controller
     /**
      * Validate inspection time to prevent manipulation
      */
-    private function validateInspectionTime(Request $request)
+    public function validateInspectionTime(Request $request)
     {
         try {
-            $aparId = $request->apar_id;
+            $request->validate([
+                'apar_qrCode' => 'required|string',
+            ]);
+
+            $apar = Apar::where('qr_code', $request->apar_qrCode)->first();
+            if (!$apar) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'QR tidak valid.'
+                ], 422);
+            }
+
+            $aparId = $apar->id;
             $now = now();
             
             // Check if there's a scheduled inspection for this APAR
@@ -393,14 +406,24 @@ class InspectionController extends Controller
                 ->where('is_completed', false)
                 ->first();
 
-            if ($schedule) {
-                $scheduledTime = \Carbon\Carbon::parse($schedule->scheduled_time);
-                $startTime = $scheduledTime->copy()->subHours(2);
-                $endTime = $scheduledTime->copy()->addHours(4);
-                
-                if ($now->lt($startTime) || $now->gt($endTime)) {
-                    abort(422, 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan');
-                }
+            if (!$schedule) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Tidak ada jadwal untuk APAR / QR tidak valid'
+                ], 422);
+            }
+
+            $scheduledTime = \Carbon\Carbon::parse($schedule->scheduled_time);
+            $startTime = $scheduledTime->copy()->subHours(2);
+            $endTime = $scheduledTime->copy()->addHours(4);
+            
+            if ($now->lt($startTime) || $now->gt($endTime)) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan',
+                    'scheduled_time' => $scheduledTime->format('H:i'),
+                    'valid_window' => $startTime->format('H:i') . ' - ' . $endTime->format('H:i')
+                ], 422);
             }
 
             // Check if inspection is being done during working hours (optional)
@@ -413,12 +436,34 @@ class InspectionController extends Controller
                     'user_id' => Auth::id()
                 ]);
             }
+
+            return response()->json([
+                'valid' => true,
+                'message' => 'QR Code valid dan jadwal sesuai',
+                'schedule' => [
+                    'id' => $schedule->id,
+                    'scheduled_date' => $schedule->scheduled_date,
+                    'scheduled_time' => $scheduledTime->format('H:i'),
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
-            // Log error but don't block inspection
+            // Log error and return error response
             Log::error('Error validating inspection time: ' . $e->getMessage(), [
                 'apar_id' => $request->apar_id ?? null,
                 'error' => $e->getMessage()
             ]);
+
+            return response()->json([
+                'valid' => false,
+                'message' => 'Terjadi kesalahan saat memvalidasi jadwal inspeksi'
+            ], 500);
         }
     }
 

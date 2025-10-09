@@ -1,183 +1,108 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
-import { QrCodeIcon, ArrowLeftIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
+import { QrCodeIcon, ArrowLongUpIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
+import { IDetectedBarcode, Scanner } from '@yudiel/react-qr-scanner';
+import axios from 'axios';
+
+interface QRScannerState {
+    state: 'initial' | 'scanning' | 'barcodeDetected' | 'cameraError';
+}
+
+function scannerReducer(state: QRScannerState, action: { type: 'start' | 'barcodeDetected' | 'cameraError' | 'reset' }): QRScannerState {
+    switch (action.type) {
+        case 'start':
+            return { ...state, state: 'scanning' };
+        case 'barcodeDetected':
+            return { ...state, state: 'barcodeDetected' };
+        case 'cameraError':
+            return { ...state, state: 'cameraError' };
+        case 'reset':
+            return { ...state, state: 'initial' };
+        default:
+            return state;
+    }
+}
 
 const QRScanner = () => {
-    const [scanning, setScanning] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const [cameraError, setCameraError] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const scannerRef = useRef(null);
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
 
-    useEffect(() => {
-        // Delay initialization to ensure DOM is ready
-        const timer = setTimeout(() => {
-            if (!isInitialized) {
-                startScanner();
-                setIsInitialized(true);
-            }
-        }, 500);
-        
-        return () => {
-            clearTimeout(timer);
-            // Cleanup on unmount
-            (async () => {
-                await cleanupScanner();
-            })();
-        };
-    }, [isInitialized]);
+    const [scannerState, dispatch] = useReducer(scannerReducer, { state: 'initial' });
 
-    const cleanupScanner = async () => {
-        if (scannerRef.current) {
-            try {
-                // Stop the scanner and release camera
-                await scannerRef.current.clear();
-                scannerRef.current = null;
-                
-                // Stop all media tracks to release camera properly
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => null);
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
-            } catch (error) {
-                console.log('Scanner cleanup error:', error);
-            }
-        }
-        
-        // Additional cleanup: stop any remaining video streams
+    const onScanSuccess = async (barcode: IDetectedBarcode[]) => {
         try {
-            const videoElements = document.querySelectorAll('video');
-            videoElements.forEach(video => {
-                if (video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => track.stop());
-                    video.srcObject = null;
-                }
-            });
-        } catch (error) {
-            console.log('Video cleanup error:', error);
-        }
-    };
+            console.log("QR Code detected:", barcode[0].rawValue);
 
-    const startScanner = async () => {
-        try {
-            // Clean up any existing scanner first
-            cleanupScanner();
-            
-            setCameraError(null);
-            setIsLoading(true);
-            setScanning(true);
-
-            // Check if camera permission is available
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Kamera tidak tersedia di browser ini');
-            }
-
-            // Check camera permissions
-            try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
-            } catch (permissionError) {
-                throw new Error('Izin kamera ditolak. Silakan aktifkan izin kamera di browser.');
-            }
-
-            // Ensure DOM element exists
-            const qrReaderElement = document.getElementById('qr-reader');
-            if (!qrReaderElement) {
-                throw new Error('Element QR reader tidak ditemukan');
-            }
-
-            const scanner = new Html5QrcodeScanner(
-                "qr-reader",
-                {
-                    fps: 5,
-                    qrbox: { width: 300, height: 300 },
-                    aspectRatio: 1.0,
-                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                    rememberLastUsedCamera: true,
-                    showTorchButtonIfSupported: true,
-                    showZoomSliderIfSupported: true,
-                    disableFlip: false,
-                },
-                false
-            );
-
-            scanner.render(onScanSuccess, onScanFailure);
-            scannerRef.current = scanner;
-            setIsLoading(false);
-
-        } catch (error) {
-            console.error('Error starting scanner:', error);
-            setCameraError(error.message);
-            setScanning(false);
-            setIsLoading(false);
-            showError(error.message);
-        }
-    };
-
-    const onScanSuccess = async (decodedText, decodedResult) => {
-        try {
-            // Stop scanner immediately
-            setScanning(false);
-            await cleanupScanner();
+            // Pause scanner to prevent multiple scans
+            dispatch({ type: 'barcodeDetected' });
 
             // Extract QR code from decoded text
-            const qrCode = decodedText.trim();
-            
+            const qrCode = barcode[0].rawValue.trim();
+
             // Validate QR code format (assuming it contains APAR ID or serial number)
             if (qrCode && qrCode.length > 0) {
-                showSuccess('QR Code berhasil di-scan! Mengarahkan ke form inspeksi...');
-                
-                // Navigate to inspection form with QR code
-                setTimeout(() => {
-                    navigate(`/dashboard/inspections/enhanced/${qrCode}`);
-                }, 1500);
+                try {
+                    const response = await axios.post('/api/inspections/validate', { 
+                        apar_qrCode: qrCode 
+                    });
+
+                    if (response.data.valid) {
+                        showSuccess(`QR Code berhasil di-scan! Mengarahkan ke form inspeksi...`);
+                        
+                        // Navigate to inspection form with QR code and schedule info
+                        setTimeout(() => {
+                            const scheduleId = response.data.schedule?.id;
+                            const navigationPath = scheduleId 
+                                ? `/dashboard/inspections/enhanced/${qrCode}?schedule_id=${scheduleId}`
+                                : `/dashboard/inspections/enhanced/${qrCode}`;
+                            navigate(navigationPath);
+                        }, 1500);
+                    } else {
+                        showError(response.data.message || 'QR Code tidak valid');
+                        // Reset scanner after error
+                        setTimeout(() => {
+                            dispatch({ type: 'reset' });
+                        }, 2000);
+                    }
+                } catch (error: any) {
+                    console.error('Error validating QR code:', error);
+                    
+                    const errorMessage = error.response?.data?.message 
+                        || 'Terjadi kesalahan saat memvalidasi QR Code';
+                    
+                    showError(errorMessage);
+                    
+                    // Reset scanner after error
+                    setTimeout(() => {
+                        dispatch({ type: 'reset' });
+                    }, 2000);
+                }
             } else {
                 showError('QR Code tidak valid');
-                // Restart scanner after error
+                // Reset scanner after error
                 setTimeout(() => {
-                    startScanner();
+                    dispatch({ type: 'reset' });
                 }, 2000);
             }
         } catch (error) {
             console.error('Error handling scan success:', error);
             showError('Terjadi kesalahan saat memproses QR Code');
-            // Restart scanner after error
+            // Reset scanner after error
             setTimeout(() => {
-                startScanner();
+                dispatch({ type: 'reset' });
             }, 2000);
         }
     };
 
-    const onScanFailure = (error) => {
+    const onScanFailure = (error: unknown) => {
         // Handle scan failure silently (user might be moving camera)
-        // Only log specific errors, not the common "no QR code detected' errors
-        if (error && !error.message?.includes('No barcode') && !error.message?.includes('NotFoundException')) {
-            console.log('QR scan failed:', error);
-        }
+        console.log('QR scan failed:', error);
     };
 
-    const handleRetry = () => {
-        setCameraError(null);
-        setIsInitialized(false);
-        setTimeout(() => {
-            startScanner();
-            setIsInitialized(true);
-        }, 100);
-    };
-
-    const handleBack = async () => {
-        await cleanupScanner();
-        // Small delay to ensure cleanup completes
-        setTimeout(() => {
-            navigate("/dashboard");
-        }, 100);
-    };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
+        <div className="min-h-screen">
             <div className="max-w-lg mx-auto p-4 space-y-6">
                 {/* Header */}
                 <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
@@ -191,11 +116,21 @@ const QRScanner = () => {
                         <p className="text-lg text-gray-600">
                             Arahkan kamera ke QR Code yang terpasang pada APAR
                         </p>
+                        {scannerState.state === 'initial' && (
+                            <button
+                                onClick={() => dispatch({ type: 'start' })
+                                }
+                                className="mx-auto mt-4 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl text-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                            >
+                                <ArrowLongUpIcon className="h-5 w-5" />
+                                <span>Mulai Scan</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* Camera Error Display */}
-                {cameraError && (
+                {scannerState.state === 'cameraError' && (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-lg">
                         <div className="flex">
                             <div className="flex-shrink-0">
@@ -210,12 +145,12 @@ const QRScanner = () => {
                                     Error Kamera
                                 </h3>
                                 <div className="mt-2 text-sm text-red-700">
-                                    {cameraError}
+                                    Tidak dapat mengakses kamera. Pastikan izin kamera diberikan dan perangkat Anda memiliki kamera yang berfungsi.
                                 </div>
                                 <div className="mt-4">
                                     <button
                                         type="button"
-                                        onClick={handleRetry}
+                                        onClick={() => dispatch({ type: 'reset' })}
                                         className="bg-red-50 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-100 border border-red-200 rounded-xl transition-all duration-200 hover:shadow-md"
                                     >
                                         Coba Lagi
@@ -227,31 +162,42 @@ const QRScanner = () => {
                 )}
 
                 {/* QR Scanner Container */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-                    <div id="qr-reader" className="mb-4"></div>
+                {scannerState.state != 'initial' && scannerState.state != 'cameraError' && (
+                    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+                        <Scanner
+                            onScan={(result) => onScanSuccess(result)}
+                            onError={onScanFailure}
+                            scanDelay={500}
+                            paused={scannerState.state === 'barcodeDetected'}
+                        />
 
-                    {/* Loading State */}
-                    {isLoading && (
-                        <div className="flex items-center justify-center py-8">
-                            <div className="text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                                <p className="text-gray-600">
-                                    Memulai kamera...
+                        {/* Scanner Status */}
+                        <div className="mt-4 text-center">
+                            {scannerState.state === 'scanning' && (
+                                <p className="text-sm text-blue-600 font-medium">
+                                    🔍 Scanning... Arahkan kamera ke QR Code
                                 </p>
-                            </div>
+                            )}
+                            {scannerState.state === 'barcodeDetected' && (
+                                <p className="text-sm text-green-600 font-medium">
+                                    ✓ QR Code terdeteksi! Memvalidasi...
+                                </p>
+                            )}
                         </div>
-                    )}
 
-                    {/* Scanner Status */}
-                    {scanning && !isLoading && !cameraError && (
-                        <div className="text-center py-4">
-                            <div className="inline-flex items-center px-4 py-2 rounded-full bg-green-100 text-green-800">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                                Kamera aktif - Arahkan ke QR Code
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        {/* Restart Scanner Button */}
+                        {scannerState.state === 'scanning' && (
+                            <button
+                                onClick={() => dispatch({ type: 'reset' })}
+                                className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl text-lg font-semibold hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                            >
+                                <ArrowPathIcon className="h-5 w-5" />
+                                <span>Mulai Ulang</span>
+                            </button>
+                        )}
+                    </div>
+                )}
+
 
                 {/* Instructions */}
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
@@ -302,22 +248,15 @@ const QRScanner = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-4">
+                {/* <div className="flex space-x-4">
                     <button
-                        onClick={handleBack}
-                        className="flex-1 px-6 py-4 border-2 border-gray-300 rounded-xl text-lg font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200 flex items-center justify-center space-x-2"
-                    >
-                        <ArrowLeftIcon className="h-5 w-5" />
-                        <span>Kembali</span>
-                    </button>
-                    <button
-                        onClick={handleRetry}
+                        onClick={() => dispatch({ type: 'reset' })}
                         className="flex-1 px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl text-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
                     >
                         <ArrowPathIcon className="h-5 w-5" />
                         <span>Mulai Ulang</span>
                     </button>
-                </div>
+                </div> */}
 
                 {/* Footer */}
                 <div className="text-center py-4">
@@ -337,4 +276,4 @@ const QRScanner = () => {
     );
 };
 
-export default QRScanner; 
+export default QRScanner;

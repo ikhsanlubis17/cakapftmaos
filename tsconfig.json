@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                         // Modern output for Vite
+    "module": "ESNext",                         // Use ES modules
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],   // Browser + modern JS APIs
+    "jsx": "react-jsx",                         // Modern JSX transform (React 17+)
+    
+    "allowJs": true,                            // Allow JS and JSX files
+    "checkJs": false,                           // Skip type-checking JS files
+    "resolveJsonModule": true,                  // Allow importing JSON files
+    "isolatedModules": true,                    // Ensures safe per-file transpilation
+    "noEmit": true,                             // Vite handles emitting, not TypeScript
+    
+    "strict": true,                             // Enable strict mode
+    "forceConsistentCasingInFileNames": true,   // Prevent case mismatches
+    "skipLibCheck": true,                       // Speed up build, skip node_modules checks
+    
+    "moduleResolution": "bundler",              // Modern resolution for Vite
+    "esModuleInterop": true,                    // Interop with CommonJS modules
+    "allowSyntheticDefaultImports": true,       // Support `import React from "react"`
+    
+    "baseUrl": "./resources/js",                // Root folder for imports
+    "paths": {
+      "@/*": ["*"]                              // Example: import from "@/components/Button"
+    }
+  },
+
+  "include": ["resources/js/**/*"],
+  "exclude": ["node_modules", "public", "bootstrap", "vendor"]
+}

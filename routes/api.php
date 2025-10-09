@@ -81,6 +81,7 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::get('/inspections/my-inspections', [InspectionController::class, 'myInspections']);
     Route::get('/inspections/{inspection}', [InspectionController::class, 'show']);
     Route::post('/inspections', [InspectionController::class, 'store']);
+    Route::post('/inspections/validate', [InspectionController::class, 'validateInspectionTime']);
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
     
