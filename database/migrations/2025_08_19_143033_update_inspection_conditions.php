@@ -12,20 +12,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement("UPDATE `inspections` SET `condition` = 'damaged' WHERE `condition` = 'needs_repair'");
+
         // First, modify the enum column to allow new values
-        Schema::table('inspections', function (Blueprint $table) {
-            // Drop the old enum column
-            $table->dropColumn('condition');
-        });
-        
-        Schema::table('inspections', function (Blueprint $table) {
-            // Add the new enum column with updated values
-            $table->enum('condition', ['good', 'needs_repair'])->default('good')->after('apar_id');
-        });
-        
-        // Then, update old inspection conditions to new consistent values
-        // Note: Since we've already changed the column structure, we need to handle this differently
-        // We'll set all old conditions to 'good' as default, and admin can review manually if needed
+        DB::statement(<<<SQL
+            ALTER TABLE `inspections`
+            MODIFY COLUMN `condition`
+            ENUM('good', 'needs_refill', 'expired', 'damaged')
+            NOT NULL DEFAULT 'good'
+        SQL);
     }
 
     /**
@@ -33,13 +28,19 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // First, revert the enum column
-        Schema::table('inspections', function (Blueprint $table) {
-            $table->dropColumn('condition');
-        });
-        
-        Schema::table('inspections', function (Blueprint $table) {
-            $table->enum('condition', ['good', 'needs_refill', 'expired', 'damaged'])->default('good')->after('apar_id');
-        });
+        DB::statement(<<<SQL
+            UPDATE `inspections`
+            SET `condition` = CASE
+                WHEN `condition` IN ('needs_refill', 'expired', 'damaged') THEN 'needs_repair'
+                ELSE `condition`
+            END
+        SQL);
+
+        DB::statement(<<<SQL
+            ALTER TABLE `inspections`
+            MODIFY COLUMN `condition`
+            ENUM('good', 'needs_repair')
+            NOT NULL DEFAULT 'good'
+        SQL);
     }
 };

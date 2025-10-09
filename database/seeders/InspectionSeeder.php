@@ -23,7 +23,7 @@ class InspectionSeeder extends Seeder
             return; // Skip if no APARs or users exist
         }
 
-        // Create inspections for the current week
+    // Create inspections for the current week
         $currentWeek = Carbon::now()->startOfWeek();
         
         for ($i = 0; $i < 7; $i++) {
@@ -34,7 +34,7 @@ class InspectionSeeder extends Seeder
                 $apar = $apars->random();
                 $user = $users->random();
                 
-                // Ensure we have a good mix of conditions, with some "needs_repair"
+                // Ensure we have a good mix of conditions across all states
                 $condition = $this->getWeightedCondition();
                 
                 Inspection::create([
@@ -55,7 +55,7 @@ class InspectionSeeder extends Seeder
             $user = $users->random();
             $date = Carbon::now()->subDays(rand(8, 30));
             
-            // Ensure we have a good mix of conditions, with some "needs_repair"
+            // Ensure we have a good mix of conditions across all states
             $condition = $this->getWeightedCondition();
             
             Inspection::create([
@@ -77,12 +77,20 @@ class InspectionSeeder extends Seeder
     private function getWeightedCondition(): string
     {
         $random = rand(1, 100);
-        
-        if ($random <= 70) {
+
+        if ($random <= 65) {
             return 'good';
-        } else {
-            return 'needs_repair';
         }
+
+        if ($random <= 80) {
+            return 'needs_refill';
+        }
+
+        if ($random <= 92) {
+            return 'damaged';
+        }
+
+        return 'expired';
     }
 
     /**
@@ -93,8 +101,12 @@ class InspectionSeeder extends Seeder
         switch ($condition) {
             case 'good':
                 return 'APAR dalam kondisi baik dan siap digunakan';
-            case 'needs_repair':
-                return 'APAR memerlukan perbaikan atau maintenance';
+            case 'needs_refill':
+                return 'Tekanan tabung menurun, perlu isi ulang segera';
+            case 'damaged':
+                return 'Komponen APAR rusak dan perlu perbaikan';
+            case 'expired':
+                return 'Masa berlaku APAR telah habis dan perlu diganti';
             default:
                 return 'Inspeksi rutin';
         }

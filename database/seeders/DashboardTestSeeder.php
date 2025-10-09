@@ -33,7 +33,7 @@ class DashboardTestSeeder extends Seeder
         // Monday - Mostly good inspections
         $this->createDayInspections($currentWeek->copy()->addDays(0), $apars, $users, [
             'good' => 3,
-            'needs_repair' => 1
+            'needs_refill' => 1
         ]);
 
         // Tuesday - No inspections
@@ -41,20 +41,22 @@ class DashboardTestSeeder extends Seeder
 
         // Wednesday - Good inspections
         $this->createDayInspections($currentWeek->copy()->addDays(2), $apars, $users, [
-            'good' => 3,
-            'needs_repair' => 0
+            'good' => 2,
+            'damaged' => 1
         ]);
 
         // Thursday - Some needs repair
         $this->createDayInspections($currentWeek->copy()->addDays(3), $apars, $users, [
             'good' => 2,
-            'needs_repair' => 1
+            'needs_refill' => 1
         ]);
 
         // Friday - Mixed conditions
         $this->createDayInspections($currentWeek->copy()->addDays(4), $apars, $users, [
-            'good' => 2,
-            'needs_repair' => 2
+            'good' => 1,
+            'needs_refill' => 1,
+            'damaged' => 1,
+            'expired' => 1
         ]);
 
         // Saturday - No inspections
@@ -62,8 +64,7 @@ class DashboardTestSeeder extends Seeder
 
         // Sunday - One good inspection
         $this->createDayInspections($currentWeek->copy()->addDays(6), $apars, $users, [
-            'good' => 1,
-            'needs_repair' => 0
+            'good' => 1
         ]);
 
         // Create some older inspections for historical data
@@ -71,9 +72,11 @@ class DashboardTestSeeder extends Seeder
 
         $this->command->info('Dashboard test data created successfully!');
         $this->command->info('Expected totals:');
-        $this->command->info('- Good: 11 inspections');
-        $this->command->info('- Needs Repair: 4 inspections');
-        $this->command->info('- Total: 15 inspections');
+    $this->command->info('- Good: 9 inspections');
+    $this->command->info('- Needs Refill: 3 inspections');
+    $this->command->info('- Damaged: 2 inspections');
+    $this->command->info('- Expired: 1 inspection');
+    $this->command->info('- Total: 15 inspections');
     }
 
     /**
@@ -109,8 +112,7 @@ class DashboardTestSeeder extends Seeder
             $user = $users->random();
             $date = Carbon::now()->subDays(rand(8, 30));
             
-            // 80% good, 20% needs_repair for historical data
-            $condition = rand(1, 100) <= 80 ? 'good' : 'needs_repair';
+            $condition = $this->getWeightedCondition();
             
             Inspection::create([
                 'apar_id' => $apar->id,
@@ -132,10 +134,33 @@ class DashboardTestSeeder extends Seeder
         switch ($condition) {
             case 'good':
                 return 'APAR dalam kondisi baik dan siap digunakan';
-            case 'needs_repair':
-                return 'APAR memerlukan perbaikan atau maintenance';
+            case 'needs_refill':
+                return 'Tekanan tabung menurun, perlu isi ulang segera';
+            case 'damaged':
+                return 'Komponen APAR rusak dan perlu perbaikan';
+            case 'expired':
+                return 'Masa berlaku APAR telah habis dan perlu diganti';
             default:
                 return 'Inspeksi rutin';
         }
+    }
+
+    private function getWeightedCondition(): string
+    {
+        $random = rand(1, 100);
+
+        if ($random <= 60) {
+            return 'good';
+        }
+
+        if ($random <= 80) {
+            return 'needs_refill';
+        }
+
+        if ($random <= 92) {
+            return 'damaged';
+        }
+
+        return 'expired';
     }
 }
