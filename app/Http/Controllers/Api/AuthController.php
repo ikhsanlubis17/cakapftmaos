@@ -45,6 +45,33 @@ class AuthController extends Controller
     }
 
     /**
+     * Refresh JWT token
+     */
+    public function refresh(Request $request)
+    {
+        try {
+
+            $guard = Auth::guard('api');
+            if (!$guard instanceof \Tymon\JWTAuth\JWTGuard) {
+                return response()->json([
+                    'message' => 'Invalid guard configuration',
+                ], 500);
+            }
+
+            $newToken = $guard->refresh();
+
+            return response()->json([
+                'token' => $newToken,
+                'message' => 'Token refreshed',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Token refresh failed',
+            ], 401);
+        }
+    }
+
+    /**
      * Get authenticated user info
      */
     public function user(Request $request)

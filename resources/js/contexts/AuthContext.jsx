@@ -21,11 +21,25 @@ axios.interceptors.request.use(
 // Add response interceptor to handle token expiration
 axios.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            // Token expired or invalid, redirect to login
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+    async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshing) {
+            setIsRefreshing(true);
+            try {
+                const refreshResponse = await axios.post('/api/refresh');
+                const newToken = refreshResponse.data.token;
+                setToken(newToken);
+                localStorage.setItem('token', newToken);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                originalRequest._retry = true;
+                setIsRefreshing(false);
+                return axios(originalRequest);
+            } catch (refreshError) {
+                setIsRefreshing(false);
+                logout();
+                return Promise.reject(refreshError);
+            }
         }
         return Promise.reject(error);
     }
@@ -45,6 +59,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [token, setToken] = useState(localStorage.getItem('token'));
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Set Authorization header when token changes
     useEffect(() => {
@@ -114,6 +129,7 @@ export const AuthProvider = ({ children }) => {
             // Always clear local state regardless of server response
             setUser(null);
             setToken(null);
+            setIsRefreshing(false);
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
         }

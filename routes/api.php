@@ -44,6 +44,7 @@ Route::middleware('auth:api')->group(function () {
     // User info
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
     
     // Dashboard - Semua route dashboard harus dilindungi
     Route::prefix('dashboard')->group(function () {
