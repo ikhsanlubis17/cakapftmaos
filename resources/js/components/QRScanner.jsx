@@ -24,18 +24,41 @@ const QRScanner = () => {
         
         return () => {
             clearTimeout(timer);
-            cleanupScanner();
+            // Cleanup on unmount
+            (async () => {
+                await cleanupScanner();
+            })();
         };
     }, [isInitialized]);
 
-    const cleanupScanner = () => {
+    const cleanupScanner = async () => {
         if (scannerRef.current) {
             try {
-                scannerRef.current.clear();
+                // Stop the scanner and release camera
+                await scannerRef.current.clear();
                 scannerRef.current = null;
+                
+                // Stop all media tracks to release camera properly
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => null);
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
             } catch (error) {
                 console.log('Scanner cleanup error:', error);
             }
+        }
+        
+        // Additional cleanup: stop any remaining video streams
+        try {
+            const videoElements = document.querySelectorAll('video');
+            videoElements.forEach(video => {
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+            });
+        } catch (error) {
+            console.log('Video cleanup error:', error);
         }
     };
 
@@ -94,11 +117,11 @@ const QRScanner = () => {
         }
     };
 
-    const onScanSuccess = (decodedText, decodedResult) => {
+    const onScanSuccess = async (decodedText, decodedResult) => {
         try {
             // Stop scanner immediately
-            cleanupScanner();
             setScanning(false);
+            await cleanupScanner();
 
             // Extract QR code from decoded text
             const qrCode = decodedText.trim();
@@ -145,9 +168,12 @@ const QRScanner = () => {
         }, 100);
     };
 
-    const handleBack = () => {
-        cleanupScanner();
-        navigate("/dashboard");
+    const handleBack = async () => {
+        await cleanupScanner();
+        // Small delay to ensure cleanup completes
+        setTimeout(() => {
+            navigate("/dashboard");
+        }, 100);
     };
 
     return (
