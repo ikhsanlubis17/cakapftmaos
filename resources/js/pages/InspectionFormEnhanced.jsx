@@ -21,13 +21,15 @@ const InspectionFormEnhanced = () => {
     const canvasRef = useRef(null);
     const selfieVideoRef = useRef(null);
     const selfieCanvasRef = useRef(null);
-    
+    const damageVideoRef = useRef(null);
+    const damageCanvasRef = useRef(null);
+
     const [apar, setApar] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [damageCategories, setDamageCategories] = useState([]);
     const { showSuccess, showError } = useToast();
-    
+
     // Form state
     const [condition, setCondition] = useState('good');
     const [notes, setNotes] = useState('');
@@ -44,9 +46,11 @@ const InspectionFormEnhanced = () => {
     const [selfieCameraActive, setSelfieCameraActive] = useState(false);
     const [cameraLoading, setCameraLoading] = useState(false);
     const [selfieLoading, setSelfieLoading] = useState(false);
+    const [damageCameraActive, setDamageCameraActive] = useState(false);
+    const [damageCameraLoading, setDamageCameraLoading] = useState(false);
     const [captureCountdown, setCaptureCountdown] = useState(0);
     const [showFlash, setShowFlash] = useState(false);
-    
+
     // Damage categories state
     const [selectedDamages, setSelectedDamages] = useState([]);
     const [showDamageForm, setShowDamageForm] = useState(false);
@@ -61,7 +65,7 @@ const InspectionFormEnhanced = () => {
         fetchAparData();
         fetchDamageCategories();
         getCurrentLocation();
-        
+
         return () => {
             if (videoRef.current && videoRef.current.srcObject) {
                 videoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -69,15 +73,18 @@ const InspectionFormEnhanced = () => {
             if (selfieVideoRef.current && selfieVideoRef.current.srcObject) {
                 selfieVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
             }
+            if (damageVideoRef.current && damageVideoRef.current.srcObject) {
+                damageVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+            }
         };
     }, [qrCode]);
 
     const fetchAparData = async () => {
         try {
             // Use test endpoint temporarily for debugging
-            const response = await axios.get(`/api/test-apar/qr/${qrCode}`);
-            if (response.data.success) {
-                setApar(response.data.data);
+            const response = await axios.get(`/api/apar/qr/${qrCode}`);
+            if (response.data && response.status == 200) {
+                setApar(response.data);
             } else {
                 showError('APAR tidak ditemukan atau QR Code tidak valid');
             }
@@ -129,36 +136,88 @@ const InspectionFormEnhanced = () => {
 
     const startDamageCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            setDamageCameraLoading(true);
+
+            if (damageVideoRef.current && damageVideoRef.current.srcObject) {
+                damageVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+                damageVideoRef.current.srcObject = null;
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
                     facingMode: 'environment',
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
-                } 
+                }
             });
-            
-            // Create temporary video element for damage photo
-            const tempVideo = document.createElement('video');
-            tempVideo.srcObject = stream;
-            tempVideo.play();
-            
-            // Wait for video to load
-            tempVideo.onloadedmetadata = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = tempVideo.videoWidth;
-                canvas.height = tempVideo.videoHeight;
-                
-                const context = canvas.getContext('2d');
-                context.drawImage(tempVideo, 0, 0);
-                
-                canvas.toBlob((blob) => {
-                    setNewDamage({ ...newDamage, damage_photo: blob });
-                    stream.getTracks().forEach(track => track.stop());
-                }, 'image/jpeg', 0.8);
-            };
+
+            setDamageCameraActive(true);
+            setDamageCameraLoading(false);
+            setCaptureCountdown(0);
+
+            setTimeout(() => {
+                if (damageVideoRef.current) {
+                    damageVideoRef.current.srcObject = stream;
+
+                    damageVideoRef.current.onloadedmetadata = () => {
+                        damageVideoRef.current.play().catch(e => {
+                            console.error('Error playing damage video:', e);
+                        });
+                    };
+
+                    damageVideoRef.current.onerror = (e) => {
+                        console.error('Damage video error:', e);
+                        showError('Error pada video stream kamera kerusakan');
+                    };
+                }
+            }, 200);
         } catch (error) {
+            console.error('Error starting damage camera:', error);
+            setDamageCameraLoading(false);
             showError('Tidak dapat mengakses kamera untuk foto kerusakan');
         }
+    };
+
+    const captureDamagePhoto = () => {
+        if (damageVideoRef.current && damageCanvasRef.current) {
+            setCaptureCountdown(3);
+
+            const countdownInterval = setInterval(() => {
+                setCaptureCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval);
+
+                        const video = damageVideoRef.current;
+                        const canvas = damageCanvasRef.current;
+                        const context = canvas.getContext('2d');
+
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        context.drawImage(video, 0, 0);
+
+                        setShowFlash(true);
+                        setTimeout(() => setShowFlash(false), 200);
+
+                        canvas.toBlob((blob) => {
+                            setNewDamage(prevDamage => ({ ...prevDamage, damage_photo: blob }));
+                            stopDamageCamera();
+                        }, 'image/jpeg', 0.8);
+
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+    };
+
+    const stopDamageCamera = () => {
+        if (damageVideoRef.current && damageVideoRef.current.srcObject) {
+            damageVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+            damageVideoRef.current.srcObject = null;
+        }
+        setDamageCameraActive(false);
+        setDamageCameraLoading(false);
     };
 
     // Camera and location methods
@@ -171,7 +230,7 @@ const InspectionFormEnhanced = () => {
                         lng: position.coords.longitude
                     };
                     setCurrentLocation(location);
-                    
+
                     // Validate location if APAR has coordinates
                     if (apar?.latitude && apar?.longitude) {
                         const distance = calculateDistance(
@@ -202,45 +261,48 @@ const InspectionFormEnhanced = () => {
     const startCamera = async () => {
         try {
             setCameraLoading(true);
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
                     facingMode: 'environment', // Use back camera
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
-                } 
+                }
             });
-            
+
             setCameraActive(true);
             setCameraLoading(false);
-            
-            // Store stream for later use
-            if (videoRef.current) {
-                console.log('Setting video stream for APAR camera');
-                videoRef.current.srcObject = stream;
-                
-                // Wait for video to be ready before playing
-                videoRef.current.onloadedmetadata = () => {
-                    console.log('Video metadata loaded, starting playback');
-                    videoRef.current.play().catch(e => {
-                        console.error('Error playing video:', e);
-                    });
-                };
-                
-                // Handle video errors
-                videoRef.current.onerror = (e) => {
-                    console.error('Video error:', e);
-                    showError('Error pada video stream kamera');
-                };
-                
-                // Log video properties
-                videoRef.current.oncanplay = () => {
-                    console.log('Video can play:', {
-                        videoWidth: videoRef.current.videoWidth,
-                        videoHeight: videoRef.current.videoHeight,
-                        readyState: videoRef.current.readyState
-                    });
-                };
-            }
+
+            setTimeout(async () => {
+
+                // Store stream for later use
+                if (videoRef.current) {
+                    console.log('Setting video stream for APAR camera');
+                    videoRef.current.srcObject = stream;
+
+                    // Wait for video to be ready before playing
+                    videoRef.current.onloadedmetadata = () => {
+                        console.log('Video metadata loaded, starting playback');
+                        videoRef.current.play().catch(e => {
+                            console.error('Error playing video:', e);
+                        });
+                    };
+
+                    // Handle video errors
+                    videoRef.current.onerror = (e) => {
+                        console.error('Video error:', e);
+                        showError('Error pada video stream kamera');
+                    };
+
+                    // Log video properties
+                    videoRef.current.oncanplay = () => {
+                        console.log('Video can play:', {
+                            videoWidth: videoRef.current.videoWidth,
+                            videoHeight: videoRef.current.videoHeight,
+                            readyState: videoRef.current.readyState
+                        });
+                    };
+                }
+            }, 200)
         } catch (error) {
             console.error('Error starting camera:', error);
             setCameraLoading(false);
@@ -252,34 +314,34 @@ const InspectionFormEnhanced = () => {
         if (videoRef.current && canvasRef.current) {
             // Start countdown
             setCaptureCountdown(3);
-            
+
             const countdownInterval = setInterval(() => {
                 setCaptureCountdown(prev => {
                     if (prev <= 1) {
                         clearInterval(countdownInterval);
-                        
+
                         // Capture photo after countdown
                         const video = videoRef.current;
                         const canvas = canvasRef.current;
                         const context = canvas.getContext('2d');
-                        
+
                         // Set canvas dimensions to match video
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
-                        
+
                         // Draw video frame to canvas
                         context.drawImage(video, 0, 0);
-                        
+
                         // Show flash effect
                         setShowFlash(true);
                         setTimeout(() => setShowFlash(false), 200);
-                        
+
                         // Convert to blob
                         canvas.toBlob((blob) => {
                             setPhoto(blob);
                             stopCamera();
                         }, 'image/jpeg', 0.8);
-                        
+
                         return 0;
                     }
                     return prev - 1;
@@ -300,45 +362,48 @@ const InspectionFormEnhanced = () => {
     const startSelfieCamera = async () => {
         try {
             setSelfieLoading(true);
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
                     facingMode: 'user', // Use front camera for selfie
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
-                } 
+                }
             });
-            
+
             setSelfieCameraActive(true);
             setSelfieLoading(false);
-            
-            // Store stream for later use
-            if (selfieVideoRef.current) {
-                console.log('Setting video stream for selfie camera');
-                selfieVideoRef.current.srcObject = stream;
-                
-                // Wait for video to be ready before playing
-                selfieVideoRef.current.onloadedmetadata = () => {
-                    console.log('Selfie video metadata loaded, starting playback');
-                    selfieVideoRef.current.play().catch(e => {
-                        console.error('Error playing selfie video:', e);
-                    });
-                };
-                
-                // Handle video errors
-                selfieVideoRef.current.onerror = (e) => {
-                    console.error('Selfie video error:', e);
-                    showError('Error pada video stream kamera depan');
-                };
-                
-                // Log video properties
-                selfieVideoRef.current.oncanplay = () => {
-                    console.log('Selfie video can play:', {
-                        videoWidth: selfieVideoRef.current.videoWidth,
-                        videoHeight: selfieVideoRef.current.videoHeight,
-                        readyState: selfieVideoRef.current.readyState
-                    });
-                };
-            }
+
+            setTimeout(async () => {
+                // Store stream for later use
+                if (selfieVideoRef.current) {
+                    console.log('Setting video stream for selfie camera');
+                    selfieVideoRef.current.srcObject = stream;
+
+                    // Wait for video to be ready before playing
+                    selfieVideoRef.current.onloadedmetadata = () => {
+                        console.log('Selfie video metadata loaded, starting playback');
+                        selfieVideoRef.current.play().catch(e => {
+                            console.error('Error playing selfie video:', e);
+                        });
+                    };
+
+                    // Handle video errors
+                    selfieVideoRef.current.onerror = (e) => {
+                        console.error('Selfie video error:', e);
+                        showError('Error pada video stream kamera depan');
+                    };
+
+                    // Log video properties
+                    selfieVideoRef.current.oncanplay = () => {
+                        console.log('Selfie video can play:', {
+                            videoWidth: selfieVideoRef.current.videoWidth,
+                            videoHeight: selfieVideoRef.current.videoHeight,
+                            readyState: selfieVideoRef.current.readyState
+                        });
+                    };
+                }
+            }, 200)
+
         } catch (error) {
             console.error('Error starting selfie camera:', error);
             setSelfieLoading(false);
@@ -350,34 +415,34 @@ const InspectionFormEnhanced = () => {
         if (selfieVideoRef.current && selfieCanvasRef.current) {
             // Start countdown
             setCaptureCountdown(3);
-            
+
             const countdownInterval = setInterval(() => {
                 setCaptureCountdown(prev => {
                     if (prev <= 1) {
                         clearInterval(countdownInterval);
-                        
+
                         // Capture selfie after countdown
                         const video = selfieVideoRef.current;
                         const canvas = selfieCanvasRef.current;
                         const context = canvas.getContext('2d');
-                        
+
                         // Set canvas dimensions to match video
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
-                        
+
                         // Draw video frame to canvas
                         context.drawImage(video, 0, 0);
-                        
+
                         // Show flash effect
                         setShowFlash(true);
                         setTimeout(() => setShowFlash(false), 200);
-                        
+
                         // Convert to blob
                         canvas.toBlob((blob) => {
                             setSelfie(blob);
                             stopSelfieCamera();
                         }, 'image/jpeg', 0.8);
-                        
+
                         return 0;
                     }
                     return prev - 1;
@@ -404,8 +469,8 @@ const InspectionFormEnhanced = () => {
         const Δλ = (lon2 - lon1) * Math.PI / 180;
 
         const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return R * c; // Distance in meters
@@ -413,7 +478,7 @@ const InspectionFormEnhanced = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Validate required fields
         if (!photo) {
             showError('Foto APAR wajib diambil');
@@ -426,16 +491,16 @@ const InspectionFormEnhanced = () => {
         }
 
         // Validate location for static APARs
-        if (apar?.location_type === 'statis') {
-            if (!currentLocation) {
-                showError('Lokasi belum didapatkan. Pastikan GPS aktif dan izin lokasi diizinkan.');
-                return;
-            }
-            if (!locationValid) {
-                showError('Lokasi tidak valid. Pastikan Anda berada di lokasi APAR.');
-                return;
-            }
-        }
+        // if (apar?.location_type === 'statis') {
+        //     if (!currentLocation) {
+        //         showError('Lokasi belum didapatkan. Pastikan GPS aktif dan izin lokasi diizinkan.');
+        //         return;
+        //     }
+        //     if (!locationValid) {
+        //         showError('Lokasi tidak valid. Pastikan Anda berada di lokasi APAR.');
+        //         return;
+        //     }
+        // }
 
         setSubmitting(true);
 
@@ -446,7 +511,7 @@ const InspectionFormEnhanced = () => {
             formData.append('notes', notes);
             formData.append('photo', photo);
             formData.append('selfie', selfie);
-            
+
             if (currentLocation) {
                 formData.append('lat', currentLocation.lat);
                 formData.append('lng', currentLocation.lng);
@@ -474,10 +539,10 @@ const InspectionFormEnhanced = () => {
             }, 2000);
         } catch (error) {
             console.error('Error submitting inspection:', error);
-            
+
             if (error.response?.status === 422 && error.response?.data?.error) {
                 showError(error.response.data.error);
-                
+
                 if (error.response.data.distance !== null) {
                     setLocationDistance(Math.round(error.response.data.distance));
                 }
@@ -543,7 +608,7 @@ const InspectionFormEnhanced = () => {
                         <label className="block text-lg font-semibold text-gray-900 mb-4">
                             📸 Foto APAR <span className="text-red-500">*</span>
                         </label>
-                        
+
                         {!photo && !cameraActive && (
                             <button
                                 type="button"
@@ -574,15 +639,15 @@ const InspectionFormEnhanced = () => {
                                     style={{ backgroundColor: 'transparent' }}
                                 />
                                 <canvas ref={canvasRef} className="hidden" />
-                                
+
                                 {/* Debug Info - Remove in production */}
                                 <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
                                     Debug: {videoRef.current?.readyState || 'N/A'}
                                 </div>
-                                
+
                                 {/* Camera Overlay */}
                                 <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
-                                
+
                                 {/* Countdown Display */}
                                 {captureCountdown > 0 && (
                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -591,12 +656,12 @@ const InspectionFormEnhanced = () => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Flash Effect */}
                                 {showFlash && (
                                     <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
                                 )}
-                                
+
                                 {/* Camera Controls */}
                                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
                                     <button
@@ -618,12 +683,12 @@ const InspectionFormEnhanced = () => {
                                         <span>Batal</span>
                                     </button>
                                 </div>
-                                
+
                                 {/* Camera Status */}
                                 <div className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                                     📹 Kamera Aktif
                                 </div>
-                                
+
                                 {/* Instructions */}
                                 <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">
                                     Arahkan ke APAR
@@ -658,7 +723,7 @@ const InspectionFormEnhanced = () => {
                         <label className="block text-lg font-semibold text-gray-900 mb-4">
                             🤳 Selfie Teknisi <span className="text-red-500">*</span>
                         </label>
-                        
+
                         {!selfie && !selfieCameraActive && (
                             <button
                                 type="button"
@@ -689,15 +754,15 @@ const InspectionFormEnhanced = () => {
                                     style={{ backgroundColor: 'transparent' }}
                                 />
                                 <canvas ref={selfieCanvasRef} className="hidden" />
-                                
+
                                 {/* Debug Info - Remove in production */}
                                 <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
                                     Debug: {selfieVideoRef.current?.readyState || 'N/A'}
                                 </div>
-                                
+
                                 {/* Camera Overlay */}
                                 <div className="absolute inset-0 border-4 border-blue-500 border-dashed opacity-50 pointer-events-none"></div>
-                                
+
                                 {/* Countdown Display */}
                                 {captureCountdown > 0 && (
                                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -706,12 +771,12 @@ const InspectionFormEnhanced = () => {
                                         </div>
                                     </div>
                                 )}
-                                
+
                                 {/* Flash Effect */}
                                 {showFlash && (
                                     <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
                                 )}
-                                
+
                                 {/* Camera Controls */}
                                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
                                     <button
@@ -733,12 +798,12 @@ const InspectionFormEnhanced = () => {
                                         <span>Batal</span>
                                     </button>
                                 </div>
-                                
+
                                 {/* Camera Status */}
                                 <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
                                     📹 Selfie Mode
                                 </div>
-                                
+
                                 {/* Instructions */}
                                 <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">
                                     Lihat ke kamera
@@ -780,7 +845,9 @@ const InspectionFormEnhanced = () => {
                             required
                         >
                             <option value="good">Baik</option>
-                            <option value="needs_repair">Perlu Perbaikan</option>
+                            <option value="needs_refill">Perlu Isi Ulang</option>
+                            <option value="expired">Kadaluwarsa</option>
+                            <option value="damaged">Rusak</option>
                         </select>
                     </div>
 
@@ -789,7 +856,7 @@ const InspectionFormEnhanced = () => {
                         <label className="block text-lg font-semibold text-gray-900 mb-4">
                             🚨 Kategori Kerusakan
                         </label>
-                        
+
                         {selectedDamages.length > 0 && (
                             <div className="space-y-3 mb-4">
                                 {selectedDamages.map((damage) => (
@@ -799,15 +866,14 @@ const InspectionFormEnhanced = () => {
                                                 <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
                                                     {damage.category_name}
                                                 </span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    damage.severity === 'low' ? 'bg-green-100 text-green-800' :
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${damage.severity === 'low' ? 'bg-green-100 text-green-800' :
                                                     damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                    damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                    'bg-red-100 text-red-800'
-                                                }`}>
+                                                        damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                            'bg-red-100 text-red-800'
+                                                    }`}>
                                                     {damage.severity === 'low' ? 'Rendah' :
-                                                     damage.severity === 'medium' ? 'Sedang' :
-                                                     damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
+                                                        damage.severity === 'medium' ? 'Sedang' :
+                                                            damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
                                                 </span>
                                             </div>
                                             <button
@@ -818,11 +884,11 @@ const InspectionFormEnhanced = () => {
                                                 <TrashIcon className="h-5 w-5" />
                                             </button>
                                         </div>
-                                        
+
                                         {damage.notes && (
                                             <p className="text-sm text-gray-700 mb-3">{damage.notes}</p>
                                         )}
-                                        
+
                                         {damage.damage_photo && (
                                             <div className="relative">
                                                 <img
@@ -857,7 +923,7 @@ const InspectionFormEnhanced = () => {
                         ) : (
                             <div className="border-2 border-red-200 rounded-xl p-4 bg-red-50">
                                 <h4 className="font-medium text-gray-900 mb-4">Tambah Kategori Kerusakan</h4>
-                                
+
                                 <div className="space-y-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -865,7 +931,7 @@ const InspectionFormEnhanced = () => {
                                         </label>
                                         <select
                                             value={newDamage.category_id}
-                                            onChange={(e) => setNewDamage({...newDamage, category_id: e.target.value})}
+                                            onChange={(e) => setNewDamage({ ...newDamage, category_id: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                                             required
                                         >
@@ -884,7 +950,7 @@ const InspectionFormEnhanced = () => {
                                         </label>
                                         <select
                                             value={newDamage.severity}
-                                            onChange={(e) => setNewDamage({...newDamage, severity: e.target.value})}
+                                            onChange={(e) => setNewDamage({ ...newDamage, severity: e.target.value })}
                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
                                         >
                                             <option value="low">Rendah</option>
@@ -900,7 +966,7 @@ const InspectionFormEnhanced = () => {
                                         </label>
                                         <textarea
                                             value={newDamage.notes}
-                                            onChange={(e) => setNewDamage({...newDamage, notes: e.target.value})}
+                                            onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })}
                                             rows={2}
                                             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
                                             placeholder="Jelaskan detail kerusakan..."
@@ -911,32 +977,105 @@ const InspectionFormEnhanced = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Foto Kerusakan <span className="text-red-500">*</span>
                                         </label>
-                                        
-                                        {!newDamage.damage_photo ? (
+
+                                        {!newDamage.damage_photo && !damageCameraActive && (
                                             <button
                                                 type="button"
                                                 onClick={startDamageCamera}
-                                                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200"
+                                                disabled={damageCameraLoading}
+                                                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <div className="text-center">
-                                                    <CameraIcon className="mx-auto h-8 w-8 text-gray-400" />
-                                                    <p className="mt-2 text-sm font-medium text-gray-700">Ambil Foto Kerusakan</p>
+                                                    <div className="mx-auto h-10 w-10 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
+                                                        <CameraIcon className="h-6 w-6 text-red-600" />
+                                                    </div>
+                                                    <p className="mt-2 text-sm font-medium text-gray-700">
+                                                        {damageCameraLoading ? 'Memulai Kamera...' : 'Ambil Foto Kerusakan'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">Foto wajib diambil dari kamera</p>
                                                 </div>
                                             </button>
-                                        ) : (
-                                            <div className="relative">
+                                        )}
+
+                                        {damageCameraActive && !newDamage.damage_photo && (
+                                            <div className="relative bg-black rounded-lg overflow-hidden">
+                                                <video
+                                                    ref={damageVideoRef}
+                                                    autoPlay
+                                                    playsInline
+                                                    muted
+                                                    className="w-full h-32 object-cover"
+                                                    style={{ backgroundColor: 'transparent' }}
+                                                />
+                                                <canvas ref={damageCanvasRef} className="hidden" />
+
+                                                <div className="absolute top-2 right-2 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
+                                                    Debug: {damageVideoRef.current?.readyState || 'N/A'}
+                                                </div>
+
+                                                <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
+
+                                                {captureCountdown > 0 && (
+                                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                                                        <div className="text-white text-4xl font-bold animate-pulse">
+                                                            {captureCountdown}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {showFlash && (
+                                                    <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
+                                                )}
+
+                                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={captureDamagePhoto}
+                                                        disabled={captureCountdown > 0}
+                                                        className="bg-red-600 text-white px-4 py-1.5 rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <span>📸</span>
+                                                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Foto'}</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={stopDamageCamera}
+                                                        disabled={captureCountdown > 0}
+                                                        className="bg-gray-600 text-white px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <span>❌</span>
+                                                        <span>Batal</span>
+                                                    </button>
+                                                </div>
+
+                                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                                    📹 Kamera Kerusakan
+                                                </div>
+
+                                                <div className="absolute top-2 right-2 translate-y-8 bg-black bg-opacity-70 text-white px-2 py-1 rounded-lg text-[10px]">
+                                                    Fokuskan pada area rusak
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {newDamage.damage_photo && (
+                                            <div className="relative group">
                                                 <img
                                                     src={URL.createObjectURL(newDamage.damage_photo)}
                                                     alt="Damage Photo"
                                                     className="w-full h-32 object-cover rounded-lg"
                                                 />
+                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setNewDamage({...newDamage, damage_photo: null})}
+                                                    onClick={() => setNewDamage({ ...newDamage, damage_photo: null })}
                                                     className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
                                                 >
                                                     <XMarkIcon className="h-4 w-4" />
                                                 </button>
+                                                <div className="absolute bottom-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                                    ✅ Foto Kerusakan
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -952,6 +1091,7 @@ const InspectionFormEnhanced = () => {
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                stopDamageCamera();
                                                 setShowDamageForm(false);
                                                 setNewDamage({
                                                     category_id: '',

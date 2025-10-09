@@ -84,7 +84,7 @@ const InspectionForm = () => {
         try {
             setLoading(true);
             // Use test endpoint temporarily for debugging
-            const response = await axios.get(`/api/test-apar/qr/${qrCode}`);
+            const response = await axios.get(`/api/qr/${qrCode}`);
             if (response.data.success) {
                 setApar(response.data.data);
 
