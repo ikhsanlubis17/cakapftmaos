@@ -19,6 +19,8 @@ import '../css/app.css';
 // Import Layout
 import LayoutEnhanced from './components/LayoutEnhanced'; // Make sure this component renders <Outlet />
 
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
 // Import pages (no changes needed in page components themselves)
 import Login from './pages/Login';
 import Welcome from './pages/Welcome';
@@ -320,6 +322,8 @@ function App() {
                         <RouterSetup />
                     </ToastProvider>
                 </AuthProvider>
+
+                <ReactQueryDevtools initialIsOpen={false} />
             </QueryClientProvider>
         </ErrorBoundary>
 
@@ -330,7 +334,7 @@ function App() {
 function RouterSetup() {
     const auth = useAuth();
 
-    if (auth.isPending) {
+    if (auth.isInitialLoading) {
         return <Loading />;
     }
 

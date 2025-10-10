@@ -34,6 +34,10 @@ export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSe
         async (error) => {
             const originalRequest = error.config;
 
+            if (originalRequest.url === '/api/refresh') {
+                return Promise.reject(error);
+            }
+
             // If 401 and not already retrying
             if (error.response?.status === 401 && !originalRequest._retry) {
                 originalRequest._retry = true;

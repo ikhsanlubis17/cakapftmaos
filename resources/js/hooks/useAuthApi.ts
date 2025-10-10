@@ -20,7 +20,7 @@ export const userQueryKey = ['user'];
 export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { updateToken }: { updateToken: (token: string | null) => void }) => {
     const queryClient = useQueryClient();
 
-    const { mutateAsync: login, isPending: isLoggingIn } = useMutation({
+    const { mutateAsync: login, isPending: isLoggingIn} = useMutation({
         mutationFn: ({ email, password }: { email: string; password: string }) =>
             apiClient.post('/api/login', { email, password }),
         onSuccess: (response: { data: LoginResponse }) => {
