@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import Toast from '../components/Toast';
 import {
@@ -47,46 +48,70 @@ ChartJS.register(
     ArcElement
 );
 
+// Query functions
+const fetchDashboardStats = async ({ apiClient, startDate, endDate }) => {
+    const response = await apiClient.get('/api/stats', {
+        params: {
+            start_date: startDate,
+            end_date: endDate
+        }
+    });
+    
+    if (response.data.success) {
+        return response.data.data;
+    }
+    throw new Error('Failed to fetch dashboard stats');
+};
+
+const fetchTeknisiData = async ({ apiClient }) => {
+    const schedulesResponse = await apiClient.get('/api/schedules/my-schedules');
+    const schedules = schedulesResponse.data || [];
+    
+    // Calculate stats from schedules
+    const now = new Date();
+    const stats = {
+        totalAssignedSchedules: schedules.length,
+        completedInspections: schedules.filter(s => s.is_completed).length,
+        pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
+        overdueInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) < now).length,
+        totalRepairs: 0,
+        completedRepairs: 0,
+        pendingRepairs: 0
+    };
+    
+    return { schedules, stats };
+};
+
+const fetchUpcomingInspectionsData = async ({ apiClient, startDate, endDate }) => {
+    const response = await apiClient.get('/api/schedules/upcoming', {
+        params: {
+            start_date: startDate,
+            end_date: endDate
+        }
+    });
+    
+    if (response.data.success) {
+        return response.data.data.schedules || [];
+    }
+    return [];
+};
+
+const sendReminderEmailMutation = async ({ apiClient, scheduleId }) => {
+    const response = await apiClient.post(`/api/schedules/${scheduleId}/send-reminder`);
+    if (response.data.success) {
+        return response.data.data;
+    }
+    throw new Error(response.data.message || 'Failed to send reminder email');
+};
+
 const DashboardEnhanced = () => {
     const { apiClient, user } = useAuth();
-    const [stats, setStats] = useState({
-        totalApar: 0,
-        activeApar: 0,
-        pendingRepairs: 0,
-        inactiveApar: 0,
-        overdueInspections: 0,
-    });
-    const [recentInspections, setRecentInspections] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [aparStatusChart, setAparStatusChart] = useState({ active: 0, needsRepair: 0, inactive: 0, underRepair: 0 });
-    const [repairStatusChart, setRepairStatusChart] = useState({ approved: 0, pending: 0, rejected: 0, completed: 0 });
-    const [inspectionsByDate, setInspectionsByDate] = useState([]);
-    const [dateRange, setDateRange] = useState([]);
-    const [dateRangeInfo, setDateRangeInfo] = useState({ startDate: '', endDate: '' });
+    const queryClient = useQueryClient();
     
     // Date filter state
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [showDateFilter, setShowDateFilter] = useState(false);
-
-    // Upcoming inspections state
-    const [upcomingInspections, setUpcomingInspections] = useState([]);
-    const [upcomingInspectionsLoading, setUpcomingInspectionsLoading] = useState(true);
-    const [sendingReminder, setSendingReminder] = useState(null);
-
-    // Teknisi dashboard state
-    const [teknisiStats, setTeknisiStats] = useState({
-        totalAssignedSchedules: 0,
-        completedInspections: 0,
-        pendingInspections: 0,
-        overdueInspections: 0,
-        totalRepairs: 0,
-        completedRepairs: 0,
-        pendingRepairs: 0
-    });
-    const [mySchedules, setMySchedules] = useState([]);
-    const [myInspections, setMyInspections] = useState([]);
-    const [myRepairs, setMyRepairs] = useState([]);
 
     // Toast state
     const [toast, setToast] = useState({
@@ -95,6 +120,84 @@ const DashboardEnhanced = () => {
         message: '',
         duration: 4000
     });
+
+    // Dashboard stats query
+    const { 
+        data: dashboardData, 
+        isLoading: dashboardLoading,
+        error: dashboardError,
+        refetch: refetchDashboard 
+    } = useQuery({
+        queryKey: ['dashboard-stats', startDate, endDate],
+        queryFn: () => fetchDashboardStats({ apiClient, startDate, endDate }),
+        enabled: !!startDate && !!endDate,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+
+    // Teknisi data query
+    const { 
+        data: teknisiData, 
+        isLoading: teknisiLoading,
+        error: teknisiError 
+    } = useQuery({
+        queryKey: ['teknisi-dashboard'],
+        queryFn: () => fetchTeknisiData({ apiClient }),
+        enabled: user?.role === 'teknisi',
+        staleTime: 5 * 60 * 1000,
+    });
+
+    // Upcoming inspections query
+    const { 
+        data: upcomingInspections = [], 
+        isLoading: upcomingInspectionsLoading,
+        error: upcomingInspectionsError,
+        refetch: refetchUpcomingInspections 
+    } = useQuery({
+        queryKey: ['upcoming-inspections', startDate, endDate],
+        queryFn: () => fetchUpcomingInspectionsData({ apiClient, startDate, endDate }),
+        enabled: !!startDate && !!endDate,
+        staleTime: 5 * 60 * 1000,
+    });
+
+    // Send reminder mutation
+    const sendReminderMutation = useMutation({
+        mutationFn: ({ scheduleId }) => sendReminderEmailMutation({ apiClient, scheduleId }),
+        onSuccess: (data, variables) => {
+            const technicianName = data.technician_name || 'Teknisi';
+            showToast('success', `Reminder email berhasil dikirim kepada ${technicianName} (${data.technician_email})!`);
+            refetchUpcomingInspections(); // Refresh the list
+        },
+        onError: (error) => {
+            showToast('error', 'Gagal mengirim reminder email: ' + error.message);
+        },
+    });
+
+    // Extract data from queries with fallbacks
+    const stats = dashboardData?.stats || {
+        totalApar: 0,
+        activeApar: 0,
+        pendingRepairs: 0,
+        inactiveApar: 0,
+        overdueInspections: 0,
+    };
+    
+    const aparStatusChart = dashboardData?.aparStatusChart || { active: 0, needsRepair: 0, inactive: 0, underRepair: 0 };
+    const repairStatusChart = dashboardData?.repairStatusChart || { approved: 0, pending: 0, rejected: 0, completed: 0 };
+    const inspectionsByDate = dashboardData?.inspectionsByDate || [];
+    const dateRange = dashboardData?.dateRange || [];
+    const dateRangeInfo = dashboardData?.dateRangeInfo || { startDate: '', endDate: '' };
+    const recentInspections = dashboardData?.recentInspections || [];
+    
+    const mySchedules = teknisiData?.schedules || [];
+    const teknisiStats = teknisiData?.stats || {
+        totalAssignedSchedules: 0,
+        completedInspections: 0,
+        pendingInspections: 0,
+        overdueInspections: 0,
+        totalRepairs: 0,
+        completedRepairs: 0,
+        pendingRepairs: 0
+    };
 
     useEffect(() => {
         // Set default date range to current week
@@ -110,60 +213,12 @@ const DashboardEnhanced = () => {
         
         setStartDate(startDateStr);
         setEndDate(endDateStr);
-        
-        // Fetch data with the correct date range
-        fetchDashboardData(startDateStr, endDateStr);
-        fetchUpcomingInspections(startDateStr, endDateStr); // Pass dates directly
-        
-        // Fetch teknisi data if user is teknisi
-        if (user?.role === 'teknisi') {
-            fetchTeknisiDashboardData();
-        }
     }, []);
-
-    const fetchDashboardData = async (start = startDate, end = endDate) => {
-        try {
-            setLoading(true);
-            const response = await apiClient.get('/api/stats', {
-                params: {
-                    start_date: start,
-                    end_date: end
-                }
-            });
-            
-            if (response.data.success) {
-                setStats(response.data.data.stats);
-                setAparStatusChart(response.data.data.aparStatusChart);
-                setRepairStatusChart(response.data.data.repairStatusChart);
-                setInspectionsByDate(response.data.data.inspectionsByDate || []);
-                setDateRange(response.data.data.dateRange || []);
-                setDateRangeInfo(response.data.data.dateRangeInfo || {});
-                setRecentInspections(response.data.data.recentInspections || []);
-                
-            }
-        } catch (error) {
-            // Fallback to default data if API fails
-            setStats({
-                totalApar: 0,
-                activeApar: 0,
-                pendingRepairs: 0,
-                inactiveApar: 0,
-                overdueInspections: 0,
-            });
-            setAparStatusChart({ active: 0, needsRepair: 0, inactive: 0, underRepair: 0 });
-            setRepairStatusChart({ approved: 0, pending: 0, rejected: 0, completed: 0 });
-            setInspectionsByDate([]);
-            setDateRange([]);
-            setDateRangeInfo({ startDate: '', endDate: '' });
-            setRecentInspections([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleDateFilter = () => {
         if (startDate && endDate) {
-            fetchDashboardData(startDate, endDate);
+            refetchDashboard();
+            refetchUpcomingInspections();
         }
     };
 
@@ -177,7 +232,6 @@ const DashboardEnhanced = () => {
         
         setStartDate(startOfWeek.toISOString().split('T')[0]);
         setEndDate(endOfWeek.toISOString().split('T')[0]);
-        fetchDashboardData(startOfWeek.toISOString().split('T')[0], endOfWeek.toISOString().split('T')[0]);
     };
 
     const statusChartData = {
@@ -285,70 +339,6 @@ const DashboardEnhanced = () => {
     const totalInspections = inspectionsByDate.reduce((sum, item) => sum + item.total, 0);
     const totalGoodInspections = inspectionsByDate.reduce((sum, item) => sum + item.good, 0);
     const totalNeedsRepairInspections = inspectionsByDate.reduce((sum, item) => sum + item.needs_repair, 0);
-
-    const fetchTeknisiDashboardData = async () => {
-        try {
-            // Fetch teknisi schedules
-            const schedulesResponse = await apiClient.get('/api/schedules/my-schedules');
-            console.log('Schedules response:', schedulesResponse.data);
-            
-            // API mengembalikan data langsung tanpa wrapper success
-            const schedules = schedulesResponse.data || [];
-            setMySchedules(schedules);
-            
-            // Calculate stats from schedules
-            const now = new Date();
-            const stats = {
-                totalAssignedSchedules: schedules.length,
-                completedInspections: schedules.filter(s => s.is_completed).length,
-                pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
-                overdueInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) < now).length,
-                totalRepairs: 0,
-                completedRepairs: 0,
-                pendingRepairs: 0
-            };
-            setTeknisiStats(stats);
-            
-            console.log('Teknisi stats calculated:', stats);
-        } catch (error) {
-            console.error('Error fetching teknisi data:', error);
-            // Set default empty state
-            setMySchedules([]);
-            setTeknisiStats({
-                totalAssignedSchedules: 0,
-                completedInspections: 0,
-                pendingInspections: 0,
-                overdueInspections: 0,
-                totalRepairs: 0,
-                completedRepairs: 0,
-                pendingRepairs: 0
-            });
-        }
-    };
-
-    const fetchUpcomingInspections = async (startDateParam, endDateParam) => {
-        try {
-            setUpcomingInspectionsLoading(true);
-            
-            const response = await apiClient.get('/api/schedules/upcoming', {
-                params: {
-                    start_date: startDateParam,
-                    end_date: endDateParam
-                }
-            });
-            
-            if (response.data.success) {
-                const schedules = response.data.data.schedules || [];
-                setUpcomingInspections(schedules);
-            } else {
-                setUpcomingInspections([]);
-            }
-        } catch (error) {
-            setUpcomingInspections([]);
-        } finally {
-            setUpcomingInspectionsLoading(false);
-        }
-    };
 
     const showToast = (type, message, duration = 4000) => {
         setToast({
@@ -486,26 +476,15 @@ const DashboardEnhanced = () => {
             return;
         }
         
-        if (sendingReminder === schedule.id) return; // Prevent double clicks
-        setSendingReminder(schedule.id);
-        try {
-            const response = await apiClient.post(`/api/schedules/${schedule.id}/send-reminder`);
-            if (response.data.success) {
-                const technicianName = response.data.data.technician_name || 'Teknisi';
-                showToast('success', `Reminder email berhasil dikirim kepada ${technicianName} (${response.data.data.technician_email})!`);
-                fetchUpcomingInspections(startDate, endDate); // Refresh list after sending reminder
-            } else {
-                showToast('error', 'Gagal mengirim reminder email: ' + response.data.message);
-            }
-        } catch (error) {
-            console.error('Error sending reminder email:', error);
-            showToast('error', 'Gagal mengirim reminder email: ' + (error.response?.data?.message || error.message));
-        } finally {
-            setSendingReminder(null);
-        }
+        if (sendReminderMutation.isPending) return; // Prevent double clicks
+        
+        sendReminderMutation.mutate({ scheduleId: schedule.id });
     };
 
-    if (loading) {
+    // Combined loading state
+    const isLoading = dashboardLoading || teknisiLoading || upcomingInspectionsLoading;
+
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="flex items-center space-x-3">
@@ -532,7 +511,13 @@ const DashboardEnhanced = () => {
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
                         <button
-                            onClick={() => fetchDashboardData()}
+                            onClick={() => {
+                                refetchDashboard();
+                                if (user?.role === 'teknisi') {
+                                    // Refetch teknisi data if needed
+                                    queryClient.invalidateQueries({ queryKey: ['teknisi-dashboard'] });
+                                }
+                            }}
                             className="bg-white/20 backdrop-blur text-white px-5 py-2.5 rounded-lg hover:bg-white/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
                         >
                             <ArrowPathIcon className="h-4 w-4" />
@@ -599,7 +584,7 @@ const DashboardEnhanced = () => {
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
                         <button
-                            onClick={() => fetchUpcomingInspections(startDate, endDate)}
+                            onClick={() => refetchUpcomingInspections()}
                             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm lg:text-base"
                         >
                             <ArrowPathIcon className="h-4 w-4" />
@@ -1278,7 +1263,7 @@ const DashboardEnhanced = () => {
                         ) : (
                             <div className="text-center py-8 lg:py-12">
                                 <div className="mx-auto w-12 h-12 lg:w-16 lg:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 lg:mb-4">
-                                        <DocumentTextIcon className="h-6 h-6 lg:h-8 lg:w-8 text-gray-400" />
+                                        <DocumentTextIcon className="h-6 lg:h-8 lg:w-8 text-gray-400" />
                                 </div>
                                 <p className="text-gray-500 font-medium mb-1 text-sm lg:text-base">Belum ada inspeksi</p>
                                 <p className="text-xs lg:text-sm text-gray-400 leading-tight">Mulai inspeksi pertama Anda</p>
