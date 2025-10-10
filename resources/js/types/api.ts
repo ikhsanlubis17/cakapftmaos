@@ -21,7 +21,7 @@ export interface Apar {
     expired_at?: string;
     status?: string;
     notes?: string;
-    aparType?: { name?: string } | null;
+    apar_type?: { name?: string } | null;
     tank_truck?: { plate_number?: string; driver_name?: string } | null;
     latitude?: number | string;
     longitude?: number | string;

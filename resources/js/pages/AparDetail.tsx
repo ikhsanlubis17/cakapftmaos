@@ -270,7 +270,7 @@ const AparDetail: React.FC = () => {
                                 Jenis
                             </dt>
                             <dd className="mt-1 text-sm text-gray-900">
-                                {apar.aparType?.name || 'Unknown'}
+                                {apar.apar_type?.name?.toUpperCase() || 'Unknown'}
                             </dd>
                         </div>
                         <div>
