@@ -55,6 +55,7 @@ const AparDetail: React.FC = () => {
             const response = await apiClient.get(`/api/apar/${id}`);
             return response.data.data ?? response.data;
         },
+        staleTime: 1 * 60 * 1000,
         enabled: !!id,
     });
 
@@ -64,14 +65,48 @@ const AparDetail: React.FC = () => {
             const response = await apiClient.get(`/api/apar/${id}/inspections`);
             return response.data.data ?? response.data;
         },
+        staleTime: 1 * 60 * 1000, 
         enabled: !!id,
     });
 
+    // Use react-query to fetch and cache the QR code blob
+    const qrQuery = useQuery({
+        queryKey: ['apar', id, 'qr-blob'],
+        queryFn: async () => {
+            const response = await apiClient.get(`/api/apar/${id}/qr-code`, {
+                responseType: 'blob',
+            });
+            return response.data;
+        },
+        enabled: !!id,
+        // Keep data fresh for 24 hours
+        staleTime: 24 * 60 * 60 * 1000,
+    });
+
+    // Create object URL when blob is available and revoke on change/unmount
     useEffect(() => {
-        if (id) {
-            setQrCodeUrl(`/api/apar/${id}/qr-code-test`);
+        let objectUrl: string | null = null;
+        setQrCodeError(false);
+        setQrCodeUrl('');
+
+        if (qrQuery.data) {
+            try {
+                objectUrl = URL.createObjectURL(qrQuery.data as Blob);
+                setQrCodeUrl(objectUrl);
+            } catch (err) {
+                console.error('Failed to create object URL for QR blob', err);
+                setQrCodeError(true);
+            }
+        } else if (qrQuery.isError) {
+            setQrCodeError(true);
         }
-    }, [id]);
+
+        return () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [qrQuery.data, qrQuery.isError]);
 
     const getStatusColor = (status?: string): string => {
         switch (status) {
@@ -308,8 +343,7 @@ const AparDetail: React.FC = () => {
                                     Mobil Tangki
                                 </dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {apar.tank_truck.plate_number} -{" "}
-                                    {apar.tank_truck.driver_name}
+                                    {apar.tank_truck.plate_number} - {apar.tank_truck.driver_name}
                                 </dd>
                             </div>
                         )}
@@ -336,12 +370,22 @@ const AparDetail: React.FC = () => {
                     <div className="flex justify-center">
                         <div className="bg-white p-4 rounded-lg border">
                             {!qrCodeError ? (
-                                <img
-                                    src={qrCodeUrl}
-                                    alt="QR Code"
-                                    className="w-48 h-48"
-                                    onError={handleQrCodeError}
-                                />
+                                qrQuery.isLoading ? (
+                                    <div className="w-48 h-48 flex items-center justify-center">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                                    </div>
+                                ) : qrCodeUrl ? (
+                                    <img
+                                        src={qrCodeUrl}
+                                        alt="QR Code"
+                                        className="w-48 h-48"
+                                        onError={handleQrCodeError}
+                                    />
+                                ) : (
+                                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                                        <div className="text-gray-400 text-sm">QR Code tidak tersedia</div>
+                                    </div>
+                                )
                             ) : (
                                 <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-lg">
                                     <div className="text-center">
@@ -382,31 +426,20 @@ const AparDetail: React.FC = () => {
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-sm font-medium text-gray-900">
-                                                        Inspeksi oleh{" "}
-                                                        {inspection.user
-                                                            ?.name ||
-                                                            "Unknown User"}
+                                                        Inspeksi oleh {inspection.user?.name || "Unknown User"}
                                                     </p>
-                                                    <span
-                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                            inspection.condition ===
-                                                            "good"
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                            inspection.condition === "good"
                                                                 ? "bg-green-100 text-green-800"
-                                                                : inspection.condition ===
-                                                                  "needs_repair"
+                                                                : inspection.condition === "needs_repair"
                                                                 ? "bg-yellow-100 text-yellow-800"
                                                                 : "bg-gray-100 text-gray-800"
-                                                        }`}
-                                                    >
-                                                        {getConditionText(
-                                                            inspection.condition
-                                                        )}
+                                                        }`}>
+                                                        {getConditionText(inspection.condition)}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-gray-500">
-                                                    {new Date(
-                                                        inspection.created_at
-                                                    ).toLocaleString("id-ID")}
+                                                    {new Date(inspection.created_at).toLocaleString("id-ID")}
                                                 </p>
                                                 {inspection.notes && (
                                                     <p className="text-sm text-gray-500 mt-1">
@@ -435,8 +468,7 @@ const AparDetail: React.FC = () => {
                                                         </div>
                                                         {/* Tooltip */}
                                                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                                                            Klik untuk lihat
-                                                            foto
+                                                            Klik untuk lihat foto
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -520,35 +552,19 @@ const AparDetail: React.FC = () => {
                                                 <p>
                                                     <strong>
                                                         Inspeksi oleh:
-                                                    </strong>{" "}
-                                                    {selectedPhoto.inspection
-                                                        .user?.name ||
-                                                        "Unknown User"}
+                                                    </strong> {selectedPhoto.inspection.user?.name || "Unknown User"}
                                                 </p>
                                                 <p>
-                                                    <strong>Tanggal:</strong>{" "}
-                                                    {new Date(
-                                                        selectedPhoto.inspection.created_at
-                                                    ).toLocaleString("id-ID")}
+                                                    <strong>Tanggal:</strong> {new Date(selectedPhoto.inspection.created_at).toLocaleString("id-ID")}
                                                 </p>
                                                 <p>
-                                                    <strong>Kondisi:</strong>{" "}
-                                                    {getConditionText(
-                                                        selectedPhoto.inspection
-                                                            .condition
-                                                    )}
+                                                    <strong>Kondisi:</strong> {getConditionText(selectedPhoto.inspection.condition)}
                                                 </p>
-                                                {selectedPhoto.inspection
-                                                    .notes && (
+                                                {selectedPhoto.inspection.notes && (
                                                     <p>
                                                         <strong>
                                                             Catatan:
-                                                        </strong>{" "}
-                                                        {
-                                                            selectedPhoto
-                                                                .inspection
-                                                                .notes
-                                                        }
+                                                        </strong> {selectedPhoto.inspection.notes}
                                                     </p>
                                                 )}
                                             </div>

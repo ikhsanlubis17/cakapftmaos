@@ -55,6 +55,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/apar', [AparController::class, 'index']);
     Route::get('/apar/{apar}', [AparController::class, 'show']);
     Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
+    Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
     Route::post('/apar', [AparController::class, 'store']);
     Route::put('/apar/{apar}', [AparController::class, 'update']);
     Route::delete('/apar/{apar}', [AparController::class, 'destroy']);

@@ -202,24 +202,9 @@ class AparController extends Controller
     /**
      * Generate QR code for APAR
      */
-    public function qrCode(Apar $apar, Request $request)
+    public function qrCode(Apar $apar)
     {
-        // Check if token is provided via query parameter
-        $token = $request->query('token');
-        if (!$token) {
-            return response('Unauthorized', 401);
-        }
-
-        try {
-            // Validate token using JWTAuth
-            $user = JWTAuth::setToken($token)->authenticate();
-            if (!$user) {
-                return response('Unauthorized', 401);
-            }
-        } catch (\Exception $e) {
-            return response('Unauthorized', 401);
-        }
-
+        // TODO: Only generate QR code once and store it, instead of generating on each request
         $qrCode = QrCode::format('png')
             ->size(300)
             ->margin(10)
