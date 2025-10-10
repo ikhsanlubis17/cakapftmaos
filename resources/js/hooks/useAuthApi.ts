@@ -9,7 +9,7 @@ export interface User {
     role: string;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
     token: string;
     user: User;
 }
@@ -20,9 +20,9 @@ export const userQueryKey = ['user'];
 export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { updateToken }: { updateToken: (token: string | null) => void }) => {
     const queryClient = useQueryClient();
 
-    const { mutate: login, isPending: isLoggingIn } = useMutation({
+    const { mutateAsync: login, isPending: isLoggingIn } = useMutation({
         mutationFn: ({ email, password }: { email: string; password: string }) =>
-            apiClient.post('/api/auth/login', { email, password }),
+            apiClient.post('/api/login', { email, password }),
         onSuccess: (response: { data: LoginResponse }) => {
             const { token: newToken, user: userData } = response.data;
             updateToken(newToken);
@@ -31,8 +31,8 @@ export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { upda
         },
     });
 
-    const { mutate: logout, isPending: isLoggingOut } = useMutation({
-        mutationFn: () => apiClient.post('/api/auth/logout'),
+    const { mutateAsync: logout, isPending: isLoggingOut } = useMutation({
+        mutationFn: () => apiClient.post('/api/logout'),
         onSuccess: () => {
             updateToken(null);
             // Clear the user data from the cache
@@ -47,7 +47,7 @@ export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { upda
 
     const fetchUser = useCallback(async (): Promise<User> => {
         try {
-            const response = await apiClient.get('/api/auth/user');
+            const response = await apiClient.get('/api/user');
             return response.data;
         } catch (error) {
             console.error("Failed to fetch user", error);

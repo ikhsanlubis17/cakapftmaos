@@ -1,16 +1,22 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { UseMutateAsyncFunction, useQuery } from '@tanstack/react-query';
+import { AxiosError, AxiosResponse } from 'axios';
 import { createApiClient, setupInterceptors } from '../services/api';
 import { useAuthState } from '../hooks/useAuthState';
-import { useAuthApi, userQueryKey, User } from '../hooks/useAuthApi';
+import { useAuthApi, userQueryKey, User, LoginResponse } from '../hooks/useAuthApi';
 
 interface AuthContextType {
     user: User | undefined;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (params: { email: string; password: string }) => void;
-    logout: () => void;
+    login: UseMutateAsyncFunction<{
+        data: LoginResponse;
+    }, Error, {
+        email: string;
+        password: string;
+    }, unknown>
+    logout: UseMutateAsyncFunction<AxiosResponse<any, any, {}>, Error, void, unknown>;
+    apiClient: ReturnType<typeof createApiClient>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -81,6 +87,7 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
         isLoading: isUserLoading || isUserFetching || isLoggingIn || isLoggingOut,
         login,
         logout,
+        apiClient
     };
 
     return (
