@@ -565,9 +565,9 @@ const AparList = () => {
                                                                 {getLocationTypeText(apar.location_type)}
                                                             </span>
                                                         </div>
-                                                        {apar.aparType?.name && (
+                                                        {apar.apar_type?.name && (
                                                             <div className="text-xs text-gray-500 mt-1">
-                                                                {apar.aparType.name}
+                                                                {apar.apar_type.name}
                                                             </div>
                                                         )}
                                                     </div>
