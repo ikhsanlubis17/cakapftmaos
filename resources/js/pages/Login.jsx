@@ -2,28 +2,28 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { AxiosError } from 'axios';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, isLoading } = useAuth();
     const { showSuccess, showError } = useToast();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
 
-        const result = await login(email, password);
-        
-        if (result.success) {
-            showSuccess('Login berhasil! Selamat datang kembali.');
-        } else {
-            showError(result.message);
+        try {
+            await login({ email: email, password: password });
+            showSuccess('Login berhasil. Selamat datang kembali!');
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                showError(error.response?.data?.message || 'Gagal melakukan login. Silakan coba lagi.');
+            } else {
+                showError('Gagal melakukan login. Silakan coba lagi.');
+            }
         }
-        
-        setLoading(false);
     };
 
     return (
@@ -141,10 +141,10 @@ const Login = () => {
                         <div>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={isLoading}
                                 className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
                             >
-                                {loading ? (
+                                {isLoading ? (
                                     <div className="flex items-center">
                                         <svg
                                             className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
