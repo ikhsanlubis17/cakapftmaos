@@ -27,6 +27,9 @@ use App\Http\Controllers\Api\RepairReportController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::post('/logout', [AuthController::class, 'logout']);
+Route::post('/refresh', [AuthController::class, 'refresh']);
+
 // Test route
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working!']);
@@ -43,8 +46,7 @@ Route::prefix('dev')->group(function () {
 Route::middleware('auth:api')->group(function () {
     // User info
     Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
+
 
     // Dashboard - Semua route dashboard harus dilindungi
     Route::get('/stats', [DashboardController::class, 'getStats']);
