@@ -48,7 +48,7 @@ ChartJS.register(
 );
 
 const DashboardEnhanced = () => {
-    const { user } = useAuth();
+    const { apiClient, user } = useAuth();
     const [stats, setStats] = useState({
         totalApar: 0,
         activeApar: 0,
@@ -124,7 +124,7 @@ const DashboardEnhanced = () => {
     const fetchDashboardData = async (start = startDate, end = endDate) => {
         try {
             setLoading(true);
-            const response = await axios.get('/api/dev/dashboard/stats', {
+            const response = await apiClient.get('/api/dev/dashboard/stats', {
                 params: {
                     start_date: start,
                     end_date: end
@@ -289,7 +289,7 @@ const DashboardEnhanced = () => {
     const fetchTeknisiDashboardData = async () => {
         try {
             // Fetch teknisi schedules
-            const schedulesResponse = await axios.get('/api/schedules/my-schedules');
+            const schedulesResponse = await apiClient.get('/api/schedules/my-schedules');
             console.log('Schedules response:', schedulesResponse.data);
             
             // API mengembalikan data langsung tanpa wrapper success
@@ -330,7 +330,7 @@ const DashboardEnhanced = () => {
         try {
             setUpcomingInspectionsLoading(true);
             
-            const response = await axios.get('/api/schedules/upcoming', {
+            const response = await apiClient.get('/api/schedules/upcoming', {
                 params: {
                     start_date: startDateParam,
                     end_date: endDateParam
@@ -489,7 +489,7 @@ const DashboardEnhanced = () => {
         if (sendingReminder === schedule.id) return; // Prevent double clicks
         setSendingReminder(schedule.id);
         try {
-            const response = await axios.post(`/api/schedules/${schedule.id}/send-reminder`);
+            const response = await apiClient.post(`/api/schedules/${schedule.id}/send-reminder`);
             if (response.data.success) {
                 const technicianName = response.data.data.technician_name || 'Teknisi';
                 showToast('success', `Reminder email berhasil dikirim kepada ${technicianName} (${response.data.data.technician_email})!`);
