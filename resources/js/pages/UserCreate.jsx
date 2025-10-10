@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -90,7 +90,7 @@ const UserCreate = () => {
             });
 
             showSuccess('Pengguna berhasil dibuat!');
-            navigate('/dashboard/users');
+            navigate({ to: '/users' });
         } catch (error) {
             console.error('Error creating user:', error);
             if (error.response?.data?.errors) {
@@ -139,7 +139,7 @@ const UserCreate = () => {
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div className="flex items-center">
                     <Link
-                        to="/dashboard/users"
+                        to="/users"
                         className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
                     >
                         <ArrowLeftIcon className="h-5 w-5" />
@@ -367,7 +367,7 @@ const UserCreate = () => {
                     {/* Submit Buttons */}
                     <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <Link
-                            to="/dashboard/users"
+                            to="/users"
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                         >
                             Batal
@@ -398,3 +398,4 @@ const UserCreate = () => {
 };
 
 export default UserCreate; 
+

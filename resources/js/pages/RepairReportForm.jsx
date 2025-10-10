@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -60,7 +60,7 @@ const RepairReportForm = () => {
             setApproval(response.data.data);
         } catch (error) {
             showError('Data persetujuan tidak ditemukan');
-            navigate('/my-repairs');
+            navigate({ to: '/my-repairs' });
         } finally {
             setLoading(false);
         }
@@ -205,7 +205,7 @@ const RepairReportForm = () => {
 
             showSuccess('Laporan perbaikan berhasil dikirim!');
             setTimeout(() => {
-                navigate('/my-repairs');
+                navigate({ to: '/my-repairs' });
             }, 2000);
         } catch (error) {
             showError(error.response?.data?.message || 'Gagal mengirim laporan perbaikan');
@@ -480,7 +480,7 @@ const RepairReportForm = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => navigate('/my-repairs')}
+                            onClick={() => navigate({ to: '/my-repairs' })}
                             className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                         >
                             Batal
@@ -497,3 +497,5 @@ const RepairReportForm = () => {
 };
 
 export default RepairReportForm;
+
+

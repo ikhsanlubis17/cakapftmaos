@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import { usePusher, useRepairApprovalUpdates } from '../hooks/usePusher';
@@ -453,3 +453,4 @@ const MyRepairApprovals = () => {
 };
 
 export default MyRepairApprovals;
+

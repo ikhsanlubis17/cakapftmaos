@@ -28,7 +28,7 @@ use App\Http\Controllers\Api\RepairReportController;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Test route
-Route::get('/test', function() {
+Route::get('/test', function () {
     return response()->json(['message' => 'API is working!']);
 });
 
@@ -45,12 +45,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    
+
     // Dashboard - Semua route dashboard harus dilindungi
-    Route::prefix('dashboard')->group(function () {
-        Route::get('/stats', [DashboardController::class, 'getStats']);
-    });
-    
+    Route::get('/stats', [DashboardController::class, 'getStats']);
+
     // APAR routes
     Route::get('/apar', [AparController::class, 'index']);
     Route::get('/apar/{apar}', [AparController::class, 'show']);
@@ -59,15 +57,15 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/apar/{apar}', [AparController::class, 'update']);
     Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
     Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
-Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
-    
+    Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
+
     // APAR Type routes (Admin only)
     Route::get('/apar-types', [AparTypeController::class, 'index']);
     Route::get('/apar-types/{aparType}', [AparTypeController::class, 'show']);
     Route::post('/apar-types', [AparTypeController::class, 'store']);
     Route::put('/apar-types/{aparType}', [AparTypeController::class, 'update']);
     Route::delete('/apar-types/{aparType}', [AparTypeController::class, 'destroy']);
-    
+
     // Damage Category routes (Admin only)
     Route::get('/damage-categories', [DamageCategoryController::class, 'index']);
     Route::get('/damage-categories/active', [DamageCategoryController::class, 'active']);
@@ -76,7 +74,7 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::put('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'update']);
     Route::delete('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'destroy']);
     Route::patch('/damage-categories/{damageCategory}/toggle-status', [DamageCategoryController::class, 'toggleStatus']);
-    
+
     // Inspection routes
     Route::get('/inspections', [InspectionController::class, 'index']);
     Route::get('/inspections/my-inspections', [InspectionController::class, 'myInspections']);
@@ -85,7 +83,7 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::post('/inspections/validate', [InspectionController::class, 'validateInspectionTime']);
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
-    
+
     // Repair Approval routes (Admin only)
     Route::get('/repair-approvals', [RepairApprovalController::class, 'index']);
     Route::get('/repair-approvals/pending', [RepairApprovalController::class, 'pending']);
@@ -94,7 +92,7 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::post('/repair-approvals/{repairApproval}/approve', [RepairApprovalController::class, 'approve']);
     Route::post('/repair-approvals/{repairApproval}/reject', [RepairApprovalController::class, 'reject']);
     Route::post('/repair-approvals/{repairApproval}/mark-completed', [RepairApprovalController::class, 'markCompleted']);
-    
+
     // Repair Report routes
     Route::get('/repair-reports', [RepairReportController::class, 'index']);
     Route::get('/repair-reports/stats', [RepairReportController::class, 'stats']);
@@ -102,7 +100,7 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::post('/repair-reports', [RepairReportController::class, 'store']);
     Route::put('/repair-reports/{repairReport}', [RepairReportController::class, 'update']);
     Route::delete('/repair-reports/{repairReport}', [RepairReportController::class, 'destroy']);
-    
+
     // User management routes (Admin only)
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{user}', [UserController::class, 'show']);
@@ -110,14 +108,14 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
-    
+
     // Tank Truck routes
     Route::get('/tank-trucks', [TankTruckController::class, 'index']);
     Route::get('/tank-trucks/{tankTruck}', [TankTruckController::class, 'show']);
     Route::post('/tank-trucks', [TankTruckController::class, 'store']);
     Route::put('/tank-trucks/{tankTruck}', [TankTruckController::class, 'update']);
     Route::delete('/tank-trucks/{tankTruck}', [TankTruckController::class, 'destroy']);
-    
+
     // Schedule routes
     Route::get('/schedules', [ScheduleController::class, 'index']);
     Route::get('/schedules/my-schedules', [ScheduleController::class, 'mySchedules']);
@@ -128,28 +126,28 @@ Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
     Route::patch('/schedules/{schedule}/mark-completed', [ScheduleController::class, 'markCompleted']);
     Route::post('/schedules/{schedule}/send-reminder', [ScheduleController::class, 'sendReminder']);
-    
-    
-    
+
+
+
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread', [NotificationController::class, 'unread']);
     Route::post('/notifications/bulk', [NotificationController::class, 'sendBulkNotifications']);
-Route::post('/notifications/bulk-all', [NotificationController::class, 'sendBulkNotificationsAll']);
+    Route::post('/notifications/bulk-all', [NotificationController::class, 'sendBulkNotificationsAll']);
     Route::patch('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
     Route::patch('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    
+
     // Settings routes (Admin only)
     Route::get('/settings', [SettingController::class, 'index']);
     Route::put('/settings/{setting}', [SettingController::class, 'update']);
-    
+
     // Report routes
     Route::get('/reports/inspections', [ReportController::class, 'inspections']);
     Route::get('/reports/summary', [ReportController::class, 'summary']);
     Route::get('/reports/overdue', [ReportController::class, 'overdue']);
     Route::get('/reports/export/{type}', [ReportController::class, 'export']);
-    
+
     // Audit Log routes (Admin only)
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
     Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
-}); 
+});

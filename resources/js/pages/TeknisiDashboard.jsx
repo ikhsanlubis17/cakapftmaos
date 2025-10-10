@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import Toast from '../components/Toast';
@@ -152,7 +152,7 @@ const TeknisiDashboard = () => {
                                 Refresh
                             </button>
                             <Link
-                                to="/dashboard/inspections/new"
+                                to="/inspections/new"
                                 className="bg-white text-green-600 px-5 py-2.5 rounded-lg hover:bg-green-50 transition-colors font-medium flex items-center justify-center gap-2 shadow-md"
                             >
                                 <PlusIcon className="h-4 w-4" />
@@ -219,7 +219,7 @@ const TeknisiDashboard = () => {
                                 <p className="text-sm text-gray-500 mt-1">Jadwal yang ditugaskan kepada Anda</p>
                             </div>
                             <Link
-                                to="/dashboard/schedules"
+                                to="/schedules"
                                 className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors"
                             >
                                 Lihat Semua
@@ -255,7 +255,7 @@ const TeknisiDashboard = () => {
                                             
                                             <div className="flex items-center gap-2">
                                                 <Link
-                                                    to={`/dashboard/inspections/new?schedule=${schedule.id}`}
+                                                    to={`/inspections/new?schedule=${schedule.id}`}
                                                     className="inline-flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-all duration-200"
                                                 >
                                                     <PlusIcon className="h-3 w-3" />
@@ -318,7 +318,7 @@ const TeknisiDashboard = () => {
                                             
                                             <div className="flex items-center gap-2">
                                                 <Link
-                                                    to={`/dashboard/inspections/new?schedule=${schedule.id}`}
+                                                    to={`/inspections/new?schedule=${schedule.id}`}
                                                     className="inline-flex items-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 transition-all duration-200"
                                                 >
                                                     <PlusIcon className="h-3 w-3" />
@@ -382,3 +382,5 @@ const TeknisiDashboard = () => {
 };
 
 export default TeknisiDashboard;
+
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -157,7 +157,7 @@ const RepairApprovalDetail = () => {
                             Coba Lagi
                         </button>
                         <button
-                            onClick={() => navigate('/dashboard/repair-approvals')}
+                            onClick={() => navigate({ to: '/repair-approvals' })}
                             className="w-full bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors font-medium text-lg"
                         >
                             Kembali ke Daftar
@@ -177,7 +177,7 @@ const RepairApprovalDetail = () => {
                 {/* Header */}
                 <div className="flex items-center space-x-4">
                     <button
-                        onClick={() => navigate('/dashboard/repair-approvals')}
+                        onClick={() => navigate({ to: '/repair-approvals' })}
                         className="p-2 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow duration-200 text-gray-600 hover:text-gray-900"
                     >
                         <ArrowLeftIcon className="h-6 w-6" />
@@ -556,3 +556,6 @@ const RepairApprovalDetail = () => {
 };
 
 export default RepairApprovalDetail;
+
+
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import { usePusher } from '../hooks/usePusher';
@@ -261,7 +261,7 @@ const RepairApprovalList = () => {
                             Coba Lagi
                         </button>
                         <button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate({ to: '/dashboard' })}
                             className="w-full bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors font-medium text-lg"
                         >
                             Kembali ke Dashboard
@@ -530,9 +530,9 @@ const RepairApprovalList = () => {
                                         <div className="flex-shrink-0 lg:ml-6">
                                             <button
                                                 onClick={() => {
-                                                    console.log('Navigating to:', `/dashboard/repair-approvals/${approval.id}`);
+                                                    console.log('Navigating to:', `/repair-approvals/${approval.id}`);
                                                     console.log('Approval ID:', approval.id);
-                                                    navigate(`/dashboard/repair-approvals/${approval.id}`);
+                                                    navigate(`/repair-approvals/${approval.id}`);
                                                 }}
                                                 className="w-full sm:w-auto bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors font-medium flex items-center justify-center space-x-2"
                                                 title="Lihat Detail"
@@ -631,3 +631,6 @@ const RepairApprovalList = () => {
 };
 
 export default RepairApprovalList;
+
+
+

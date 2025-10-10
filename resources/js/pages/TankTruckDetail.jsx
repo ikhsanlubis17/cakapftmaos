@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from '@tanstack/react-router';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -48,7 +48,7 @@ const TankTruckDetail = () => {
         } catch (error) {
             console.error('Error fetching tank truck detail:', error);
             showError('Gagal memuat data mobil tangki. Silakan coba lagi.');
-            navigate('/dashboard/tank-trucks');
+            navigate({ to: '/tank-trucks' });
         } finally {
             setLoading(false);
         }
@@ -188,7 +188,7 @@ const TankTruckDetail = () => {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <Link
-                        to={`/dashboard/tank-trucks/${id}/edit`}
+                        to={`/tank-trucks/${id}/edit`}
                         className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <PencilIcon className="h-4 w-4 mr-2" />
@@ -196,7 +196,7 @@ const TankTruckDetail = () => {
                         <span className="sm:hidden">Edit</span>
                     </Link>
                     <button
-                        onClick={() => navigate('/dashboard/tank-trucks')}
+                        onClick={() => navigate({ to: '/tank-trucks' })}
                         className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -525,3 +525,5 @@ const TankTruckDetail = () => {
 };
 
 export default TankTruckDetail; 
+
+

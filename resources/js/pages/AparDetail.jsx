@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "@tanstack/react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
 import {
@@ -171,8 +171,8 @@ const AparDetail = () => {
                             <Link
                                 to={
                                     apar?.id
-                                        ? `/dashboard/apar/${apar.id}/edit`
-                                        : "/dashboard/apar"
+                                        ? `/apar/${apar.id}/edit`
+                                        : "/apar"
                                 }
                                 className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${
                                     !apar?.id
@@ -194,7 +194,7 @@ const AparDetail = () => {
                                 Edit APAR
                             </Link>
                             <Link
-                                to="/dashboard/apar"
+                                to="/apar"
                                 className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                             >
                                 Kembali

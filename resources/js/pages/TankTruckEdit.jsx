@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { TruckIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../contexts/ToastContext';
@@ -38,7 +38,7 @@ const TankTruckEdit = () => {
         } catch (error) {
             console.error('Error fetching tank truck detail:', error);
             showError('Gagal memuat data mobil tangki. Silakan coba lagi.');
-            navigate('/dashboard/tank-trucks');
+            navigate({ to: '/tank-trucks' });
         } finally {
             setLoading(false);
         }
@@ -59,7 +59,7 @@ const TankTruckEdit = () => {
         try {
             await axios.put(`/api/tank-trucks/${id}`, formData);
             showSuccess('Mobil tangki berhasil diperbarui');
-            navigate('/dashboard/tank-trucks');
+            navigate({ to: '/tank-trucks' });
         } catch (error) {
             console.error('Error updating tank truck:', error);
             
@@ -106,7 +106,7 @@ const TankTruckEdit = () => {
                 </div>
                 <div className="flex justify-start sm:justify-end">
                     <button
-                        onClick={() => navigate('/dashboard/tank-trucks')}
+                        onClick={() => navigate({ to: '/tank-trucks' })}
                         className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -210,7 +210,7 @@ const TankTruckEdit = () => {
                     <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
                         <button
                             type="button"
-                            onClick={() => navigate('/dashboard/tank-trucks')}
+                            onClick={() => navigate({ to: '/tank-trucks' })}
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
                         >
                             <span className="hidden sm:inline">Batal</span>
@@ -243,3 +243,5 @@ const TankTruckEdit = () => {
 };
 
 export default TankTruckEdit; 
+
+

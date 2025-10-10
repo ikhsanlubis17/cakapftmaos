@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
@@ -463,14 +463,14 @@ const TankTruckList = () => {
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex items-center gap-2">
                                                     <Link
-                                                        to={`/dashboard/tank-trucks/${tankTruck.id}`}
+                                                        to={`/tank-trucks/${tankTruck.id}`}
                                                         className="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
                                                         title="Lihat Detail"
                                                     >
                                                         <EyeIcon className="h-4 w-4" />
                                                     </Link>
                                                     <Link
-                                                        to={`/dashboard/tank-trucks/${tankTruck.id}/edit`}
+                                                        to={`/tank-trucks/${tankTruck.id}/edit`}
                                                         className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
                                                         title="Edit"
                                                     >
@@ -626,3 +626,4 @@ const TankTruckList = () => {
 };
 
 export default TankTruckList; 
+

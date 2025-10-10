@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
@@ -308,7 +308,7 @@ const AparList = () => {
                             {/* QR Scan Button - Teknisi only */}
                                 {user?.role === "teknisi" && (
                                     <Link
-                                        to="/dashboard/scan"
+                                        to="/scan"
                                     className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm"
                                     >
                                     <QrCodeIcon className="h-4 w-4 mr-2" />
@@ -319,7 +319,7 @@ const AparList = () => {
                             {/* Add New APAR Button */}
                             {(user?.role === "admin" || user?.role === "supervisor") && (
                                 <Link
-                                    to="/dashboard/apar/create"
+                                    to="/apar/create"
                                     className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
                                 >
                                     <PlusIcon className="h-4 w-4 mr-2" />
@@ -605,7 +605,7 @@ const AparList = () => {
 
                                                     {/* View Button */}
                                                     <Link
-                                                        to={`/dashboard/apar/${apar.id}`}
+                                                        to={`/apar/${apar.id}`}
                                                             className="inline-flex items-center p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                                                         title="Lihat Detail"
                                                     >
@@ -615,7 +615,7 @@ const AparList = () => {
                                                     {/* Edit Button - Admin & Supervisor only */}
                                                     {(user?.role === "admin" || user?.role === "supervisor") && (
                                                         <Link
-                                                            to={`/dashboard/apar/${apar.id}/edit`}
+                                                            to={`/apar/${apar.id}/edit`}
                                                                 className="inline-flex items-center p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
                                                             title="Edit APAR"
                                                         >
@@ -660,7 +660,7 @@ const AparList = () => {
                             {!searchTerm && statusFilter === "all" && locationFilter === "all" && (
                                 <div className="mt-6">
                                     <Link
-                                        to="/dashboard/apar/create"
+                                        to="/apar/create"
                                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
                                     >
                                         <PlusIcon className="h-4 w-4 mr-2" />

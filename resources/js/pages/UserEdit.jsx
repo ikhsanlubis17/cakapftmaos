@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -49,7 +49,7 @@ const UserEdit = () => {
             console.error('Error fetching user:', error);
             if (error.response?.status === 404) {
                 showError('Pengguna tidak ditemukan');
-                navigate('/dashboard/users');
+                navigate({ to: '/users' });
                 return;
             }
             showError('Gagal memuat data pengguna');
@@ -130,7 +130,7 @@ const UserEdit = () => {
             const response = await axios.put(`/api/users/${id}`, updateData);
 
             showSuccess('Pengguna berhasil diperbarui!');
-            navigate('/dashboard/users');
+            navigate({ to: '/users' });
         } catch (error) {
             console.error('Error updating user:', error);
             if (error.response?.data?.errors) {
@@ -186,7 +186,7 @@ const UserEdit = () => {
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Pengguna tidak ditemukan</h3>
                 <Link
-                    to="/dashboard/users"
+                    to="/users"
                     className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
                 >
                     Kembali ke Daftar Pengguna
@@ -201,7 +201,7 @@ const UserEdit = () => {
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div className="flex items-center">
                                             <Link
-                            to="/dashboard/users"
+                            to="/users"
                             className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
@@ -380,7 +380,7 @@ const UserEdit = () => {
                     {/* Submit Buttons */}
                     <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                         <Link
-                            to="/dashboard/users"
+                            to="/users"
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                         >
                             Batal
@@ -411,3 +411,4 @@ const UserEdit = () => {
 };
 
 export default UserEdit; 
+

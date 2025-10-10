@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "@tanstack/react-router";
 import axios from "axios";
 import {
     FireIcon,
@@ -63,7 +63,7 @@ const AparEdit = () => {
         } catch (error) {
             console.error("Error fetching APAR detail:", error);
             showError("Gagal memuat data APAR. Silakan coba lagi.");
-            navigate("/dashboard/apar");
+            navigate({ to: "/apar" });
         } finally {
             setLoading(false);
         }
@@ -167,7 +167,7 @@ const AparEdit = () => {
 
             await axios.put(`/api/apar/${id}`, dataToSend);
             showSuccess("APAR berhasil diperbarui");
-            navigate("/dashboard/apar");
+            navigate({ to: "/apar" });
         } catch (error) {
             console.error("Error updating APAR:", error);
 
@@ -217,7 +217,7 @@ const AparEdit = () => {
                 </div>
                 <div className="mt-4 sm:mt-0">
                     <button
-                        onClick={() => navigate("/dashboard/apar")}
+                        onClick={() => navigate({ to: "/apar" })}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -513,7 +513,7 @@ const AparEdit = () => {
                     <div className="flex justify-end space-x-3">
                         <button
                             type="button"
-                            onClick={() => navigate("/dashboard/apar")}
+                            onClick={() => navigate({ to: "/apar" })}
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             Batal
@@ -543,3 +543,4 @@ const AparEdit = () => {
 };
 
 export default AparEdit;
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
@@ -299,7 +299,7 @@ const InspectionForm = () => {
 
             showSuccess("Inspeksi berhasil disimpan!");
             setTimeout(() => {
-                navigate("/apar");
+                navigate({ to: "/apar" });
             }, 2000);
         } catch (error) {
             console.error("Error submitting inspection:", error);
@@ -469,7 +469,7 @@ const InspectionForm = () => {
                     {/* Back Button */}
                     <div className="text-center mt-8">
                         <button
-                            onClick={() => navigate("/dashboard")}
+                            onClick={() => navigate({ to: "/dashboard" })}
                             className="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                         >
                             Kembali ke Dashboard
@@ -495,7 +495,7 @@ const InspectionForm = () => {
                                         Batal
                                     </button>
                                     <button
-                                        onClick={() => navigate("/scan")}
+                                        onClick={() => navigate({ to: "/scan" })}
                                         className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                                     >
                                         Buka Scanner
@@ -1130,7 +1130,7 @@ const InspectionForm = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => navigate("/apar")}
+                            onClick={() => navigate({ to: "/apar" })}
                             className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                         >
                             Batal
@@ -1143,3 +1143,5 @@ const InspectionForm = () => {
 };
 
 export default InspectionForm;
+
+

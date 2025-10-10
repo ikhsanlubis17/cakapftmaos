@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import {
@@ -535,7 +535,7 @@ const InspectionFormEnhanced = () => {
 
             showSuccess('Inspeksi berhasil disimpan!');
             setTimeout(() => {
-                navigate('/apar');
+                navigate({ to: '/apar' });
             }, 2000);
         } catch (error) {
             console.error('Error submitting inspection:', error);
@@ -1142,7 +1142,7 @@ const InspectionFormEnhanced = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => navigate('/apar')}
+                            onClick={() => navigate({ to: '/apar' })}
                             className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                         >
                             Batal
@@ -1155,3 +1155,5 @@ const InspectionFormEnhanced = () => {
 };
 
 export default InspectionFormEnhanced;
+
+

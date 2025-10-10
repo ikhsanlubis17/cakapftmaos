@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { 
     UserIcon, 
     EyeIcon, 
@@ -143,7 +143,7 @@ const UsersTable = ({ users, onEdit, onDelete }) => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex items-center space-x-2">
                                                                                                                                 <Link
-                                            to={`/dashboard/users/${user.id}`}
+                                            to={`/users/${user.id}`}
                                             className="action-btn action-btn-view"
                                             title="Lihat Detail"
                                         >
@@ -177,3 +177,4 @@ const UsersTable = ({ users, onEdit, onDelete }) => {
 };
 
 export default UsersTable;
+

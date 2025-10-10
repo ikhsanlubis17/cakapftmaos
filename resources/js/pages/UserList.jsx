@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -282,7 +282,7 @@ const UserList = () => {
                                     <span className="sm:hidden">Hapus</span>
                                 </button>
                                 <Link
-                                    to="/dashboard/users/create"
+                                    to="/users/create"
                                     className="inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                 >
                                     <PlusIcon className="h-4 w-4 mr-2" />
@@ -437,7 +437,7 @@ const UserList = () => {
                                                     <div className="flex flex-row gap-2">
                                                         {/* View Button */}
                                                         <Link
-                                                            to={`/dashboard/users/${user.id}`}
+                                                            to={`/users/${user.id}`}
                                                             className="inline-flex items-center justify-center p-2 border border-transparent text-xs font-medium rounded text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors"
                                                             title="Lihat Detail"
                                                         >
@@ -446,7 +446,7 @@ const UserList = () => {
 
                                                         {/* Edit Button */}
                                                         <Link
-                                                            to={`/dashboard/users/${user.id}/edit`}
+                                                            to={`/users/${user.id}/edit`}
                                                             className="inline-flex items-center justify-center p-2 border border-transparent text-xs font-medium rounded text-yellow-600 bg-yellow-100 hover:bg-yellow-200 transition-colors"
                                                             title="Edit Pengguna"
                                                         >
@@ -505,3 +505,4 @@ const UserList = () => {
 };
 
 export default UserList; 
+

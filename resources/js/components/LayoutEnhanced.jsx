@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate, useLocation } from "@tanstack/react-router"
 import { useAuth } from "../contexts/AuthContext"
 import { useToast } from "../contexts/ToastContext"
 import { useConfirmDialog } from "../hooks/useConfirmDialog"
@@ -109,23 +109,23 @@ const LayoutEnhanced = () => {
     switch (role) {
       case "teknisi":
         return [
-          { name: "Dashboard", href: "/dashboard", icon: HomeIcon, description: "Ringkasan inspeksi" },
+          { name: "Dashboard", href: "/", icon: HomeIcon, description: "Ringkasan inspeksi" },
           {
             name: "Jadwal Tugas",
-            href: "/dashboard/my-schedules",
+            href: "/my-schedules",
             icon: CalendarDaysIcon,
             description: "Jadwal inspeksi saya",
           },
-          { name: "Scan QR & Inspeksi", href: "/dashboard/scan", icon: QrCodeIcon, description: "Mulai inspeksi APAR" },
+          { name: "Scan QR & Inspeksi", href: "/scan", icon: QrCodeIcon, description: "Mulai inspeksi APAR" },
           {
             name: "Riwayat Inspeksi",
-            href: "/dashboard/my-inspections",
+            href: "/my-inspections",
             icon: ClipboardDocumentListIcon,
             description: "Laporan inspeksi pribadi",
           },
           {
             name: "Perbaikan Saya",
-            href: "/dashboard/my-repairs",
+            href: "/my-repairs",
             icon: WrenchScrewdriverIcon,
             description: "Status perbaikan APAR",
           },
@@ -133,24 +133,24 @@ const LayoutEnhanced = () => {
 
       case "supervisor":
         return [
-          { name: "Dashboard", href: "/dashboard", icon: HomeIcon, description: "Monitoring APAR" },
-          { name: "APAR", href: "/dashboard/apar", icon: FireIcon, description: "Data APAR" },
+          { name: "Dashboard", href: "/", icon: HomeIcon, description: "Monitoring APAR" },
+          { name: "APAR", href: "/apar", icon: FireIcon, description: "Data APAR" },
           {
             name: "Inspeksi",
-            href: "/dashboard/inspections",
+            href: "/inspections",
             icon: ClipboardDocumentListIcon,
             description: "Riwayat inspeksi",
           },
-          { name: "Mobil Tangki", href: "/dashboard/tank-trucks", icon: TruckIcon, description: "Data mobil tangki" },
+          { name: "Mobil Tangki", href: "/tank-trucks", icon: TruckIcon, description: "Data mobil tangki" },
           {
             name: "Persetujuan Perbaikan",
-            href: "/dashboard/repair-approvals",
+            href: "/repair-approvals",
             icon: CheckCircleIcon,
             description: "Tinjau permintaan perbaikan",
           },
           {
             name: "Laporan & Audit",
-            href: "/dashboard/reports",
+            href: "/reports",
             icon: ChartBarIcon,
             description: "Laporan dan monitoring audit",
           },
@@ -158,40 +158,40 @@ const LayoutEnhanced = () => {
 
       case "admin":
         return [
-          { name: "Dashboard", href: "/dashboard", icon: HomeIcon, description: "Dashboard lengkap" },
-          { name: "APAR", href: "/dashboard/apar", icon: FireIcon, description: "Manajemen data APAR" },
-          { name: "Jenis APAR", href: "/dashboard/apar-types", icon: TagIcon, description: "Kelola jenis APAR" },
+          { name: "Dashboard", href: "/", icon: HomeIcon, description: "Dashboard lengkap" },
+          { name: "APAR", href: "/apar", icon: FireIcon, description: "Manajemen data APAR" },
+          { name: "Jenis APAR", href: "/apar-types", icon: TagIcon, description: "Kelola jenis APAR" },
           {
             name: "Kategori Kerusakan",
-            href: "/dashboard/damage-categories",
+            href: "/damage-categories",
             icon: ExclamationTriangleIcon,
             description: "Kelola kategori kerusakan",
           },
           {
             name: "Mobil Tangki",
-            href: "/dashboard/tank-trucks",
+            href: "/tank-trucks",
             icon: TruckIcon,
             description: "Manajemen mobil tangki",
           },
-          { name: "Pengguna", href: "/dashboard/users", icon: UserGroupIcon, description: "Kelola pengguna" },
-          { name: "Jadwal", href: "/dashboard/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
+          { name: "Pengguna", href: "/users", icon: UserGroupIcon, description: "Kelola pengguna" },
+          { name: "Jadwal", href: "/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
           {
             name: "Persetujuan Perbaikan",
-            href: "/dashboard/repair-approvals",
+            href: "/repair-approvals",
             icon: CheckCircleIcon,
             description: "Tinjau permintaan perbaikan",
           },
           {
             name: "Laporan & Audit",
-            href: "/dashboard/reports",
+            href: "/reports",
             icon: ChartBarIcon,
             description: "Laporan dan monitoring audit",
           },
-          { name: "Pengaturan", href: "/dashboard/settings", icon: CogIcon, description: "Konfigurasi sistem" },
+          { name: "Pengaturan", href: "/settings", icon: CogIcon, description: "Konfigurasi sistem" },
         ]
 
       default:
-        return [{ name: "Dashboard", href: "/dashboard", icon: HomeIcon, description: "Dashboard" }]
+        return [{ name: "Dashboard", href: "/", icon: HomeIcon, description: "Dashboard" }]
     }
   }
 
@@ -203,7 +203,7 @@ const LayoutEnhanced = () => {
 
     if (routeExists) {
       try {
-        navigate(href)
+        navigate({ to: href })
         setNavigationError(null)
       } catch (error) {
         showError(`Gagal membuka halaman ${itemName}. Silakan coba lagi.`)
@@ -226,7 +226,7 @@ const LayoutEnhanced = () => {
       showSuccess("Berhasil logout dari sistem")
 
       // Navigate to login page
-      navigate("/login")
+      navigate({ to: "/login" })
     } catch (error) {
       console.error("Logout error:", error)
       showError("Gagal logout dari sistem. Silakan coba lagi.")
@@ -234,22 +234,22 @@ const LayoutEnhanced = () => {
   }
 
   const isActive = (href) => {
-    // Dashboard is active when on dashboard or root
-    if (href === "/dashboard") {
-      return location.pathname === "/dashboard" || location.pathname === "/"
+    // Dashboard is active when on root
+    if (href === "/") {
+      return location.pathname === "/"
     }
 
-    // Special handling for /dashboard/apar to avoid conflict with /dashboard/apar-types
-    if (href === "/dashboard/apar") {
+    // Special handling for /apar to avoid conflict with /apar-types
+    if (href === "/apar") {
       return (
-        location.pathname === "/dashboard/apar" ||
-        (location.pathname.startsWith("/dashboard/apar/") && !location.pathname.startsWith("/dashboard/apar-types"))
+        location.pathname === "/apar" ||
+        (location.pathname.startsWith("/apar/") && !location.pathname.startsWith("/apar-types"))
       )
     }
 
-    // Special handling for /dashboard/apar-types to be exact match only
-    if (href === "/dashboard/apar-types") {
-      return location.pathname === "/dashboard/apar-types"
+    // Special handling for /apar-types to be exact match only
+    if (href === "/apar-types") {
+      return location.pathname === "/apar-types"
     }
 
     // For other routes, check if pathname starts with href

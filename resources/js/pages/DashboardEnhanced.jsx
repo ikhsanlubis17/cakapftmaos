@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import Toast from '../components/Toast';
@@ -124,7 +124,7 @@ const DashboardEnhanced = () => {
     const fetchDashboardData = async (start = startDate, end = endDate) => {
         try {
             setLoading(true);
-            const response = await apiClient.get('/api/dev/dashboard/stats', {
+            const response = await apiClient.get('/api/stats', {
                 params: {
                     start_date: start,
                     end_date: end
@@ -539,7 +539,7 @@ const DashboardEnhanced = () => {
                             Refresh
                         </button>
                         <Link
-                            to="/dashboard/inspections/new"
+                            to="/inspections/new"
                             className="bg-white text-red-600 px-5 py-2.5 rounded-lg hover:bg-red-50 transition-colors font-medium flex items-center justify-center gap-2 shadow-md"
                         >
                             <PlusIcon className="h-4 w-4" />
@@ -547,7 +547,7 @@ const DashboardEnhanced = () => {
                         </Link>
                         {user?.role === 'admin' && (
                             <Link
-                                to="/dashboard/damage-categories"
+                                to="/damage-categories"
                                 className="bg-red-700 text-white px-5 py-2.5 rounded-lg hover:bg-red-800 transition-colors font-medium flex items-center justify-center gap-2"
                             >
                                 <CogIcon className="h-4 w-4" />
@@ -728,7 +728,7 @@ const DashboardEnhanced = () => {
                                     Menampilkan 5 dari {upcomingInspections.length} jadwal terdekat
                                 </p>
                                 <Link
-                                    to="/dashboard/schedules"
+                                    to="/schedules"
                                     className="inline-flex items-center gap-2 mt-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
                                 >
                                     Lihat Semua Jadwal
@@ -745,7 +745,7 @@ const DashboardEnhanced = () => {
                         <p className="text-gray-500 font-medium mb-2">Tidak ada jadwal inspeksi terdekat</p>
                         <p className="text-sm text-gray-400 mb-4">Semua jadwal inspeksi sudah selesai atau belum dijadwalkan</p>
                         <Link
-                            to="/dashboard/schedules"
+                            to="/schedules"
                             className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
                         >
                             <PlusIcon className="h-4 w-4" />
@@ -872,7 +872,7 @@ const DashboardEnhanced = () => {
                                                 
                                                 <div className="flex items-center gap-2">
                                                     <Link
-                                                        to={`/dashboard/my-schedules`}
+                                                        to={`/my-schedules`}
                                                         className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-all duration-200"
                                                     >
                                                         <EyeIcon className="h-3 w-3" />
@@ -896,7 +896,7 @@ const DashboardEnhanced = () => {
                             {mySchedules.length > 3 && (
                                 <div className="text-center pt-4">
                                     <Link
-                                        to="/dashboard/my-schedules"
+                                        to="/my-schedules"
                                         className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
                                     >
                                         Lihat Semua Jadwal
@@ -1199,7 +1199,7 @@ const DashboardEnhanced = () => {
                     </div>
                     <div className="space-y-3 lg:space-y-4">
                         <Link
-                            to="/dashboard/inspections/new"
+                            to="/inspections/new"
                             className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-red-50 border border-red-100 rounded-xl hover:bg-red-100 transition-all duration-200 group hover:shadow-sm"
                         >
                             <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-200 flex-shrink-0">
@@ -1213,7 +1213,7 @@ const DashboardEnhanced = () => {
 
                         {user?.role === 'admin' && (
                             <Link
-                                to="/dashboard/repair-approvals"
+                                to="/repair-approvals"
                                 className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-amber-50 border border-amber-100 rounded-xl hover:bg-amber-100 transition-all duration-200 group hover:shadow-sm"
                             >
                                 <div className="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors duration-200 flex-shrink-0">
@@ -1227,7 +1227,7 @@ const DashboardEnhanced = () => {
                         )}
 
                         <Link
-                            to="/dashboard/my-repairs"
+                            to="/my-repairs"
                             className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-all duration-200 group hover:shadow-sm"
                         >
                             <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200 flex-shrink-0">
@@ -1283,7 +1283,7 @@ const DashboardEnhanced = () => {
                                 <p className="text-gray-500 font-medium mb-1 text-sm lg:text-base">Belum ada inspeksi</p>
                                 <p className="text-xs lg:text-sm text-gray-400 leading-tight">Mulai inspeksi pertama Anda</p>
                                 <Link
-                                    to="/dashboard/inspections/new"
+                                    to="/inspections/new"
                                     className="inline-flex items-center gap-2 mt-4 text-red-600 hover:text-red-700 font-medium transition-colors"
                                 >
                                     <PlusIcon className="h-4 w-4" />

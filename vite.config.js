@@ -9,7 +9,7 @@ export default defineConfig({
                 "resources/css/app.css",
                 "resources/css/vendor-fixes.css",
                 "resources/css/exception-fixes.css",
-                "resources/js/app.jsx"
+                "resources/js/app.tsx"
             ],
             refresh: true,
         }),

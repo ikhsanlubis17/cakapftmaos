@@ -5,7 +5,7 @@ import { createApiClient, setupInterceptors } from '../services/api';
 import { useAuthState } from '../hooks/useAuthState';
 import { useAuthApi, userQueryKey, User, LoginResponse } from '../hooks/useAuthApi';
 
-interface AuthContextType {
+export interface AuthContextType {
     user: User | undefined;
     isAuthenticated: boolean;
     isLoading: boolean;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from '@tanstack/react-router';
 import axios from 'axios';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
@@ -38,7 +38,7 @@ const UserDetail = () => {
             console.error('Error fetching user:', error);
             if (error.response?.status === 404) {
                 showError('Pengguna tidak ditemukan');
-                navigate('/dashboard/users');
+                navigate({ to: '/users' });
                 return;
             }
             showError('Gagal memuat data pengguna');
@@ -61,7 +61,7 @@ const UserDetail = () => {
             try {
                 await axios.delete(`/api/users/${id}`);
                 showSuccess('Pengguna berhasil dihapus');
-                navigate('/dashboard/users');
+                navigate({ to: '/users' });
             } catch (error) {
                 console.error('Error deleting user:', error);
                 showError(error.response?.data?.message || 'Gagal menghapus pengguna');
@@ -133,7 +133,7 @@ const UserDetail = () => {
             <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Pengguna tidak ditemukan</h3>
                 <Link
-                    to="/dashboard/users"
+                    to="/users"
                     className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
                 >
                     Kembali ke Daftar Pengguna
@@ -152,7 +152,7 @@ const UserDetail = () => {
                 <div className="sm:flex sm:items-center sm:justify-between">
                     <div className="flex items-center">
                         <Link
-                            to="/dashboard/users"
+                            to="/users"
                             className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
@@ -166,7 +166,7 @@ const UserDetail = () => {
                     </div>
                     <div className="mt-4 sm:mt-0 flex space-x-3">
                         <Link
-                            to={`/dashboard/users/${id}/edit`}
+                            to={`/users/${id}/edit`}
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700"
                         >
                             <PencilIcon className="h-4 w-4 mr-2" />
@@ -332,3 +332,4 @@ const UserDetail = () => {
 };
 
 export default UserDetail; 
+

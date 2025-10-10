@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useReducer } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 import { useToast } from '../contexts/ToastContext';
 import { QrCodeIcon, ArrowLongUpIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { IDetectedBarcode, Scanner } from '@yudiel/react-qr-scanner';
@@ -54,9 +54,10 @@ const QRScanner = () => {
                         setTimeout(() => {
                             const scheduleId = response.data.schedule?.id;
                             const navigationPath = scheduleId 
-                                ? `/dashboard/inspections/enhanced/${qrCode}?schedule_id=${scheduleId}`
-                                : `/dashboard/inspections/enhanced/${qrCode}`;
-                            navigate(navigationPath);
+                                ? `/inspections/enhanced/${qrCode}?schedule_id=${scheduleId}`
+                                : `/inspections/enhanced/${qrCode}`;
+                            // Use window.location for now since this route may not be in router yet
+                            window.location.href = navigationPath;
                         }, 1500);
                     } else {
                         showError(response.data.message || 'QR Code tidak valid');
