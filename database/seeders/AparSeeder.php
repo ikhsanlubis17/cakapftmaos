@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Apar;
+use App\Models\AparType;
 use App\Models\TankTruck;
 use Illuminate\Support\Str;
 
@@ -14,6 +15,9 @@ class AparSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get AparType IDs by name
+        $aparTypes = AparType::pluck('id', 'name')->toArray();
+
         // Create tank trucks
         $tankTruck1 = TankTruck::create([
             'plate_number' => 'B 1234 ABC',
@@ -84,7 +88,7 @@ class AparSeeder extends Seeder
                 'latitude' => $aparData['latitude'],
                 'longitude' => $aparData['longitude'],
                 'valid_radius' => 30,
-                'type' => $aparData['type'], 
+                'apar_type_id' => $aparTypes[$aparData['type']], 
                 'capacity' => $aparData['capacity'],
                 'manufactured_date' => $aparData['manufactured_date'],
                 'expired_at' => $aparData['expired_at'],
@@ -120,7 +124,7 @@ class AparSeeder extends Seeder
                 'qr_code' => 'APAR-' . Str::random(10),
                 'location_type' => 'mobile',
                 'location_name' => $aparData['location_name'],
-                'type' => $aparData['type'],
+                'apar_type_id' => $aparTypes[$aparData['type']],
                 'capacity' => $aparData['capacity'],
                 'manufactured_date' => $aparData['manufactured_date'],
                 'expired_at' => $aparData['expired_at'],
@@ -138,7 +142,7 @@ class AparSeeder extends Seeder
             'latitude' => -6.2088,
             'longitude' => 106.8456,
             'valid_radius' => 30,
-            'type' => 'powder',
+            'apar_type_id' => $aparTypes['powder'],
             'capacity' => 6,
             'manufactured_date' => '2022-12-01',
             'expired_at' => '2025-12-01',
@@ -153,7 +157,7 @@ class AparSeeder extends Seeder
             'latitude' => -6.2088,
             'longitude' => 106.8456,
             'valid_radius' => 30,
-            'type' => 'foam',
+            'apar_type_id' => $aparTypes['foam'],
             'capacity' => 9,
             'manufactured_date' => '2021-08-15',
             'expired_at' => '2024-08-15',

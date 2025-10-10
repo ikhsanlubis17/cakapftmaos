@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import axios from 'axios';
 import { FireIcon, ArrowLeftIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AparTypeListResponse } from '@/types/api';
 
 const AparCreate = () => {
-    const navigate = useNavigate();
+    const { apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const [loading, setLoading] = useState(false);
-    const [aparTypes, setAparTypes] = useState([]);
     const [gettingLocation, setGettingLocation] = useState(false);
     const [formData, setFormData] = useState({
         serial_number: '',
@@ -16,7 +18,7 @@ const AparCreate = () => {
         location_name: '',
         latitude: '',
         longitude: '',
-        valid_radius: 50,
+        valid_radius: '50',
         apar_type_id: '',
         capacity: '',
         manufactured_date: '',
@@ -25,20 +27,18 @@ const AparCreate = () => {
         notes: ''
     });
 
-    useEffect(() => {
-        fetchAparTypes();
-    }, []);
-
-    const fetchAparTypes = async () => {
-        try {
-            const response = await axios.get('/api/apar-types');
-            if (response.data.success) {
-                setAparTypes(response.data.data.filter(type => type.is_active));
-            }
-        } catch (error) {
-            console.error('Error fetching APAR types:', error);
-        }
-    };
+    const {
+        data: aparTypes = [],
+        isLoading: isAparTypesLoading,
+        isError: isAparTypesError,
+    } = useQuery({
+        queryKey: ['apar-types'],
+        queryFn: async () => {
+            const response = await apiClient.get('/api/apar-types');
+            const data = response.data as AparTypeListResponse;
+            return data.data.filter(type => type.is_active);
+        },
+    });
 
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -47,7 +47,7 @@ const AparCreate = () => {
         }
 
         setGettingLocation(true);
-        
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 const { latitude, longitude } = position.coords;
@@ -84,7 +84,7 @@ const AparCreate = () => {
         );
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
@@ -92,35 +92,38 @@ const AparCreate = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            // Validate data before sending
+    const {
+        mutate: createApar,
+        isPending: isCreatingApar,
+    } = useMutation({
+        mutationFn: (data: typeof formData) => {
             const dataToSend = {
-                ...formData,
-                capacity: parseInt(formData.capacity) || 0,
-                valid_radius: parseInt(formData.valid_radius) || 30,
-                latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-                longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+                ...data,
+                capacity: parseInt(data.capacity) || 0,
+                valid_radius: parseInt(data.valid_radius) || 30,
+                latitude: data.latitude ? parseFloat(data.latitude) : null,
+                longitude: data.longitude ? parseFloat(data.longitude) : null,
             };
-
-            await axios.post('/api/apar', dataToSend);
+            return apiClient.post('/api/apar', dataToSend);
+        },
+        onSuccess: () => {
             showSuccess('APAR berhasil dibuat!');
-            navigate({ to: '/apar' });
-        } catch (error) {
+            window.location.href = '/apar';
+        },
+        onError: (error: any) => {
             console.error('Error creating APAR:', error);
-            
-            if (error.response?.data?.errors) {
+            if (axios.isAxiosError(error) && error.response?.data?.errors) {
                 const errorMessages = Object.values(error.response.data.errors).flat();
                 showError(errorMessages.join(', '), "Gagal Membuat APAR");
             } else {
                 showError("Gagal membuat APAR. Silakan coba lagi.");
             }
-        } finally {
-            setLoading(false);
         }
+    });
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        createApar(formData);
     };
 
     return (
@@ -134,13 +137,13 @@ const AparCreate = () => {
                     </p>
                 </div>
                 <div className="mt-4 sm:mt-0">
-                    <button
-                        onClick={() => navigate({ to: "/apar" })}
+                    <Link
+                        to="/apar"
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
                         Kembali
-                    </button>
+                    </Link>
                 </div>
             </div>
 
@@ -379,19 +382,18 @@ const AparCreate = () => {
 
                     {/* Submit Button */}
                     <div className="flex justify-end space-x-3">
-                        <button
-                            type="button"
-                            onClick={() => navigate({ to: "/apar" })}
+                        <Link
+                            to="/apar"
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             Batal
-                        </button>
+                        </Link>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={isCreatingApar}
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                         >
-                            {loading ? (
+                            {isCreatingApar ? (
                                 <>
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                     Menyimpan...
@@ -410,5 +412,5 @@ const AparCreate = () => {
     );
 };
 
-export default AparCreate; 
+export default AparCreate;
 

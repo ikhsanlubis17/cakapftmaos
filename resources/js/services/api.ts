@@ -15,6 +15,8 @@ export const createApiClient = (baseURL = 'http://localhost:8000') => {
     });
 };
 
+const refreshClient = createApiClient();
+
 export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSetup): (() => void) => {
     // Request interceptor
     const requestInterceptor = apiClient.interceptors.request.use(
@@ -34,7 +36,11 @@ export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSe
         async (error) => {
             const originalRequest = error.config;
 
-            if (originalRequest.url === '/api/refresh') {
+            if (
+                originalRequest._retry ||
+                originalRequest.url.includes('/api/refresh') ||
+                originalRequest.url.includes('/api/logout')
+            ) {
                 return Promise.reject(error);
             }
 
@@ -44,7 +50,10 @@ export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSe
 
                 try {
                     // Try to refresh token
-                    const response = await apiClient.post('/api/refresh');
+                    const response = await refreshClient.post('/api/refresh', {
+                        token: setup.getToken()
+                    });
+
                     const newToken = response.data.token;
 
                     // Notify about new token

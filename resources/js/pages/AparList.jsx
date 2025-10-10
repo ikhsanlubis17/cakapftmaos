@@ -19,13 +19,12 @@ import {
     ClipboardDocumentCheckIcon,
     DocumentArrowDownIcon,
 } from '@heroicons/react/24/outline';
+import { useQuery } from '@tanstack/react-query';
 
 const AparList = () => {
     const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [apars, setApars] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [locationFilter, setLocationFilter] = useState('all');
@@ -36,27 +35,25 @@ const AparList = () => {
     const [downloadingQr, setDownloadingQr] = useState(false);
     const [qrDownloadApars, setQrDownloadApars] = useState([]);
 
-    useEffect(() => {
-        fetchApars();
-    }, []);
-
-    const fetchApars = async () => {
-        try {
+    const {
+        data: apars = [],
+        isLoading,
+        isError
+    } = useQuery({
+        queryKey: ['apars'],
+        queryFn: async () => {
             const response = await apiClient.get('/api/apar');
-            setApars(response.data);
-        } catch (error) {
-            console.error('Gagal mengambil data APAR:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+            return response.data;
+        },
+        staleTime: 1 * 60 * 1000,
+    });
 
     const filteredApars = apars.filter(apar => {
         const matchesSearch = apar.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            apar.location_name.toLowerCase().includes(searchTerm.toLowerCase());
+            apar.location_name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || apar.status === statusFilter;
         const matchesLocation = locationFilter === 'all' || apar.location_type === locationFilter;
-        
+
         return matchesSearch && matchesStatus && matchesLocation;
     });
 
@@ -228,8 +225,8 @@ const AparList = () => {
     };
 
     const handleSelectApar = (aparId) => {
-        setSelectedApars(prev => 
-            prev.includes(aparId) 
+        setSelectedApars(prev =>
+            prev.includes(aparId)
                 ? prev.filter(id => id !== aparId)
                 : [...prev, aparId]
         );
@@ -243,7 +240,7 @@ const AparList = () => {
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -261,12 +258,12 @@ const AparList = () => {
                             <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl">
                                 <FireIcon className="h-6 w-6 text-red-600" />
                             </div>
-                    <div>
+                            <div>
                                 <h1 className="text-2xl font-bold text-gray-900">Manajemen APAR</h1>
                                 <p className="text-sm text-gray-600 mt-1">
                                     Kelola dan pantau semua APAR dalam sistem
-                        </p>
-                    </div>
+                                </p>
+                            </div>
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3">
@@ -283,38 +280,37 @@ const AparList = () => {
 
                             {/* Bulk Delete Toggle */}
                             {user?.role === "admin" && (
-                                    <button
+                                <button
                                     onClick={() => setBulkDeleteMode(!bulkDeleteMode)}
-                                    className={`inline-flex items-center px-4 py-2.5 border text-sm font-medium rounded-lg transition-all duration-200 ${
-                                        bulkDeleteMode
+                                    className={`inline-flex items-center px-4 py-2.5 border text-sm font-medium rounded-lg transition-all duration-200 ${bulkDeleteMode
                                             ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100'
                                             : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-                                    }`}
+                                        }`}
                                 >
                                     {bulkDeleteMode ? (
                                         <>
                                             <XMarkIcon className="h-4 w-4 mr-2" />
                                             Keluar Mode Hapus Massal
-                                            </>
-                                        ) : (
-                                            <>
+                                        </>
+                                    ) : (
+                                        <>
                                             <TrashIcon className="h-4 w-4 mr-2" />
                                             Hapus Massal
-                                            </>
-                                        )}
-                                    </button>
+                                        </>
+                                    )}
+                                </button>
                             )}
 
                             {/* QR Scan Button - Teknisi only */}
-                                {user?.role === "teknisi" && (
-                                    <Link
-                                        to="/scan"
+                            {user?.role === "teknisi" && (
+                                <Link
+                                    to="/scan"
                                     className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm"
-                                    >
+                                >
                                     <QrCodeIcon className="h-4 w-4 mr-2" />
                                     Scan QR & Inspeksi
-                                    </Link>
-                                )}
+                                </Link>
+                            )}
 
                             {/* Add New APAR Button */}
                             {(user?.role === "admin" || user?.role === "supervisor") && (
@@ -428,7 +424,7 @@ const AparList = () => {
                                     </span>
                                 )}
                             </div>
-                            
+
                             {bulkDeleteMode && (
                                 <div className="flex items-center gap-3">
                                     <span className="text-sm text-gray-600">
@@ -451,16 +447,16 @@ const AparList = () => {
                         <div className="px-6 py-3 border-b border-gray-200 bg-red-50">
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
+                                    <input
+                                        type="checkbox"
                                         checked={selectedApars.length === filteredApars.length && filteredApars.length > 0}
-                                            onChange={handleSelectAll}
-                                            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                        />
+                                        onChange={handleSelectAll}
+                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                    />
                                     <span className="text-sm font-medium text-gray-900">
-                                            Pilih Semua ({filteredApars.length})
-                                        </span>
-                                    </label>
+                                        Pilih Semua ({filteredApars.length})
+                                    </span>
+                                </label>
                                 <button
                                     onClick={() => setBulkDeleteMode(false)}
                                     className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -502,34 +498,34 @@ const AparList = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                            {filteredApars.map((apar) => {
+                                {filteredApars.map((apar) => {
                                     const LocationIcon = getLocationTypeIcon(apar.location_type);
                                     const isExpired = apar.expired_at && new Date(apar.expired_at) < new Date();
-                                    
-                                return (
+
+                                    return (
                                         <tr key={apar.id} className="hover:bg-gray-50 transition-colors duration-150">
-                                        {bulkDeleteMode && (
+                                            {bulkDeleteMode && (
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                <input
-                                                    type="checkbox"
+                                                    <input
+                                                        type="checkbox"
                                                         checked={selectedApars.includes(apar.id)}
                                                         onChange={() => handleSelectApar(apar.id)}
-                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                                />
+                                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                    />
                                                 </td>
                                             )}
-                                            
+
                                             {/* APAR Info */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
                                                         <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-                                                    <FireIcon className="h-5 w-5 text-red-600" />
-                                                </div>
-                                            </div>
+                                                            <FireIcon className="h-5 w-5 text-red-600" />
+                                                        </div>
+                                                    </div>
                                                     <div className="ml-4">
                                                         <div className="text-sm font-medium text-gray-900">
-                                                    {apar.serial_number}
+                                                            {apar.serial_number}
                                                         </div>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <LocationIcon className={`h-4 w-4 ${getLocationTypeColor(apar.location_type)}`} />
@@ -549,13 +545,13 @@ const AparList = () => {
                                             {/* Location */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900">
-                                                {apar.location_name}
+                                                    {apar.location_name}
                                                 </div>
-                                            {apar.tank_truck && (
+                                                {apar.tank_truck && (
                                                     <div className="mt-1">
                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                    {apar.tank_truck.plate_number}
-                                                </span>
+                                                            {apar.tank_truck.plate_number}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </td>
@@ -564,7 +560,7 @@ const AparList = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900 font-medium">
                                                     {apar.capacity} kg
-                                        </div>
+                                                </div>
                                             </td>
 
                                             {/* Expiry Date */}
@@ -573,85 +569,85 @@ const AparList = () => {
                                                     {apar.expired_at
                                                         ? new Date(apar.expired_at).toLocaleDateString("id-ID")
                                                         : "Tidak ada"}
-                                            </div>
+                                                </div>
                                                 {isExpired && (
                                                     <div className="text-xs text-red-500 mt-1">
                                                         Sudah kadaluarsa
-                                        </div>
+                                                    </div>
                                                 )}
                                             </td>
 
                                             {/* Status */}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(apar.status)}`}>
-                                                {getStatusText(apar.status)}
-                                            </span>
+                                                    {getStatusText(apar.status)}
+                                                </span>
                                             </td>
 
                                             {/* Actions */}
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            {!bulkDeleteMode && (
+                                                {!bulkDeleteMode && (
                                                     <div className="flex items-center gap-2">
-                                                    {/* Inspection Button - Teknisi only */}
-                                                    {user?.role === "teknisi" && (
-                                                        <Link
-                                                            to={`/inspection/${apar.qr_code || apar.id}`}
+                                                        {/* Inspection Button - Teknisi only */}
+                                                        {user?.role === "teknisi" && (
+                                                            <Link
+                                                                to={`/inspection/${apar.qr_code || apar.id}`}
                                                                 className="inline-flex items-center p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                                                            title="Mulai Inspeksi"
-                                                        >
+                                                                title="Mulai Inspeksi"
+                                                            >
                                                                 <ClipboardDocumentCheckIcon className="h-4 w-4" />
-                                                        </Link>
-                                                    )}
+                                                            </Link>
+                                                        )}
 
-                                                    {/* View Button */}
-                                                    <Link
-                                                        to={`/apar/${apar.id}`}
-                                                            className="inline-flex items-center p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                                                        title="Lihat Detail"
-                                                    >
-                                                            <EyeIcon className="h-4 w-4" />
-                                                    </Link>
-
-                                                    {/* Edit Button - Admin & Supervisor only */}
-                                                    {(user?.role === "admin" || user?.role === "supervisor") && (
+                                                        {/* View Button */}
                                                         <Link
-                                                            to={`/apar/${apar.id}/edit`}
-                                                                className="inline-flex items-center p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
-                                                            title="Edit APAR"
+                                                            to={`/apar/${apar.id}`}
+                                                            className="inline-flex items-center p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                                                            title="Lihat Detail"
                                                         >
-                                                                <PencilIcon className="h-4 w-4" />
+                                                            <EyeIcon className="h-4 w-4" />
                                                         </Link>
-                                                    )}
 
-                                                    {/* Delete Button - Admin only */}
-                                                    {user?.role === "admin" && (
-                                                        <button
+                                                        {/* Edit Button - Admin & Supervisor only */}
+                                                        {(user?.role === "admin" || user?.role === "supervisor") && (
+                                                            <Link
+                                                                to={`/apar/${apar.id}/edit`}
+                                                                className="inline-flex items-center p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
+                                                                title="Edit APAR"
+                                                            >
+                                                                <PencilIcon className="h-4 w-4" />
+                                                            </Link>
+                                                        )}
+
+                                                        {/* Delete Button - Admin only */}
+                                                        {user?.role === "admin" && (
+                                                            <button
                                                                 onClick={() => handleDelete(apar.id, apar.serial_number)}
                                                                 className="inline-flex items-center p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                                            title="Hapus APAR"
-                                                        >
+                                                                title="Hapus APAR"
+                                                            >
                                                                 <TrashIcon className="h-4 w-4" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
-                                );
-                            })}
+                                    );
+                                })}
                             </tbody>
                         </table>
-                </div>
+                    </div>
 
                     {/* Empty State */}
-                {filteredApars.length === 0 && !loading && (
+                    {filteredApars.length === 0 && !loading && (
                         <div className="text-center py-16 px-6">
                             <div className="mx-auto h-16 w-16 text-gray-300 mb-4">
                                 <FireIcon className="h-16 w-16" />
                             </div>
                             <h3 className="text-lg font-medium text-gray-900 mb-2">
                                 Tidak ada APAR ditemukan
-                        </h3>
+                            </h3>
                             <p className="text-sm text-gray-500 max-w-sm mx-auto">
                                 {searchTerm || statusFilter !== "all" || locationFilter !== "all"
                                     ? "Coba ubah filter pencarian Anda atau hapus filter yang ada."
@@ -668,8 +664,8 @@ const AparList = () => {
                                     </Link>
                                 </div>
                             )}
-                    </div>
-                )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -687,12 +683,12 @@ const AparList = () => {
                                     <XMarkIcon className="h-6 w-6" />
                                 </button>
                             </div>
-                            
+
                             <div className="mb-4">
                                 <p className="text-sm text-gray-600 mb-3">
                                     Pilih APAR yang QR Code-nya ingin diunduh:
                                 </p>
-                                
+
                                 {/* Select All */}
                                 <div className="mb-3">
                                     <label className="flex items-center">
