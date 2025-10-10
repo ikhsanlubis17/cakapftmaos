@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Import CSS
 import '../css/app.css';
@@ -167,10 +168,10 @@ function AppRoutes() {
             console.log('=== ROUTE DEFINITIONS DEBUG ===');
             console.log('User role:', user.role);
             console.log('Available routes for this user:');
-            
+
             // Log all available routes based on user role
             const availableRoutes = [];
-            
+
             if (user.role === 'admin') {
                 availableRoutes.push(
                     '/dashboard',
@@ -203,7 +204,7 @@ function AppRoutes() {
                     '/dashboard/my-repairs'
                 );
             }
-            
+
             console.log('Available routes:', availableRoutes);
         }
     }, [user]);
@@ -243,119 +244,119 @@ function AppRoutes() {
             <Route path="/dashboard" element={user ? <LayoutEnhanced /> : <Navigate to="/login" replace />}>
                 {/* Dashboard - All roles */}
                 <Route index element={<DashboardEnhanced />} />
-                
+
                 {/* APAR Routes - Supervisor & Admin only */}
-                <Route 
+                <Route
                     path="apar"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <AparList />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="apar/create"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <AparCreate />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="apar/:id/edit"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <AparEdit />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="apar/:id"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <AparDetail />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* APAR Types - Admin only */}
-                <Route 
+                <Route
                     path="apar-types"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <AparTypeManagement />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Tank Trucks - Supervisor & Admin only */}
-                <Route 
+                <Route
                     path="tank-trucks"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <TankTruckList />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="tank-trucks/:id/edit"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <TankTruckEdit />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="tank-trucks/:id"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <TankTruckDetail />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Users Management - Admin only */}
-                <Route 
+                <Route
                     path="users"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <UsersManagement />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="users/create"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <UserCreate />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="users/:id/edit"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <UserEdit />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="users/:id"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <UserDetail />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Schedules */}
-                <Route 
+                <Route
                     path="schedules"
                     element={
                         <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
                             <SchedulesManagement />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
                 <Route path="my-schedules" element={<MySchedules />} />
 
@@ -364,104 +365,104 @@ function AppRoutes() {
                 <Route path="my-inspections" element={<MyInspections />} />
 
                 {/* Reports - Supervisor & Admin only */}
-                <Route 
+                <Route
                     path="reports"
                     element={
                         <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
                             <ReportsAndAudit />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Settings - Admin only */}
-                <Route 
+                <Route
                     path="settings"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <Settings />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Audit Logs - Admin only */}
-                <Route 
+                <Route
                     path="audit-logs"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <AuditLogs />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* NEW ENHANCED FEATURES ROUTES */}
-                
+
                 {/* Damage Categories Management - Admin only */}
-                <Route 
+                <Route
                     path="damage-categories"
                     element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <DamageCategoryManagement />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* Repair Approvals - Admin & Supervisor only */}
-                <Route 
+                <Route
                     path="repair-approvals"
                     element={
                         <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
                             <RepairApprovalList />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                <Route 
+                <Route
                     path="repair-approvals/:id"
                     element={
                         <ProtectedRoute allowedRoles={['admin', 'supervisor']}>
                             <RepairApprovalDetail />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
-                
+
                 {/* Temporary test route without auth for debugging */}
-                <Route 
+                <Route
                     path="test-repair-approval/:id"
-                    element={<RepairApprovalDetail />} 
+                    element={<RepairApprovalDetail />}
                 />
 
                 {/* Repair Reports - All authenticated users */}
-                <Route 
-                    path="repair-report/:approvalId" 
-                    element={<RepairReportForm />} 
+                <Route
+                    path="repair-report/:approvalId"
+                    element={<RepairReportForm />}
                 />
 
                 {/* My Repairs - All authenticated users */}
                 <Route path="my-repairs" element={<MyRepairApprovals />} />
 
                 {/* Enhanced Inspection Form - Teknisi only */}
-                <Route 
+                <Route
                     path="inspections/enhanced/:qrCode"
                     element={
                         <ProtectedRoute allowedRoles={['teknisi']}>
                             <InspectionFormEnhanced />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
                 {/* New Inspection Route - All authenticated users */}
-                <Route 
-                    path="inspections/new" 
-                    element={<InspectionForm />} 
+                <Route
+                    path="inspections/new"
+                    element={<InspectionForm />}
                 />
 
                 {/* QR Scanner - Teknisi only */}
-                <Route 
+                <Route
                     path="scan"
                     element={
                         <ProtectedRoute allowedRoles={['teknisi']}>
                             <QRScanner />
                         </ProtectedRoute>
-                    } 
+                    }
                 />
 
             </Route>
@@ -472,14 +473,19 @@ function AppRoutes() {
     );
 }
 
+// Tanstack Query Client
+const queryClient = new QueryClient();
+
 function App() {
     return (
         <ErrorBoundary>
-            <AuthProvider>
-                <ToastProvider>
-                    <AppRoutes />
-                </ToastProvider>
-            </AuthProvider>
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                    <ToastProvider>
+                        <AppRoutes />
+                    </ToastProvider>
+                </AuthProvider>
+            </QueryClientProvider>
         </ErrorBoundary>
     );
 }
