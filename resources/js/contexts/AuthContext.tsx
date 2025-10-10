@@ -34,24 +34,25 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
     // Prevent re-creating the API client on every render by using useRef
     const apiClientRef = useRef(externalApiClient || createApiClient());
     const apiClient = apiClientRef.current;
-    const { token, updateToken } = useAuthState();
+    const { token, updateToken, getTokenImmediate } = useAuthState();
     const { login, isLoggingIn, logout, isLoggingOut, fetchUser } = useAuthApi(apiClient, {
         updateToken,
     });
 
     useEffect(() => {
         const cleanup = setupInterceptors(apiClient, {
-            getToken: () => token,
+            getToken: getTokenImmediate,
             onTokenRefresh: async (newToken: string) => {
                 updateToken(newToken);
             },
             onAuthError: () => {
-                // When refresh fails, log out.
                 logout();
             },
         });
+
         return cleanup;
     }, [apiClient, token, updateToken, logout]);
+
 
     const {
         data: user,

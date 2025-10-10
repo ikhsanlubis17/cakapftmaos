@@ -36,7 +36,7 @@ class AuthController extends Controller
         }
 
         $token = Auth::guard('api')->login($user);
-
+        
         return response()->json([
             'token' => $token,
             'user' => $user,

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosError, AxiosInstance } from "axios";
 
 interface InterceptorSetup {
     getToken: () => string | null;
@@ -17,65 +17,82 @@ export const createApiClient = (baseURL = 'http://localhost:8000') => {
 
 const refreshClient = createApiClient();
 
-export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSetup): (() => void) => {
-    // Request interceptor
-    const requestInterceptor = apiClient.interceptors.request.use(
-        (config) => {
-            const token = setup.getToken();
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-        },
-        (error) => Promise.reject(error)
-    );
+export function setupInterceptors(
+    apiClient: AxiosInstance,
+    setup: {
+        getToken: () => string | null;
+        onTokenRefresh: (newToken: string) => Promise<void> | void;
+        onAuthError: () => void;
+    }
+) {
+    let isRefreshing = false;
+    let refreshPromise: Promise<string | null> | null = null;
 
-    // Response interceptor
+    const requestInterceptor = apiClient.interceptors.request.use((config) => {
+        const token = setup.getToken();
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+
     const responseInterceptor = apiClient.interceptors.response.use(
         (response) => response,
-        async (error) => {
-            const originalRequest = error.config;
+        async (error: AxiosError) => {
+            const originalRequest: any = error.config;
 
-            if (
-                originalRequest._retry ||
-                originalRequest.url.includes('/api/refresh') ||
-                originalRequest.url.includes('/api/logout')
-            ) {
-                return Promise.reject(error);
-            }
-
-            // If 401 and not already retrying
+            // Only handle 401 errors once per request
             if (error.response?.status === 401 && !originalRequest._retry) {
                 originalRequest._retry = true;
 
-                try {
-                    // Try to refresh token
-                    const response = await refreshClient.post('/api/refresh', {
-                        token: setup.getToken()
-                    });
+                // ✅ If refresh already in progress — wait for it
+                if (isRefreshing && refreshPromise) {
+                    const newToken = await refreshPromise;
+                    if (newToken) {
+                        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                        return apiClient(originalRequest);
+                    } else {
+                        setup.onAuthError();
+                        return Promise.reject(error);
+                    }
+                }
 
-                    const newToken = response.data.token;
+                // ✅ Otherwise, start a refresh
+                isRefreshing = true;
+                refreshPromise = (async () => {
+                    try {
+                        const response = await refreshClient.post('/api/refresh', {}, {
+                            headers: {
+                                Authorization: `Bearer ${setup.getToken()}`,
+                            },
+                        });
+                        const newToken = (response.data as any).token;
+                        await setup.onTokenRefresh(newToken);
+                        return newToken;
+                    } catch (refreshError) {
+                        setup.onAuthError();
+                        return null;
+                    } finally {
+                        isRefreshing = false;
+                        refreshPromise = null;
+                    }
+                })();
 
-                    // Notify about new token
-                    await setup.onTokenRefresh(newToken);
-
-                    // Retry original request with new token
+                const newToken = await refreshPromise;
+                if (newToken) {
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     return apiClient(originalRequest);
-                } catch (refreshError) {
-                    // Refresh failed, trigger logout
-                    setup.onAuthError();
-                    return Promise.reject(refreshError);
+                } else {
+                    return Promise.reject(error);
                 }
             }
 
             return Promise.reject(error);
         }
     );
-
-    // Return cleanup function
+    // ✅ Cleanup function
     return () => {
         apiClient.interceptors.request.eject(requestInterceptor);
         apiClient.interceptors.response.eject(responseInterceptor);
     };
-};
+}
