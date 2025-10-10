@@ -40,7 +40,7 @@ export const setupInterceptors = (apiClient: AxiosInstance, setup: InterceptorSe
 
                 try {
                     // Try to refresh token
-                    const response = await apiClient.post('/api/auth/refresh');
+                    const response = await apiClient.post('/api/refresh');
                     const newToken = response.data.token;
 
                     // Notify about new token
