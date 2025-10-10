@@ -101,10 +101,10 @@ class ErrorBoundary extends React.Component {
 
 // Role-based route protection component
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-    const { user, loading } = useAuth();
+    const { user, isPending } = useAuth();
     const location = useLocation();
 
-    if (loading) {
+    if (isPending) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="text-center">
@@ -160,7 +160,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 };
 
 function AppRoutes() {
-    const { user, loading } = useAuth();
+    const { user, isPending } = useAuth();
 
     // Debug route definitions
     useEffect(() => {
@@ -209,7 +209,7 @@ function AppRoutes() {
         }
     }, [user]);
 
-    if (loading) {
+    if (isPending) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
                 <div className="text-center">

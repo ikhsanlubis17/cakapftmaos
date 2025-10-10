@@ -9,6 +9,7 @@ interface AuthContextType {
     user: User | undefined;
     isAuthenticated: boolean;
     isLoading: boolean;
+    isPending: boolean;
     login: UseMutateAsyncFunction<{
         data: LoginResponse;
     }, Error, {
@@ -56,6 +57,7 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
         data: user,
         isLoading: isUserLoading,
         isFetching: isUserFetching,
+        isPending,
         isError,
     } = useQuery({
         queryKey: userQueryKey,
@@ -85,6 +87,7 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
         user,
         isAuthenticated: !!user && !isUserLoading,
         isLoading: isUserLoading || isUserFetching || isLoggingIn || isLoggingOut,
+        isPending: isPending,
         login,
         logout,
         apiClient
