@@ -8,11 +8,10 @@ import {
     CalendarIcon,
     FireIcon,
 } from "@heroicons/react/24/outline";
-import axios from "axios";
 
 const AparDetail = () => {
     const { id } = useParams();
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showError } = useToast();
     const [apar, setApar] = useState(null);
     const [inspections, setInspections] = useState([]);
@@ -29,7 +28,7 @@ const AparDetail = () => {
     const fetchAparDetail = async () => {
         try {
             // Fetch APAR data from API
-            const response = await axios.get(`/api/apar/${id}`);
+            const response = await apiClient.get(`/api/apar/${id}`);
             const aparData = response.data;
 
             setApar({
@@ -49,7 +48,7 @@ const AparDetail = () => {
             });
 
             // Fetch inspections
-            const inspectionsResponse = await axios.get(
+            const inspectionsResponse = await apiClient.get(
                 `/api/apar/${id}/inspections`
             );
             console.log("Inspections data:", inspectionsResponse.data);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
@@ -22,7 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const AparList = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
     const [apars, setApars] = useState([]);
@@ -43,7 +42,7 @@ const AparList = () => {
 
     const fetchApars = async () => {
         try {
-            const response = await axios.get('/api/apar');
+            const response = await apiClient.get('/api/apar');
             setApars(response.data);
         } catch (error) {
             console.error('Gagal mengambil data APAR:', error);
@@ -121,7 +120,7 @@ const AparList = () => {
 
             // For now, we'll use a simple approach
             // In a real implementation, you might want to use a library like jsPDF or make an API call
-            const response = await axios.post('/api/apar/download-qr-pdf', pdfContent, {
+            const response = await apiClient.post('/api/apar/download-qr-pdf', pdfContent, {
                 responseType: 'blob'
             });
 
@@ -157,7 +156,7 @@ const AparList = () => {
 
         if (confirmed) {
             try {
-                await axios.delete(`/api/apar/${aparId}`);
+                await apiClient.delete(`/api/apar/${aparId}`);
                 showSuccess('APAR berhasil dihapus');
                 fetchApars(); // Refresh list
             } catch (error) {
@@ -193,7 +192,7 @@ const AparList = () => {
                 // Delete APARs one by one to handle errors properly
                 const deletePromises = selectedApars.map(async (aparId) => {
                     try {
-                        await axios.delete(`/api/apar/${aparId}`);
+                        await apiClient.delete(`/api/apar/${aparId}`);
                         return { success: true, id: aparId };
                     } catch (error) {
                         console.error(`Error deleting APAR ${aparId}:`, error);
