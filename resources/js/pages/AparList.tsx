@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
+import { Apar } from '../types/api';
 import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -19,31 +20,54 @@ import {
     ClipboardDocumentCheckIcon,
     DocumentArrowDownIcon,
 } from '@heroicons/react/24/outline';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+
+// Local types for confirm dialog (hook is implemented in plain JS)
+interface ConfirmConfig {
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    title?: string;
+    message?: string;
+    type?: 'warning' | 'info' | 'danger' | string;
+    confirmText?: string;
+    cancelText?: string;
+    confirmButtonColor?: string;
+}
+
+type ConfirmOptions = Omit<ConfirmConfig, 'onConfirm' | 'onCancel'>;
 
 const AparList = () => {
     const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
-    const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
-    const [locationFilter, setLocationFilter] = useState('all');
-    const [selectedApars, setSelectedApars] = useState([]);
-    const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
-    const [deleting, setDeleting] = useState(false);
-    const [showQrDownloadModal, setShowQrDownloadModal] = useState(false);
-    const [downloadingQr, setDownloadingQr] = useState(false);
-    const [qrDownloadApars, setQrDownloadApars] = useState([]);
+    const { isOpen, config, confirm, close } = useConfirmDialog() as {
+        isOpen: boolean;
+        config: ConfirmConfig;
+        confirm: (options: ConfirmOptions) => Promise<boolean>;
+        close: () => void;
+    };
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [locationFilter, setLocationFilter] = useState<string>('all');
+    const [selectedApars, setSelectedApars] = useState<number[]>([]);
+    const [bulkDeleteMode, setBulkDeleteMode] = useState<boolean>(false);
+    const [deleting, setDeleting] = useState<boolean>(false);
+    const [showQrDownloadModal, setShowQrDownloadModal] = useState<boolean>(false);
+    const [downloadingQr, setDownloadingQr] = useState<boolean>(false);
+    const [qrDownloadApars, setQrDownloadApars] = useState<Apar[]>([]);
+
+    const queryClient = useQueryClient();
 
     const {
         data: apars = [],
         isLoading,
         isError
-    } = useQuery({
+    } = useQuery<Apar[], Error>({
         queryKey: ['apars'],
         queryFn: async () => {
             const response = await apiClient.get('/api/apar');
-            return response.data;
+            // API sometimes returns { data: [...] } or directly the array
+            return response.data.data ?? response.data;
         },
         staleTime: 1 * 60 * 1000,
     });
@@ -57,7 +81,7 @@ const AparList = () => {
         return matchesSearch && matchesStatus && matchesLocation;
     });
 
-    const getStatusColor = (status) => {
+    const getStatusColor = (status?: string): string => {
         switch (status) {
             case 'active':
                 return 'bg-green-100 text-green-800';
@@ -72,7 +96,7 @@ const AparList = () => {
         }
     };
 
-    const getStatusText = (status) => {
+    const getStatusText = (status?: string): string => {
         switch (status) {
             case 'active':
                 return 'Aktif';
@@ -83,19 +107,19 @@ const AparList = () => {
             case 'under_repair':
                 return 'Sedang Perbaikan';
             default:
-                return status;
+                return status ?? 'Unknown';
         }
     };
 
-    const getLocationTypeText = (type) => {
+    const getLocationTypeText = (type: Apar['location_type']): string => {
         return type === 'statis' ? 'Statis' : 'Mobil';
     };
 
-    const getLocationTypeIcon = (type) => {
+    const getLocationTypeIcon = (type: Apar['location_type']): React.ComponentType<any> => {
         return type === 'statis' ? MapPinIcon : TruckIcon;
     };
 
-    const getLocationTypeColor = (type) => {
+    const getLocationTypeColor = (type: Apar['location_type']): string => {
         return type === 'statis' ? 'text-blue-600' : 'text-purple-600';
     };
 
@@ -104,7 +128,7 @@ const AparList = () => {
         setShowQrDownloadModal(true);
     };
 
-    const downloadQrPdf = async (selectedApars) => {
+    const downloadQrPdf = async (selectedApars: Apar[]) => {
         setDownloadingQr(true);
         try {
             // Create PDF content
@@ -141,7 +165,16 @@ const AparList = () => {
         }
     };
 
-    const handleDelete = async (aparId, serialNumber) => {
+    const deleteMutation = useMutation<void, unknown, number>({
+        mutationFn: async (aparId: number) => {
+            await apiClient.delete(`/api/apar/${aparId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['apars'] });
+        }
+    });
+
+    const handleDelete = async (aparId: number, serialNumber: string): Promise<void> => {
         const confirmed = await confirm({
             title: 'Konfirmasi Hapus APAR',
             message: `Apakah Anda yakin ingin menghapus APAR ${serialNumber}? Tindakan ini tidak dapat dibatalkan.`,
@@ -153,17 +186,16 @@ const AparList = () => {
 
         if (confirmed) {
             try {
-                await apiClient.delete(`/api/apar/${aparId}`);
+                await deleteMutation.mutateAsync(aparId);
                 showSuccess('APAR berhasil dihapus');
-                fetchApars(); // Refresh list
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Gagal menghapus APAR:', error);
-                showError('Gagal menghapus APAR. Silakan coba lagi.');
+                showError(error?.response?.data?.message || 'Gagal menghapus APAR. Silakan coba lagi.');
             }
         }
     };
 
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = async (): Promise<void> => {
         if (selectedApars.length === 0) {
             showError('Pilih APAR yang akan dihapus terlebih dahulu');
             return;
@@ -186,18 +218,17 @@ const AparList = () => {
         if (confirmed) {
             setDeleting(true);
             try {
-                // Delete APARs one by one to handle errors properly
-                const deletePromises = selectedApars.map(async (aparId) => {
+                // Use deleteMutation.mutateAsync for each and collect results
+                const results = await Promise.all(selectedApars.map(async (aparId) => {
                     try {
-                        await apiClient.delete(`/api/apar/${aparId}`);
+                        await deleteMutation.mutateAsync(aparId);
                         return { success: true, id: aparId };
-                    } catch (error) {
+                    } catch (error: any) {
                         console.error(`Error deleting APAR ${aparId}:`, error);
                         return { success: false, id: aparId, error: error.response?.data?.message || 'Unknown error' };
                     }
-                });
+                }));
 
-                const results = await Promise.all(deletePromises);
                 const successful = results.filter(r => r.success);
                 const failed = results.filter(r => !r.success);
 
@@ -209,7 +240,8 @@ const AparList = () => {
 
                 setSelectedApars([]);
                 setBulkDeleteMode(false);
-                fetchApars();
+                // invalidate once (already invalidated by individual successes but ensure)
+                queryClient.invalidateQueries({ queryKey: ['apars'] });
             } catch (error) {
                 console.error('Gagal dalam bulk delete:', error);
                 showError('Gagal menghapus APAR yang dipilih. Silakan coba lagi.');
@@ -224,7 +256,7 @@ const AparList = () => {
         setSelectedApars([]);
     };
 
-    const handleSelectApar = (aparId) => {
+    const handleSelectApar = (aparId: number) => {
         setSelectedApars(prev =>
             prev.includes(aparId)
                 ? prev.filter(id => id !== aparId)
@@ -601,7 +633,8 @@ const AparList = () => {
 
                                                         {/* View Button */}
                                                         <Link
-                                                            to={`/apar/${apar.id}`}
+                                                            to={`/apar/$id`}
+                                                            params={{ id: apar.id }}
                                                             className="inline-flex items-center p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                                                             title="Lihat Detail"
                                                         >
@@ -640,7 +673,7 @@ const AparList = () => {
                     </div>
 
                     {/* Empty State */}
-                    {filteredApars.length === 0 && !loading && (
+                    {filteredApars.length === 0 && !isLoading && (
                         <div className="text-center py-16 px-6">
                             <div className="mx-auto h-16 w-16 text-gray-300 mb-4">
                                 <FireIcon className="h-16 w-16" />

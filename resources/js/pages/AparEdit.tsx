@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import axios from "axios";
+import { useParams, useNavigate, getRouteApi } from "@tanstack/react-router";
+import axios, { AxiosResponse } from "axios";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AparTypeListResponse, AparType } from '@/types/api';
+import { useAuth } from '../contexts/AuthContext';
 import {
     FireIcon,
     ArrowLeftIcon,
@@ -9,13 +12,14 @@ import {
 import { useToast } from "../contexts/ToastContext";
 
 const AparEdit = () => {
-    const { id } = useParams();
+    let route = getRouteApi('/authenticated/apar/$id/edit');
+    let { id } = route.useParams();
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [apar, setApar] = useState(null);
-    const [aparTypes, setAparTypes] = useState([]);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
+    const [apar, setApar] = useState<any>(null);
+    const [aparTypes, setAparTypes] = useState<AparType[]>([]);
     const [gettingLocation, setGettingLocation] = useState(false);
     const [formData, setFormData] = useState({
         serial_number: "",
@@ -32,55 +36,58 @@ const AparEdit = () => {
         notes: "",
     });
 
-    useEffect(() => {
-        fetchAparDetail();
-        fetchAparTypes();
-    }, [id]);
+    // Query: fetch apar detail
+    const { data: aparData, isLoading: isAparLoading, isError: isAparError } = useQuery<any, Error, any>({
+        queryKey: ['apar', id],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/apar/${id}`);
+            return res.data;
+        },
+        enabled: !!id,
+    });
 
-    const fetchAparDetail = async () => {
-        try {
-            const response = await axios.get(`/api/apar/${id}`);
-            const aparData = response.data;
+    useEffect(() => {
+        if (aparData) {
             setApar(aparData);
             setFormData({
                 serial_number: aparData.serial_number || "",
                 location_type: aparData.location_type || "statis",
                 location_name: aparData.location_name || "",
-                latitude: aparData.latitude || "",
-                longitude: aparData.longitude || "",
-                valid_radius: aparData.valid_radius || 50,
-                apar_type_id: aparData.apar_type_id || "",
-                capacity: aparData.capacity || "",
-                manufactured_date: aparData.manufactured_date
-                    ? aparData.manufactured_date.split("T")[0]
-                    : "",
-                expired_at: aparData.expired_at
-                    ? aparData.expired_at.split("T")[0]
-                    : "",
-                status: aparData.status || "active",
-                notes: aparData.notes || "",
+                latitude: aparData.latitude ?? "",
+                longitude: aparData.longitude ?? "",
+                valid_radius: aparData.valid_radius ?? 50,
+                apar_type_id: aparData.apar_type_id ?? "",
+                capacity: aparData.capacity ?? "",
+                manufactured_date: aparData.manufactured_date ? aparData.manufactured_date.split('T')[0] : "",
+                expired_at: aparData.expired_at ? aparData.expired_at.split('T')[0] : "",
+                status: aparData.status ?? 'active',
+                notes: aparData.notes ?? '',
             });
-        } catch (error) {
-            console.error("Error fetching APAR detail:", error);
-            showError("Gagal memuat data APAR. Silakan coba lagi.");
-            navigate({ to: "/apar" });
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [aparData]);
 
-    const fetchAparTypes = async () => {
-        try {
-            const response = await axios.get("/api/apar-types");
-            if (response.data.success) {
-                setAparTypes(
-                    response.data.data.filter((type) => type.is_active)
-                );
-            }
-        } catch (error) {
-            console.error("Error fetching APAR types:", error);
+    useEffect(() => {
+        if (isAparError) {
+            showError('Gagal memuat data APAR. Silakan coba lagi.');
+            (navigate as any)({ to: '/apar' });
         }
-    };
+    }, [isAparError]);
+
+    // Query: apar types
+    const { data: aparTypesData = [], isLoading: isAparTypesLoading } = useQuery<AparType[], Error, AparType[]>({
+        queryKey: ['apar-types'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar-types');
+            const data = res.data as AparTypeListResponse;
+            return data.data.filter(t => t.is_active);
+        },
+    });
+
+    useEffect(() => {
+        if (aparTypesData && aparTypesData.length) {
+            setAparTypes(aparTypesData as AparType[]);
+        }
+    }, [aparTypesData]);
 
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -130,7 +137,7 @@ const AparEdit = () => {
         );
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({
             ...prev,
@@ -138,53 +145,40 @@ const AparEdit = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSaving(true);
-
-        try {
-            // Validate data before sending
+    const updateMutation = useMutation<AxiosResponse, any, typeof formData>({
+        mutationFn: (data: typeof formData) => {
             const dataToSend = {
-                ...formData,
-                capacity: parseInt(formData.capacity) || 0,
-                valid_radius: parseInt(formData.valid_radius) || 30,
-                latitude: formData.latitude
-                    ? parseFloat(formData.latitude)
-                    : null,
-                longitude: formData.longitude
-                    ? parseFloat(formData.longitude)
-                    : null,
+                ...data,
+                capacity: parseInt(data.capacity as any) || 0,
+                valid_radius: parseInt(data.valid_radius as any) || 30,
+                latitude: data.latitude ? parseFloat(data.latitude as any) : null,
+                longitude: data.longitude ? parseFloat(data.longitude as any) : null,
             };
-
-            console.log("Data to send:", dataToSend);
-
-            // Additional validation
-            if (!dataToSend.serial_number || !dataToSend.apar_type_id) {
-                showError("Nomor seri dan jenis APAR wajib diisi.");
-                setSaving(false);
-                return;
-            }
-
-            await axios.put(`/api/apar/${id}`, dataToSend);
-            showSuccess("APAR berhasil diperbarui");
-            navigate({ to: "/apar" });
-        } catch (error) {
-            console.error("Error updating APAR:", error);
-
-            if (error.response?.data?.errors) {
-                const errorMessages = Object.values(
-                    error.response.data.errors
-                ).flat();
-                showError(errorMessages.join(", "), "Gagal Memperbarui APAR");
+            return apiClient.put(`/api/apar/${id}`, dataToSend);
+        },
+        onSuccess: () => {
+            // Invalidate apars list so other pages refresh
+            queryClient.invalidateQueries({ queryKey: ['apars'] });
+            showSuccess('APAR berhasil diperbarui');
+            (navigate as any)({ to: '/apar' });
+        },
+        onError: (error: any) => {
+            console.error('Error updating APAR:', error);
+            if (axios.isAxiosError(error) && error.response?.data?.errors) {
+                const errorMessages = Object.values(error.response.data.errors).flat();
+                showError(errorMessages.join(', '), 'Gagal Memperbarui APAR');
             } else {
-                showError("Gagal memperbarui APAR. Silakan coba lagi.");
+                showError('Gagal memperbarui APAR. Silakan coba lagi.');
             }
-        } finally {
-            setSaving(false);
         }
+    });
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        updateMutation.mutate(formData);
     };
 
-    if (loading) {
+    if (isAparLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -217,7 +211,7 @@ const AparEdit = () => {
                 </div>
                 <div className="mt-4 sm:mt-0">
                     <button
-                        onClick={() => navigate({ to: "/apar" })}
+                        onClick={() => (navigate as any)({ to: "/apar" })}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
@@ -513,17 +507,17 @@ const AparEdit = () => {
                     <div className="flex justify-end space-x-3">
                         <button
                             type="button"
-                            onClick={() => navigate({ to: "/apar" })}
+                            onClick={() => (navigate as any)({ to: "/apar" })}
                             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
-                            disabled={saving}
+                            disabled={(updateMutation as any).isLoading}
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                         >
-                            {saving ? (
+                            {(updateMutation as any).isLoading ? (
                                 <>
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                     Menyimpan...

@@ -9,6 +9,25 @@ export interface AparType {
     updated_at: string;
 }
 
+export interface Apar {
+    id: number;
+    serial_number: string;
+    location_name: string;
+    location_type: 'statis' | 'mobile' | string;
+    valid_radius?: number;
+    apar_type_id?: number;
+    capacity?: number;
+    manufactured_date?: string;
+    expired_at?: string;
+    status?: string;
+    notes?: string;
+    aparType?: { name?: string } | null;
+    tank_truck?: { plate_number?: string; driver_name?: string } | null;
+    latitude?: number | string;
+    longitude?: number | string;
+    qr_code?: string | null;
+}
+
 export interface ApiResponse<T = any> {
     success: boolean;
     data: T;

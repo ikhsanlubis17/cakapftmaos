@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { useToast } from "../contexts/ToastContext";
+import { useQuery } from '@tanstack/react-query';
+import { Apar } from '../types/api';
 import {
     CameraIcon,
     MapPinIcon,
@@ -9,63 +11,69 @@ import {
     FireIcon,
 } from "@heroicons/react/24/outline";
 
-const AparDetail = () => {
-    const { id } = useParams();
+const AparDetail: React.FC = () => {
+    const route = getRouteApi('/authenticated/apar/$id');
+    const { id } = route.useParams() as { id?: string };
+
     const { user, apiClient } = useAuth();
     const { showError } = useToast();
-    const [apar, setApar] = useState(null);
-    const [inspections, setInspections] = useState([]);
-    const [qrCodeUrl, setQrCodeUrl] = useState("");
-    const [qrCodeError, setQrCodeError] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [selectedPhoto, setSelectedPhoto] = useState(null);
-    const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+    // Minimal inspection shape used in the UI
+    interface Inspection {
+        id: number;
+        created_at: string;
+        condition?: string;
+        notes?: string | null;
+        photo_url?: string | null;
+        user?: { name?: string } | null;
+    }
+
+    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const [qrCodeError, setQrCodeError] = useState<boolean>(false);
+    const [selectedPhoto, setSelectedPhoto] = useState<{ url: string; inspection?: Inspection } | null>(null);
+    const [showPhotoModal, setShowPhotoModal] = useState<boolean>(false);
+
+    // Check if id parameter is available
+    if (!id) {
+        return (
+            <div className="text-center py-12">
+                <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    Parameter ID tidak ditemukan
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                    ID APAR tidak tersedia dalam URL. Router context mungkin belum terinisialisasi.
+                </p>
+            </div>
+        );
+    }
+
+    // Use react-query to fetch APAR detail and inspections
+    const { data: apar, isLoading: aparLoading, isError: aparError } = useQuery<Apar, Error>({
+        queryKey: ['apar', id],
+        queryFn: async () => {
+            const response = await apiClient.get(`/api/apar/${id}`);
+            return response.data.data ?? response.data;
+        },
+        enabled: !!id,
+    });
+
+    const { data: inspections = [], isLoading: inspectionsLoading } = useQuery<Inspection[], Error>({
+        queryKey: ['apar', id, 'inspections'],
+        queryFn: async () => {
+            const response = await apiClient.get(`/api/apar/${id}/inspections`);
+            return response.data.data ?? response.data;
+        },
+        enabled: !!id,
+    });
 
     useEffect(() => {
-        fetchAparDetail();
+        if (id) {
+            setQrCodeUrl(`/api/apar/${id}/qr-code-test`);
+        }
     }, [id]);
 
-    const fetchAparDetail = async () => {
-        try {
-            // Fetch APAR data from API
-            const response = await apiClient.get(`/api/apar/${id}`);
-            const aparData = response.data;
-
-            setApar({
-                id: aparData.id,
-                serial_number: aparData.serial_number,
-                type: aparData.apar_type?.name || aparData.type || "Unknown",
-                capacity: `${aparData.capacity} kg`,
-                manufactured_date: aparData.manufactured_date,
-                expired_at: aparData.expired_at,
-                status: aparData.status,
-                location_name: aparData.location_name,
-                location_type: aparData.location_type,
-                notes: aparData.notes,
-                tank_truck: aparData.tank_truck,
-                latitude: aparData.latitude,
-                longitude: aparData.longitude,
-            });
-
-            // Fetch inspections
-            const inspectionsResponse = await apiClient.get(
-                `/api/apar/${id}/inspections`
-            );
-            console.log("Inspections data:", inspectionsResponse.data);
-            setInspections(inspectionsResponse.data);
-
-            // Generate QR code URL dengan error handling yang lebih baik
-            setQrCodeUrl(`/api/apar/${id}/qr-code-test`);
-
-            setLoading(false);
-        } catch (error) {
-            console.error("Error fetching APAR detail:", error);
-            showError("Gagal memuat detail APAR");
-            setLoading(false);
-        }
-    };
-
-    const getStatusColor = (status) => {
+    const getStatusColor = (status?: string): string => {
         switch (status) {
             case "active":
                 return "bg-green-100 text-green-800";
@@ -80,7 +88,7 @@ const AparDetail = () => {
         }
     };
 
-    const getStatusText = (status) => {
+    const getStatusText = (status?: string): string => {
         switch (status) {
             case "active":
                 return "Aktif";
@@ -91,47 +99,50 @@ const AparDetail = () => {
             case "under_repair":
                 return "Sedang Perbaikan";
             default:
-                return status;
+                return status ?? 'Unknown';
         }
     };
 
-    const getConditionText = (condition) => {
+    const getConditionText = (condition?: string): string => {
         switch (condition) {
             case "good":
                 return "Baik";
             case "needs_repair":
                 return "Perlu Perbaikan";
             default:
-                return condition;
+                return condition ?? 'Unknown';
         }
     };
 
-    const handlePhotoClick = (photoUrl, inspectionData) => {
+    const handlePhotoClick = (photoUrl: string, inspectionData?: Inspection): void => {
         setSelectedPhoto({ url: photoUrl, inspection: inspectionData });
         setShowPhotoModal(true);
     };
 
-    const closePhotoModal = () => {
+    const closePhotoModal = (): void => {
         setShowPhotoModal(false);
         setSelectedPhoto(null);
     };
 
-    const handleQrCodeError = () => {
+    const handleQrCodeError = (): void => {
         console.error("QR Code failed to load");
         setQrCodeError(true);
     };
 
-    const handlePhotoError = (e, fallbackSelector) => {
-        console.error("Photo failed to load:", e.target.src);
-        e.target.style.display = "none";
+    const handlePhotoError = (e: React.SyntheticEvent<HTMLImageElement>, fallbackSelector: string): void => {
+        const img = e.currentTarget as HTMLImageElement;
+        console.error("Photo failed to load:", img.src);
+        img.style.display = "none";
 
         // Cari fallback element menggunakan parent element
-        const parent = e.target.parentElement;
-        const fallback = parent.querySelector(fallbackSelector);
+        const parent = img.parentElement as HTMLElement | null;
+        const fallback = parent?.querySelector(fallbackSelector) as HTMLElement | null;
         if (fallback) {
             fallback.style.display = "flex";
         }
     };
+
+    const loading = aparLoading || inspectionsLoading;
 
     if (loading) {
         return (
@@ -224,7 +235,7 @@ const AparDetail = () => {
                                 Jenis
                             </dt>
                             <dd className="mt-1 text-sm text-gray-900">
-                                {apar.type}
+                                {apar.aparType?.name || 'Unknown'}
                             </dd>
                         </div>
                         <div>
@@ -232,7 +243,7 @@ const AparDetail = () => {
                                 Kapasitas
                             </dt>
                             <dd className="mt-1 text-sm text-gray-900">
-                                {apar.capacity}
+                                {apar.capacity} {/* Format capacity accordingly */}
                             </dd>
                         </div>
                         <div>
@@ -308,7 +319,7 @@ const AparDetail = () => {
                                     Koordinat
                                 </dt>
                                 <dd className="mt-1 text-sm text-gray-900">
-                                    {apar.latitude}, {apar.longitude}
+                                    {apar.latitude}, {apar.longitude} {/* Coordinates */}
                                 </dd>
                             </div>
                         )}
@@ -360,7 +371,7 @@ const AparDetail = () => {
                     {inspections.length > 0 ? (
                         <div className="flow-root">
                             <ul className="-my-5 divide-y divide-gray-200">
-                                {inspections.map((inspection) => (
+                                {inspections.map((inspection: Inspection) => (
                                     <li key={inspection.id} className="py-4">
                                         <div className="flex items-center space-x-4">
                                             <div className="flex-shrink-0">
@@ -407,23 +418,11 @@ const AparDetail = () => {
                                                 {inspection.photo_url ? (
                                                     <div className="relative group">
                                                         <img
-                                                            src={
-                                                                inspection.photo_url
-                                                            }
+                                                            src={inspection.photo_url ?? undefined}
                                                             alt="Inspection Photo"
                                                             className="h-12 w-12 rounded-lg object-cover border border-gray-200 cursor-pointer hover:scale-110 transition-transform duration-200"
-                                                            onClick={() =>
-                                                                handlePhotoClick(
-                                                                    inspection.photo_url,
-                                                                    inspection
-                                                                )
-                                                            }
-                                                            onError={(e) =>
-                                                                handlePhotoError(
-                                                                    e,
-                                                                    ".photo-fallback"
-                                                                )
-                                                            }
+                                                            onClick={() => inspection.photo_url && handlePhotoClick(inspection.photo_url, inspection)}
+                                                            onError={(e) => handlePhotoError(e as unknown as React.SyntheticEvent<HTMLImageElement>, ".photo-fallback")}
                                                         />
                                                         {/* Fallback icon when photo fails to load */}
                                                         <div
@@ -500,14 +499,11 @@ const AparDetail = () => {
                                                         "Error loading photo in modal:",
                                                         e
                                                     );
-                                                    e.target.style.display =
-                                                        "none";
-                                                    const errorDiv =
-                                                        e.target
-                                                            .nextElementSibling;
+                                                    const img = e.currentTarget as HTMLImageElement;
+                                                    img.style.display = "none";
+                                                    const errorDiv = img.nextElementSibling as HTMLElement | null;
                                                     if (errorDiv) {
-                                                        errorDiv.style.display =
-                                                            "block";
+                                                        errorDiv.style.display = "block";
                                                     }
                                                 }}
                                             />

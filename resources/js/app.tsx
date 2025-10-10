@@ -20,6 +20,7 @@ import '../css/app.css';
 import LayoutEnhanced from './components/LayoutEnhanced'; // Make sure this component renders <Outlet />
 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
 // Import pages (no changes needed in page components themselves)
 import Login from './pages/Login';
@@ -63,7 +64,12 @@ interface RouterContext {
 const queryClient = new QueryClient();
 
 const rootRoute = createRootRouteWithContext<RouterContext>()({
-    component: Outlet,
+    component: () => (
+        <>
+        <Outlet />
+        <TanStackRouterDevtools/>
+        </>
+    ),
     notFoundComponent: () => (
         <div className="p-4">
             <h2 className="text-xl font-bold">404 - Page Not Found</h2>
