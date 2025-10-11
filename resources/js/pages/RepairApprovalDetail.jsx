@@ -28,14 +28,10 @@ const RepairApprovalDetail = () => {
 
     const [approval, setApproval] = useState(null);
     const [error, setError] = useState(null);
-    const [showActionModal, setShowActionModal] = useState(false);
-    const [actionType, setActionType] = useState(null);
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState(null);
-    const [notes, setNotes] = useState('');
-    const [submitting, setSubmitting] = useState(false);
 
     const { data: approvalData, isLoading: loading, refetch } = useQuery({
         queryKey: ['repair-approval', id],
