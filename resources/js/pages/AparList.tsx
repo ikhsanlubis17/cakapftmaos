@@ -564,12 +564,18 @@ const AparList = () => {
                                                             <span className={`text-xs font-medium ${getLocationTypeColor(apar.location_type)}`}>
                                                                 {getLocationTypeText(apar.location_type)}
                                                             </span>
+                                                            {apar.apar_type?.name && (
+                                                                <>
+                                                                    <span className="mx-1 text-gray-300">|</span>
+                                                                    <span className="inline-flex items-center gap-1">
+                                                                        <span className="h-2 w-2 rounded-full bg-gray-400"></span>
+                                                                        <span className="text-xs font-medium text-gray-700 tracking-wide">
+                                                                            {apar.apar_type.name.toUpperCase()}
+                                                                        </span>
+                                                                    </span>
+                                                                </>
+                                                            )}
                                                         </div>
-                                                        {apar.apar_type?.name && (
-                                                            <div className="text-xs text-gray-500 mt-1">
-                                                                {apar.apar_type.name}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </td>
