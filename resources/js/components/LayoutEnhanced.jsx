@@ -173,6 +173,12 @@ const LayoutEnhanced = () => {
             icon: TruckIcon,
             description: "Manajemen mobil tangki",
           },
+          // {
+          //   name: "Inspeksi",
+          //   href: "/inspections",
+          //   icon: ClipboardDocumentListIcon,
+          //   description: "Riwayat inspeksi",
+          // },
           { name: "Pengguna", href: "/users", icon: UserGroupIcon, description: "Kelola pengguna" },
           { name: "Jadwal", href: "/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
           {
@@ -295,16 +301,14 @@ const LayoutEnhanced = () => {
                       handleNavigation(item.href, item.name)
                       setSidebarOpen(false)
                     }}
-                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
+                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
+                      }`}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                      }`}
+                      className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                        }`}
                     />
                     <div className="text-left flex-1">
                       <div className="font-medium">{item.name}</div>
@@ -342,16 +346,14 @@ const LayoutEnhanced = () => {
                   <button
                     key={item.name}
                     onClick={() => handleNavigation(item.href, item.name)}
-                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                      isActive(item.href)
+                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
+                      }`}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                      }`}
+                      className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
+                        }`}
                     />
                     <div className="text-left flex-1">
                       <div className="font-medium">{item.name}</div>

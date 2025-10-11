@@ -238,6 +238,20 @@ const inspectionsRoute = createRoute({
     component: InspectionsList,
 });
 
+const newInspectionRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: 'inspections/new/{-$qrCode}',
+    beforeLoad: checkRoles(['admin', 'supervisor']),
+    component: InspectionForm,
+});
+
+const newInspectionFromQRRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: 'inspections/enhanced/$qrCode',
+    beforeLoad: checkRoles(['teknisi']),
+    component: InspectionFormEnhanced,
+});
+
 // const inspectionsDetailRoute = createRoute({
 //     getParentRoute: () => authenticatedRoute,
 //     path: 'inspections/$id',
@@ -315,6 +329,8 @@ const routeTree = rootRoute.addChildren([
         schedulesRoute,
         mySchedulesRoute,
         inspectionsRoute,
+        newInspectionRoute,
+        newInspectionFromQRRoute,
         myInspectionsRoute,
         scanRoute,
         repairApprovalsRoute,
@@ -337,7 +353,7 @@ function App() {
                     </ToastProvider>
                 </AuthProvider>
 
-                <ReactQueryDevtools initialIsOpen={false} />
+                <ReactQueryDevtools initialIsOpen={true} />
             </QueryClientProvider>
         </ErrorBoundary>
 
