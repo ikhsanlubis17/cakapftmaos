@@ -123,12 +123,12 @@ const LayoutEnhanced = () => {
             icon: ClipboardDocumentListIcon,
             description: "Laporan inspeksi pribadi",
           },
-          {
-            name: "Perbaikan Saya",
-            href: "/my-repairs",
-            icon: WrenchScrewdriverIcon,
-            description: "Status perbaikan APAR",
-          },
+          // {
+          //   name: "Perbaikan Saya",
+          //   href: "/my-repairs",
+          //   icon: WrenchScrewdriverIcon,
+          //   description: "Status perbaikan APAR",
+          // },
         ]
 
       case "supervisor":
