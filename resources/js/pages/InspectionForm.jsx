@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams, getRouteApi } from "@tanstack/react-router";
 import { useToast } from "../contexts/ToastContext";
 import { useAuth } from "../contexts/AuthContext";
-import axios from "axios";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     FireIcon,
     CheckCircleIcon,
@@ -15,13 +15,13 @@ import {
 } from "@heroicons/react/24/outline";
 
 const InspectionForm = () => {
-    const { qrCode } = useParams();
+    const route = getRouteApi('/authenticated/inspections/new/{-$qrCode}');
+    const { qrCode } = route.useParams();
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
 
     const [apar, setApar] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showQRScanner, setShowQRScanner] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
@@ -51,14 +51,79 @@ const InspectionForm = () => {
     const [damageCategories, setDamageCategories] = useState([]);
     const fileInputRef = useRef(null);
 
-    useEffect(() => {
-        if (qrCode) {
-            fetchAparByQR(qrCode);
-        } else {
-            fetchAparList();
+    // Queries
+    const { data: aparByQrData, isLoading: aparByQrLoading, refetch: refetchAparByQr } = useQuery({
+        queryKey: ['apar-from-qr', qrCode],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/qr/${qrCode}`);
+            return res.data;
+        },
+        enabled: !!qrCode,
+        throwOnError: false,
+    });
+
+    const { data: aparListData, isLoading: aparListLoading, refetch: refetchAparList } = useQuery({
+        queryKey: ['apars'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar');
+            return response.data.data ?? response.data;
+        },
+        enabled: !qrCode,
+        throwOnError: false,
+    });
+
+    const { data: damageCatsData, isLoading: damageLoading, refetch: refetchDamageCategories } = useQuery({
+        queryKey: ['damage-categories'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/damage-categories');
+            return res.data.data;
+        },
+        throwOnError: false,
+    });
+
+    // Use react-query loading flags instead of local loading state
+    const isLoading = (qrCode ? aparByQrLoading : aparListLoading) || damageLoading;
+
+    const queryClient = useQueryClient();
+
+    const submitMutation = useMutation({
+        mutationFn: async (form) => {
+            const res = await apiClient.post('/api/inspections', form, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return res.data;
+        },
+        throwOnError: true,
+        onSuccess: () => {
+            // Invalidate caches that might be affected by a new inspection
+            queryClient.invalidateQueries(['aparList']);
+            queryClient.invalidateQueries(['myInspections']);
+            queryClient.invalidateQueries(['repair-approvals']);
         }
-        fetchDamageCategories();
-    }, [qrCode]);
+    });
+
+    useEffect(() => {
+        // sync query results into local state
+        if (qrCode) {
+            if (aparByQrData && aparByQrData.success) {
+                setApar(aparByQrData.data);
+                if (aparByQrData.data.location_type === 'statis') {
+                    setTimeout(() => getCurrentLocation(), 1000);
+                }
+            } else if (aparByQrData && !aparByQrData.success) {
+                showError('APAR tidak ditemukan atau QR Code tidak valid');
+            }
+        } else {
+            if (Array.isArray(aparListData)) {
+                setAparList(aparListData);
+                setFilteredAparList(aparListData);
+            }
+        }
+
+        if (damageCatsData) {
+            setDamageCategories(damageCatsData.filter((cat) => cat.is_active));
+        }
+    }, [qrCode, aparByQrData, aparListData, damageCatsData]);
 
     useEffect(() => {
         if (searchTerm) {
@@ -80,55 +145,11 @@ const InspectionForm = () => {
         }
     }, [searchTerm, aparList]);
 
-    const fetchAparByQR = async (qrCode) => {
-        try {
-            setLoading(true);
-            // Use test endpoint temporarily for debugging
-            const response = await axios.get(`/api/qr/${qrCode}`);
-            if (response.data.success) {
-                setApar(response.data.data);
+    // fetchAparByQR handled by useQuery 'aparByQr'
 
-                // Auto-start location validation for static APAR
-                if (response.data.data.location_type === "statis") {
-                    setTimeout(() => {
-                        getCurrentLocation();
-                    }, 1000);
-                }
-            } else {
-                showError("APAR tidak ditemukan atau QR Code tidak valid");
-            }
-        } catch (error) {
-            console.error("Error fetching APAR:", error);
-            showError("APAR tidak ditemukan atau QR Code tidak valid");
-        } finally {
-            setLoading(false);
-        }
-    };
+    // fetchAparList handled by useQuery 'aparList'
 
-    const fetchAparList = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get("/api/apar");
-            setAparList(response.data.data);
-            setFilteredAparList(response.data.data);
-        } catch (error) {
-            console.error("Error fetching APAR list:", error);
-            showError("Gagal memuat daftar APAR");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchDamageCategories = async () => {
-        try {
-            const response = await axios.get("/api/damage-categories");
-            setDamageCategories(
-                response.data.data.filter((cat) => cat.is_active)
-            );
-        } catch (error) {
-            console.error("Error fetching damage categories:", error);
-        }
-    };
+    // fetchDamageCategories handled by useQuery 'damageCategories'
 
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -208,7 +229,7 @@ const InspectionForm = () => {
             (Math.atan2(
                 Math.sin(Δλ) * Math.cos(φ2),
                 Math.cos(φ1) * Math.sin(φ2) -
-                    Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
             ) *
                 180) /
             Math.PI;
@@ -291,11 +312,7 @@ const InspectionForm = () => {
                 }
             });
 
-            await axios.post("/api/inspections", formDataToSend, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            await submitMutation.mutateAsync(formDataToSend);
 
             showSuccess("Inspeksi berhasil disimpan!");
             setTimeout(() => {
@@ -338,7 +355,7 @@ const InspectionForm = () => {
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -384,7 +401,7 @@ const InspectionForm = () => {
                         </div>
                     </div>
 
-                    {loading ? (
+                    {isLoading ? (
                         <div className="text-center py-8">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
                             <p className="text-gray-600">
@@ -392,7 +409,7 @@ const InspectionForm = () => {
                             </p>
                         </div>
                     ) : Array.isArray(filteredAparList) &&
-                      filteredAparList.length > 0 ? (
+                        filteredAparList.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredAparList.map((apar) => (
                                 <div
@@ -423,32 +440,31 @@ const InspectionForm = () => {
                                         <p>
                                             <strong>Status:</strong>
                                             <span
-                                                className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                                                    apar.status === "active"
+                                                className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${apar.status === "active"
                                                         ? "bg-green-100 text-green-800"
                                                         : apar.status ===
-                                                          "needs_repair"
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : apar.status ===
-                                                          "inactive"
-                                                        ? "bg-red-100 text-red-800"
-                                                        : apar.status ===
-                                                          "under_repair"
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : "bg-gray-100 text-gray-800"
-                                                }`}
+                                                            "needs_repair"
+                                                            ? "bg-yellow-100 text-yellow-800"
+                                                            : apar.status ===
+                                                                "inactive"
+                                                                ? "bg-red-100 text-red-800"
+                                                                : apar.status ===
+                                                                    "under_repair"
+                                                                    ? "bg-blue-100 text-blue-800"
+                                                                    : "bg-gray-100 text-gray-800"
+                                                    }`}
                                             >
                                                 {apar.status === "active"
                                                     ? "Aktif"
                                                     : apar.status ===
-                                                      "needs_repair"
-                                                    ? "Perlu Perbaikan"
-                                                    : apar.status === "inactive"
-                                                    ? "Nonaktif"
-                                                    : apar.status ===
-                                                      "under_repair"
-                                                    ? "Sedang Perbaikan"
-                                                    : "Tidak Diketahui"}
+                                                        "needs_repair"
+                                                        ? "Perlu Perbaikan"
+                                                        : apar.status === "inactive"
+                                                            ? "Nonaktif"
+                                                            : apar.status ===
+                                                                "under_repair"
+                                                                ? "Sedang Perbaikan"
+                                                                : "Tidak Diketahui"}
                                             </span>
                                         </p>
                                     </div>
@@ -510,7 +526,7 @@ const InspectionForm = () => {
     }
 
     // Show loading state if APAR data is not yet loaded
-    if (loading || !apar) {
+    if (isLoading || !apar) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center">
                 <div className="text-center">
@@ -586,29 +602,28 @@ const InspectionForm = () => {
                                 <div className="bg-gray-50 p-3 rounded-lg">
                                     <div className="text-gray-600">Status</div>
                                     <div
-                                        className={`font-medium ${
-                                            apar?.status === "active"
+                                        className={`font-medium ${apar?.status === "active"
                                                 ? "text-green-600"
                                                 : apar?.status === "inactive"
-                                                ? "text-red-600"
-                                                : apar?.status ===
-                                                  "needs_repair"
-                                                ? "text-yellow-600"
-                                                : apar?.status ===
-                                                  "under_repair"
-                                                ? "text-blue-600"
-                                                : "text-gray-600"
-                                        }`}
+                                                    ? "text-red-600"
+                                                    : apar?.status ===
+                                                        "needs_repair"
+                                                        ? "text-yellow-600"
+                                                        : apar?.status ===
+                                                            "under_repair"
+                                                            ? "text-blue-600"
+                                                            : "text-gray-600"
+                                            }`}
                                     >
                                         {apar?.status === "active"
                                             ? "Aktif"
                                             : apar?.status === "inactive"
-                                            ? "Nonaktif"
-                                            : apar?.status === "needs_repair"
-                                            ? "Perlu Perbaikan"
-                                            : apar?.status === "under_repair"
-                                            ? "Sedang Perbaikan"
-                                            : apar?.status || "N/A"}
+                                                ? "Nonaktif"
+                                                : apar?.status === "needs_repair"
+                                                    ? "Perlu Perbaikan"
+                                                    : apar?.status === "under_repair"
+                                                        ? "Sedang Perbaikan"
+                                                        : apar?.status || "N/A"}
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 p-3 rounded-lg">
@@ -618,8 +633,8 @@ const InspectionForm = () => {
                                     <div className="font-medium text-gray-900">
                                         {apar?.expired_at
                                             ? new Date(
-                                                  apar.expired_at
-                                              ).toLocaleDateString("id-ID")
+                                                apar.expired_at
+                                            ).toLocaleDateString("id-ID")
                                             : "Tidak ada"}
                                     </div>
                                 </div>
@@ -631,13 +646,12 @@ const InspectionForm = () => {
                 {/* Location Validation */}
                 {apar?.location_type === "statis" && (
                     <div
-                        className={`bg-white shadow-xl rounded-2xl p-6 border border-gray-100 ${
-                            locationLoading
+                        className={`bg-white shadow-xl rounded-2xl p-6 border border-gray-100 ${locationLoading
                                 ? "border-l-4 border-blue-400 bg-blue-50"
                                 : locationValid
-                                ? "border-l-4 border-green-400 bg-green-50"
-                                : "border-l-4 border-red-400 bg-red-50"
-                        }`}
+                                    ? "border-l-4 border-green-400 bg-green-50"
+                                    : "border-l-4 border-red-400 bg-red-50"
+                            }`}
                     >
                         <div className="flex items-center space-x-4">
                             <div className="flex-shrink-0">
@@ -663,11 +677,10 @@ const InspectionForm = () => {
                                     {locationLoading
                                         ? "Mendapatkan lokasi..."
                                         : locationValid
-                                        ? "Lokasi valid. Anda berada di lokasi APAR."
-                                        : `${
-                                              locationError ||
-                                              "Lokasi tidak valid."
-                                          }`}
+                                            ? "Lokasi valid. Anda berada di lokasi APAR."
+                                            : `${locationError ||
+                                            "Lokasi tidak valid."
+                                            }`}
                                 </p>
                                 {currentLocation && (
                                     <div className="mt-2 space-y-1">
@@ -690,11 +703,10 @@ const InspectionForm = () => {
                                                     <div className="flex items-center justify-between text-sm">
                                                         <div className="flex items-center space-x-4">
                                                             <span
-                                                                className={`px-2 py-1 rounded-full font-medium ${
-                                                                    locationValid
+                                                                className={`px-2 py-1 rounded-full font-medium ${locationValid
                                                                         ? "bg-green-100 text-green-700"
                                                                         : "bg-red-100 text-red-700"
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 Jarak:{" "}
                                                                 {
@@ -727,16 +739,15 @@ const InspectionForm = () => {
                                                     {/* Simple distance visualization */}
                                                     <div className="w-full bg-gray-200 rounded-full h-2">
                                                         <div
-                                                            className={`h-2 rounded-full transition-all duration-300 ${
-                                                                locationValid
+                                                            className={`h-2 rounded-full transition-all duration-300 ${locationValid
                                                                     ? "bg-green-500"
                                                                     : "bg-red-500"
-                                                            }`}
+                                                                }`}
                                                             style={{
                                                                 width: `${Math.min(
                                                                     (locationDistance /
                                                                         locationValidRadius) *
-                                                                        100,
+                                                                    100,
                                                                     100
                                                                 )}%`,
                                                             }}
@@ -755,11 +766,10 @@ const InspectionForm = () => {
                                                     {/* Progress indicator */}
                                                     <div className="text-center">
                                                         <div
-                                                            className={`text-xs font-medium ${
-                                                                locationValid
+                                                            className={`text-xs font-medium ${locationValid
                                                                     ? "text-green-600"
                                                                     : "text-red-600"
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {locationValid
                                                                 ? "Dalam radius valid"
@@ -767,7 +777,7 @@ const InspectionForm = () => {
                                                         </div>
                                                         {!locationValid &&
                                                             locationDistance >
-                                                                locationValidRadius && (
+                                                            locationValidRadius && (
                                                                 <div className="text-xs text-gray-500 mt-1">
                                                                     Perlu
                                                                     mendekat{" "}
