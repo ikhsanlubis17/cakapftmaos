@@ -177,21 +177,22 @@ class ReportController extends Controller
      */
     private function generateOverdueReport($format)
     {
+    $nowUtc = Carbon::now('UTC');
+
         $overdueSchedules = InspectionSchedule::with(['apar.aparType', 'assignedUser'])
             ->where('is_active', true)
-            ->whereRaw('CONCAT(scheduled_date, " ", scheduled_time) < ?', [now()->format('Y-m-d H:i:s')])
-            ->orderBy('scheduled_date', 'asc')
-            ->orderBy('scheduled_time', 'asc')
+            ->where('start_at', '<', $nowUtc)
+            ->orderBy('start_at', 'asc')
             ->get();
 
         $data = [
             'title' => 'Laporan Jadwal Terlambat',
             'total_overdue' => $overdueSchedules->count(),
             'overdue_schedules' => $overdueSchedules,
-            'generated_at' => now()->format('d/m/Y H:i:s'),
+            'generated_at' => Carbon::now(config('app.timezone', 'UTC'))->format('d/m/Y H:i:s'),
         ];
 
-        $filename = "laporan-terlambat-" . now()->format('Y-m-d');
+        $filename = "laporan-terlambat-" . $nowUtc->format('Y-m-d');
 
         if ($format === 'excel') {
             return Excel::download(new OverdueReportExport($data), $filename . '.xlsx');
@@ -277,18 +278,14 @@ class ReportController extends Controller
     private function getAparTypesStats()
     {
         try {
-            // Try to get stats using new apar_type_id relationship
-            $aparTypes = Apar::with('aparType')
-                ->get()
-                ->groupBy('aparType.name')
-                ->map->count();
-            
-            // If no data found, return empty array
-            if ($aparTypes->isEmpty()) {
-                return [];
-            }
-            
-            return $aparTypes;
+            $aparTypes = Apar::query()
+                ->leftJoin('apar_types', 'apars.apar_type_id', '=', 'apar_types.id')
+                ->selectRaw('COALESCE(apar_types.name, ?) as type_name, COUNT(*) as total', ['Tidak diketahui'])
+                ->groupBy('type_name')
+                ->orderByDesc('total')
+                ->pluck('total', 'type_name');
+
+            return $aparTypes->toArray();
         } catch (\Exception $e) {
             Log::warning('Could not get APAR types stats using new relationship: ' . $e->getMessage());
             return [];

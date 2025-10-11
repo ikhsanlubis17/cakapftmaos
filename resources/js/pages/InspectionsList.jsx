@@ -40,7 +40,15 @@ const InspectionsList = () => {
     });
 
     useEffect(() => {
-        if (inspectionsQuery.data) setInspections(inspectionsQuery.data);
+        if (inspectionsQuery.data) {
+            // Sort by created_at descending (newest first)
+            const sorted = [...inspectionsQuery.data].sort((a, b) => {
+                const aTime = new Date(a.created_at).getTime();
+                const bTime = new Date(b.created_at).getTime();
+                return bTime - aTime;
+            });
+            setInspections(sorted);
+        }
         if (inspectionsQuery.isError) setError('Gagal memuat data inspeksi');
     }, [inspectionsQuery.data, inspectionsQuery.isError]);
 
@@ -109,7 +117,8 @@ const InspectionsList = () => {
     };
 
     // Filter inspections based on search and filters
-    const filteredInspections = inspections.filter(inspection => {
+    const filteredInspections = inspections
+        .filter(inspection => {
         const matchesSearch = 
             inspection.apar?.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             inspection.apar?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -123,7 +132,9 @@ const InspectionsList = () => {
         const matchesTechnician = technicianFilter === 'all' || inspection.user?.id?.toString() === technicianFilter;
 
         return matchesSearch && matchesStatus && matchesLocation && matchesTechnician;
-    });
+    })
+    // Ensure filtered results keep newest-first ordering
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Get unique technicians for filter
     const technicians = [...new Set(inspections.map(i => i.user?.id))].map(id => {

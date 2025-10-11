@@ -37,8 +37,8 @@ return new class extends Migration
 
         // Add indexes to inspection_schedules table
         Schema::table('inspection_schedules', function (Blueprint $table) {
-            $table->index(['apar_id', 'scheduled_date']);
-            $table->index(['scheduled_date', 'is_active']);
+            $table->index(['apar_id', 'start_at']);
+            $table->index(['start_at', 'is_active']);
             $table->index(['is_completed']);
         });
 
@@ -86,8 +86,8 @@ return new class extends Migration
 
         // Remove indexes from inspection_schedules table
         Schema::table('inspection_schedules', function (Blueprint $table) {
-            $table->dropIndex(['apar_id', 'scheduled_date']);
-            $table->dropIndex(['scheduled_date', 'is_active']);
+            $table->dropIndex(['apar_id', 'start_at']);
+            $table->dropIndex(['start_at', 'is_active']);
             $table->dropIndex(['is_completed']);
         });
 

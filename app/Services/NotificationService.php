@@ -19,18 +19,20 @@ class NotificationService
     {
         try {
             $sentCount = 0;
-            $today = Carbon::today();
-            
-            // Ambil semua jadwal aktif untuk hari ini
+            $appTimezone = config('app.timezone', 'UTC');
+            $todayLocal = Carbon::now($appTimezone);
+            $startOfDayUtc = $todayLocal->copy()->startOfDay()->setTimezone('UTC');
+            $endOfDayUtc = $todayLocal->copy()->endOfDay()->setTimezone('UTC');
+
             $todaySchedules = InspectionSchedule::with(['apar', 'assignedUser'])
                 ->where('is_active', true)
-                ->whereDate('scheduled_date', $today->toDateString())
+                ->whereBetween('start_at', [$startOfDayUtc, $endOfDayUtc])
                 ->get();
             
-            Log::info("Found {$todaySchedules->count()} schedules for today: " . $today->toDateString());
+            Log::info("Found {$todaySchedules->count()} schedules for today: " . $todayLocal->toDateString());
             
             foreach ($todaySchedules as $schedule) {
-                Log::info("Processing schedule ID: {$schedule->id}, Date: {$schedule->scheduled_date}, User: " . ($schedule->assignedUser ? $schedule->assignedUser->email : 'No user'));
+                Log::info("Processing schedule ID: {$schedule->id}, Start: " . optional($schedule->startAtLocal())->toDateTimeString() . ', User: ' . ($schedule->assignedUser ? $schedule->assignedUser->email : 'No user'));
                 
                 if ($schedule->assignedUser && $schedule->assignedUser->email) {
                     $sent = $this->sendScheduleNotification($schedule, 'reminder');
@@ -56,11 +58,11 @@ class NotificationService
     {
         try {
             $sentCount = 0;
+            $nowUtc = Carbon::now('UTC');
             
-            // Ambil semua jadwal aktif (tidak hanya hari ini)
             $allActiveSchedules = InspectionSchedule::with(['apar', 'assignedUser'])
                 ->where('is_active', true)
-                ->where('scheduled_date', '>=', Carbon::today()->toDateString())
+                ->where('start_at', '>=', $nowUtc)
                 ->get();
             
             foreach ($allActiveSchedules as $schedule) {
@@ -138,12 +140,12 @@ class NotificationService
                     'schedule_id' => $schedule->id,
                     'apar_id' => $apar->id,
                     'action' => $action,
-                    'scheduled_date' => $schedule->scheduled_date,
-                    'scheduled_time' => $schedule->scheduled_time,
+                    'start_at' => optional($schedule->startAtUtc())->toIso8601String(),
+                    'end_at' => optional($schedule->endAtUtc())->toIso8601String(),
                     'frequency' => $schedule->frequency
                 ],
                 'status' => 'sent',
-                'sent_at' => now()
+                'sent_at' => now('UTC')
             ]);
 
             Log::info("Schedule notification sent successfully", [
@@ -168,8 +170,7 @@ class NotificationService
      */
     private function getScheduleCreatedMessage($schedule, $apar, $technician)
     {
-        $date = Carbon::parse($schedule->scheduled_date)->locale('id')->isoFormat('dddd, D MMMM Y');
-        $time = $schedule->scheduled_time;
+        [$date, $time] = $this->getScheduleWindowStrings($schedule);
         $frequency = $this->getFrequencyText($schedule->frequency);
         
         return "Halo {$technician->name},\n\n" .
@@ -191,8 +192,7 @@ class NotificationService
      */
     private function getScheduleUpdatedMessage($schedule, $apar, $technician)
     {
-        $date = Carbon::parse($schedule->scheduled_date)->locale('id')->isoFormat('dddd, D MMMM Y');
-        $time = $schedule->scheduled_time;
+        [$date, $time] = $this->getScheduleWindowStrings($schedule);
         $frequency = $this->getFrequencyText($schedule->frequency);
         
         return "Halo {$technician->name},\n\n" .
@@ -216,8 +216,7 @@ class NotificationService
      */
     private function getScheduleDefaultMessage($schedule, $apar, $technician)
     {
-        $date = Carbon::parse($schedule->scheduled_date)->locale('id')->isoFormat('dddd, D MMMM Y');
-        $time = $schedule->scheduled_time;
+        [$date, $time] = $this->getScheduleWindowStrings($schedule);
         $frequency = $this->getFrequencyText($schedule->frequency);
         
         return "Halo {$technician->name},\n\n" .
@@ -249,6 +248,26 @@ class NotificationService
             default:
                 return $frequency;
         }
+    }
+
+    /**
+     * Format schedule window for notifications.
+     */
+    private function getScheduleWindowStrings(InspectionSchedule $schedule): array
+    {
+        $startAtLocal = $schedule->startAtLocal();
+        $endAtLocal = $schedule->endAtLocal();
+
+        $date = $startAtLocal
+            ? $startAtLocal->locale('id')->isoFormat('dddd, D MMMM Y')
+            : '-';
+
+        $startTime = $startAtLocal ? $startAtLocal->format('H:i') : '-';
+        $endTime = $endAtLocal ? $endAtLocal->format('H:i') : null;
+
+        $time = $endTime ? $startTime . ' - ' . $endTime : $startTime;
+
+        return [$date, $time];
     }
 
     /**
@@ -518,13 +537,15 @@ Tim CAKAP FT MAOS";
      */
     private function getInspectionReminderMessage($technician, $schedule)
     {
-        return "Halo {$technician->name},
+    [$date, $time] = $this->getScheduleWindowStrings($schedule);
+
+    return "Halo {$technician->name},
 
 Ini adalah pengingat untuk melakukan inspeksi APAR sesuai jadwal yang telah ditentukan.
 
 Detail Jadwal:
-- Tanggal: " . $schedule->scheduled_date . "
-- Waktu: " . $schedule->scheduled_time . "
+- Tanggal: {$date}
+- Waktu: {$time}
 - Lokasi: " . $schedule->apar->location_name . "
 - APAR: {$schedule->apar->serial_number}
 
@@ -590,8 +611,7 @@ Tim CAKAP FT MAOS";
      */
     private function getScheduleReminderMessage($schedule, $apar, $technician)
     {
-        $date = Carbon::parse($schedule->scheduled_date)->locale('id')->isoFormat('dddd, D MMMM Y');
-        $time = $schedule->scheduled_time;
+    [$date, $time] = $this->getScheduleWindowStrings($schedule);
         
         return "Halo {$technician->name},
 

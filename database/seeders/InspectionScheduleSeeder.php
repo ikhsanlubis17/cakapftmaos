@@ -29,32 +29,32 @@ class InspectionScheduleSeeder extends Seeder
         InspectionSchedule::query()->delete();
 
         // Create upcoming schedules for the next 7 days
-        $startDate = Carbon::today();
-        
+        $appTimezone = config('app.timezone', 'UTC');
+        $startDate = Carbon::today($appTimezone);
+
         for ($i = 0; $i < 7; $i++) {
             $date = $startDate->copy()->addDays($i);
-            
-            // Create 2-3 schedules per day
-            $schedulesPerDay = rand(2, 3);
-            
-            for ($j = 0; $j < $schedulesPerDay; $j++) {
-                $apar = $apars->random();
-                $technician = $technicians->random();
-                $times = $this->getRandomTimeRange();
-                
-                InspectionSchedule::create([
-                    'apar_id' => $apar->id,
-                    'assigned_user_id' => $technician->id,
-                    'scheduled_date' => $date->toDateString(),
-                    'scheduled_time' => $times['start'],
-                    'start_time' => $times['start'],
-                    'end_time' => $times['end'],
-                    'frequency' => $this->getRandomFrequency(),
-                    'is_active' => true,
-                    'is_completed' => false,
-                    'notes' => $this->getRandomNotes(),
-                ]);
+            $apar = $apars->random();
+            $technician = $technicians->random();
+            $times = $this->getRandomTimeRange();
+
+            $startAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['start'], $appTimezone);
+            $endAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['end'], $appTimezone);
+
+            if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
+                $endAtLocal = $startAtLocal->copy()->addHour();
             }
+
+            InspectionSchedule::create([
+                'apar_id' => $apar->id,
+                'assigned_user_id' => $technician->id,
+                'start_at' => $startAtLocal->clone()->setTimezone('UTC'),
+                'end_at' => $endAtLocal->clone()->setTimezone('UTC'),
+                'frequency' => $this->getRandomFrequency(),
+                'is_active' => true,
+                'is_completed' => false,
+                'notes' => $this->getRandomNotes(),
+            ]);
         }
 
         // Create some overdue schedules (past dates)
@@ -63,17 +63,48 @@ class InspectionScheduleSeeder extends Seeder
             $apar = $apars->random();
             $technician = $technicians->random();
             $times = $this->getRandomTimeRange();
-            
+
+            $startAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['start'], $appTimezone);
+            $endAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['end'], $appTimezone);
+
+            if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
+                $endAtLocal = $startAtLocal->copy()->addHour();
+            }
+
             InspectionSchedule::create([
                 'apar_id' => $apar->id,
                 'assigned_user_id' => $technician->id,
-                'scheduled_date' => $date->toDateString(),
-                'scheduled_time' => $times['start'],
-                'start_time' => $times['start'],
-                'end_time' => $times['end'],
+                'start_at' => $startAtLocal->clone()->setTimezone('UTC'),
+                'end_at' => $endAtLocal->clone()->setTimezone('UTC'),
                 'frequency' => $this->getRandomFrequency(),
                 'is_active' => true,
                 'is_completed' => false,
+                'notes' => $this->getRandomNotes(),
+            ]);
+        }
+
+        // Create some completed schedules (past dates that have been completed)
+        for ($i = 4; $i <= 6; $i++) {
+            $date = $startDate->copy()->subDays($i);
+            $apar = $apars->random();
+            $technician = $technicians->random();
+            $times = $this->getRandomTimeRange();
+
+            $startAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['start'], $appTimezone);
+            $endAtLocal = Carbon::parse($date->toDateString() . ' ' . $times['end'], $appTimezone);
+
+            if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
+                $endAtLocal = $startAtLocal->copy()->addHour();
+            }
+
+            InspectionSchedule::create([
+                'apar_id' => $apar->id,
+                'assigned_user_id' => $technician->id,
+                'start_at' => $startAtLocal->clone()->setTimezone('UTC'),
+                'end_at' => $endAtLocal->clone()->setTimezone('UTC'),
+                'frequency' => $this->getRandomFrequency(),
+                'is_active' => true,
+                'is_completed' => true,
                 'notes' => $this->getRandomNotes(),
             ]);
         }
@@ -86,11 +117,11 @@ class InspectionScheduleSeeder extends Seeder
     {
         $startTimes = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00'];
         $startTime = $startTimes[array_rand($startTimes)];
-        
+
         // Add 2-4 hours to start time for end time
         $start = Carbon::createFromFormat('H:i', $startTime);
         $end = $start->copy()->addHours(rand(2, 4));
-        
+
         return [
             'start' => $startTime,
             'end' => $end->format('H:i')
@@ -99,7 +130,7 @@ class InspectionScheduleSeeder extends Seeder
 
     private function getRandomFrequency(): string
     {
-        $frequencies = ['weekly', 'monthly', 'quarterly', 'semiannual'];
+        $frequencies = ['daily', 'weekly', 'monthly'];
         return $frequencies[array_rand($frequencies)];
     }
 

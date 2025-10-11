@@ -26,6 +26,7 @@ import {
     UserIcon,
     XCircleIcon
 } from '@heroicons/react/24/outline';
+import { getScheduleWindow, formatScheduleDate, formatScheduleTime } from '../utils/scheduleTime';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -66,14 +67,19 @@ const fetchDashboardStats = async ({ apiClient, startDate, endDate }) => {
 const fetchTeknisiData = async ({ apiClient }) => {
     const schedulesResponse = await apiClient.get('/api/schedules/my-schedules');
     const schedules = schedulesResponse.data || [];
-    
-    // Calculate stats from schedules
+
     const now = new Date();
     const stats = {
         totalAssignedSchedules: schedules.length,
         completedInspections: schedules.filter(s => s.is_completed).length,
-        pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
-        overdueInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) < now).length,
+        pendingInspections: schedules.filter(s => {
+            const { start } = getScheduleWindow(s);
+            return !s.is_completed && start && start >= now;
+        }).length,
+        overdueInspections: schedules.filter(s => {
+            const { start } = getScheduleWindow(s);
+            return !s.is_completed && start && start < now;
+        }).length,
         totalRepairs: 0,
         completedRepairs: 0,
         pendingRepairs: 0
@@ -355,100 +361,90 @@ const DashboardEnhanced = () => {
 
     // Helper functions for schedule status (same as SchedulesManagement.jsx)
     const getStatusColor = (schedule) => {
+        const { start, end } = getScheduleWindow(schedule);
         const now = new Date();
-        const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+
+        if (!start) {
+            return 'bg-gray-100 text-gray-700';
+        }
+
         if (!schedule.is_active) {
             return 'bg-gray-100 text-gray-700';
         }
-        
-        // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
-        // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
-            now >= scheduledDateTime && now <= scheduledEndDateTime) {
+
+        const endTime = end || new Date(start.getTime() + 60 * 60 * 1000);
+
+        if (start.toDateString() === now.toDateString() && now >= start && now <= endTime) {
             return 'bg-amber-100 text-amber-700';
         }
-        
-        // Check if schedule is today but not started yet - SECOND PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
+
+        if (start.toDateString() === now.toDateString() && now < start) {
             return 'bg-blue-100 text-blue-700';
         }
-        
-        // Check if schedule is overdue (past start time) - THIRD PRIORITY
-        if (scheduledDateTime < now) {
+
+        if (start < now) {
             return 'bg-red-100 text-red-700';
         }
-        
-        // Future schedule - LOWEST PRIORITY
+
         return 'bg-emerald-100 text-emerald-700';
     };
 
     const getStatusText = (schedule) => {
+        const { start, end } = getScheduleWindow(schedule);
         const now = new Date();
-        const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const startTime = schedule.start_time || '00:00:00';
-        const endTime = schedule.end_time || '23:59:59';
-        const scheduledDateTime = new Date(`${scheduledDate}T${startTime}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${endTime}`);
+
+        if (!start) {
+            return 'Tidak diketahui';
+        }
 
         if (!schedule.is_active) {
             return 'Nonaktif';
         }
 
-        // Priority order: today_ongoing > today_not_started > overdue > upcoming
+        const endTime = end || new Date(start.getTime() + 60 * 60 * 1000);
 
-        // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (now >= scheduledDateTime && now <= scheduledEndDateTime) {
+        if (now >= start && now <= endTime) {
             return 'Hari ini (sedang berlangsung)';
         }
 
-        // Check if schedule is today but not started yet - SECOND PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
+        if (start.toDateString() === now.toDateString() && now < start) {
             return 'Hari ini (belum dimulai)';
         }
 
-        // Check if schedule is overdue (past start time) - THIRD PRIORITY
-        if (scheduledDateTime < now) {
+        if (start < now) {
             return 'Terlambat';
         }
 
-        // Future schedule - LOWEST PRIORITY
         return 'Akan datang';
     };
 
 
     const getStatusIcon = (schedule) => {
+        const { start, end } = getScheduleWindow(schedule);
         const now = new Date();
-        const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+
+        if (!start) {
+            return XCircleIcon;
+        }
+
         if (!schedule.is_active) {
             return XCircleIcon;
         }
-        
-        // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
-        // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
-            now >= scheduledDateTime && now <= scheduledEndDateTime) {
+
+        const endTime = end || new Date(start.getTime() + 60 * 60 * 1000);
+
+        if (start.toDateString() === now.toDateString() && now >= start && now <= endTime) {
             return ClockIcon;
         }
-        
-        // Check if schedule is today but not started yet - SECOND PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
+
+        if (start.toDateString() === now.toDateString() && now < start) {
             return CalendarDaysIcon;
         }
-        
-        // Check if schedule is overdue (past start time) - THIRD PRIORITY
-        if (scheduledDateTime < now) {
+
+        if (start < now) {
             return ExclamationTriangleIcon;
         }
-        
-        // Future schedule - LOWEST PRIORITY
+
         return CheckCircleIcon;
     };
 
@@ -646,19 +642,11 @@ const DashboardEnhanced = () => {
                                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                                                         <div className="flex items-center gap-2">
                                                             <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-                                                            <span>
-                                                                {schedule.scheduled_date ? 
-                                                                    new Date(schedule.scheduled_date).toLocaleDateString("id-ID", {
-                                                                        day: "numeric",
-                                                                        month: "short",
-                                                                        year: "numeric",
-                                                                    }) : 'Tanggal tidak valid'
-                                                                }
-                                                            </span>
+                                                            <span>{formatScheduleDate(schedule, "id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <ClockIcon className="w-4 h-4 text-gray-400" />
-                                                            <span>{schedule.start_time} - {schedule.end_time}</span>
+                                                            <span>{formatScheduleTime(schedule)}</span>
                                                         </div>
                                                         <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full w-fit">
                                                             {getFrequencyText(schedule.frequency)}
@@ -678,7 +666,7 @@ const DashboardEnhanced = () => {
                                         
                                         <div className="flex items-center justify-end sm:justify-start gap-2">
                                             {/* Tombol Kirim Reminder hanya untuk Admin */}
-                                            {user?.role === 'admin' && (
+                                            {/* {user?.role === 'admin' && (
                                                 <button
                                                     onClick={() => sendReminderEmail(schedule)}
                                                     disabled={sendingReminder === schedule.id}
@@ -696,7 +684,7 @@ const DashboardEnhanced = () => {
                                                         </>
                                                     )}
                                                 </button>
-                                            )}
+                                            )} */}
                                             
                                             {/* Informasi untuk non-admin */}
                                             {user?.role !== 'admin' && (
@@ -839,19 +827,11 @@ const DashboardEnhanced = () => {
                                                         <div className="flex items-center gap-4">
                                                             <div className="flex items-center gap-2">
                                                                 <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-                                                                <span>
-                                                                    {schedule.scheduled_date ? 
-                                                                        new Date(schedule.scheduled_date).toLocaleDateString("id-ID", {
-                                                                            day: "numeric",
-                                                                            month: "short",
-                                                                            year: "numeric",
-                                                                        }) : 'Tanggal tidak valid'
-                                                                    }
-                                                                </span>
+                                                                <span>{formatScheduleDate(schedule, "id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 <ClockIcon className="w-4 h-4 text-gray-400" />
-                                                                <span>{schedule.start_time} - {schedule.end_time}</span>
+                                                                <span>{formatScheduleTime(schedule)}</span>
                                                             </div>
                                                         </div>
                                                     </div>

@@ -27,24 +27,35 @@ class ValidateInspectionTime
         
         // Check if there's a scheduled inspection for this APAR
         $schedule = InspectionSchedule::where('apar_id', $aparId)
-            ->where('scheduled_date', today())
+            ->where('is_active', true)
             ->where('is_completed', false)
+            ->orderBy('start_at')
             ->first();
 
         if ($schedule) {
-            $now = Carbon::now();
-            $scheduledTime = Carbon::parse($schedule->scheduled_time);
-            
-            // Allow inspection within 2 hours before and after scheduled time
-            $startTime = $scheduledTime->subHours(2);
-            $endTime = $scheduledTime->addHours(4); // 2 hours before + 2 hours after
-            
-            if ($now->lt($startTime) || $now->gt($endTime)) {
+            $nowUtc = Carbon::now('UTC');
+            $startAtUtc = $schedule->startAtUtc();
+            $endAtUtc = $schedule->endAtUtc();
+
+            if (!$startAtUtc || !$endAtUtc) {
+                return response()->json([
+                    'message' => 'Jadwal inspeksi belum memiliki waktu mulai atau selesai yang valid',
+                ], 422);
+            }
+
+            $windowStart = $startAtUtc->copy()->subHours(2);
+            $windowEnd = $endAtUtc->copy()->addHours(2);
+
+            if ($nowUtc->lt($windowStart) || $nowUtc->gt($windowEnd)) {
+                $appTimezone = config('app.timezone', 'UTC');
+                $startLocal = $schedule->startAtLocal()?->format('H:i:s');
+                $endLocal = $schedule->endAtLocal()?->format('H:i:s');
+
                 return response()->json([
                     'message' => 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan',
-                    'scheduled_time' => $schedule->scheduled_time,
-                    'current_time' => $now->format('H:i:s'),
-                    'valid_window' => $startTime->format('H:i:s') . ' - ' . $endTime->format('H:i:s')
+                    'scheduled_time' => $startLocal,
+                    'current_time' => Carbon::now($appTimezone)->format('H:i:s'),
+                    'valid_window' => ($startLocal ?? '-') . ' - ' . ($endLocal ?? '-')
                 ], 422);
             }
         }

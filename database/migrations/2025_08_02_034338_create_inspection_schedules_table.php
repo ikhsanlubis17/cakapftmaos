@@ -15,10 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('apar_id')->constrained()->onDelete('cascade');
             $table->foreignId('assigned_user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->date('scheduled_date');
-            $table->time('scheduled_time')->nullable();
-            $table->time('start_time');
-            $table->time('end_time');
+            $table->dateTimeTz('start_at');
+            $table->dateTimeTz('end_at');
             $table->enum('frequency', ['daily', 'weekly', 'monthly'])->default('weekly');
             $table->boolean('is_active')->default(true);
             $table->text('notes')->nullable();

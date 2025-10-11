@@ -8,6 +8,7 @@ use App\Models\Apar;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -51,55 +52,37 @@ class ScheduleController extends Controller
             });
         }
 
+        $appTimezone = config('app.timezone', 'UTC');
+        $nowLocal = Carbon::now($appTimezone);
+        $nowUtc = $nowLocal->copy()->setTimezone('UTC');
+        $startOfTodayUtc = $nowLocal->copy()->startOfDay()->setTimezone('UTC');
+        $endOfTodayUtc = $nowLocal->copy()->endOfDay()->setTimezone('UTC');
+
         // Apply status filter with improved logic - consistent with frontend
         if ($request->has('status') && $request->status !== 'all') {
-            $now = now();
-            $today = $now->toDateString();
-            $currentTime = $now->format('H:i:s');
-            
-            // Debug: Log the current time values
             Log::info('Filter debug info', [
                 'status' => $request->status,
-                'now' => $now->toDateTimeString(),
-                'today' => $today,
-                'current_time' => $currentTime,
-                'timezone' => $now->timezone->getName()
+                'now_local' => $nowLocal->toDateTimeString(),
+                'now_utc' => $nowUtc->toDateTimeString(),
+                'timezone' => $appTimezone,
             ]);
-            
+
             switch ($request->status) {
                 case 'overdue':
-                    // Jadwal yang sudah lewat waktu (scheduled_date < today atau scheduled_date = today dan start_time < current_time)
-                    $query->where(function($q) use ($today, $currentTime) {
-                        $q->where('scheduled_date', '<', $today)
-                          ->orWhere(function($subQ) use ($today, $currentTime) {
-                              $subQ->where('scheduled_date', '=', $today)
-                                   ->where('start_time', '<', $currentTime);
-                          });
-                    });
+                    $query->where('start_at', '<', $nowUtc);
                     break;
-                    
+
                 case 'today':
-                    // Jadwal hari ini (scheduled_date = today) - PERBAIKAN: Tampilkan semua jadwal hari ini
-                    $query->where('scheduled_date', $today);
+                    $query->whereBetween('start_at', [$startOfTodayUtc, $endOfTodayUtc]);
                     break;
-                    
+
                 case 'upcoming':
-                    // Jadwal yang akan datang (scheduled_date > today atau scheduled_date = today dan start_time > current_time)
-                    $query->where(function($q) use ($today, $currentTime) {
-                        $q->where('scheduled_date', '>', $today)
-                          ->orWhere(function($subQ) use ($today, $currentTime) {
-                              $subQ->where('scheduled_date', '=', $today)
-                                   ->where('start_time', '>', $currentTime);
-                          });
-                    });
+                    $query->where('start_at', '>', $nowUtc);
                     break;
             }
-            
-            // Log the filter query for debugging
+
             Log::info('Status filter applied', [
                 'status' => $request->status,
-                'today' => $today,
-                'current_time' => $currentTime,
                 'query_sql' => $query->toSql(),
                 'query_bindings' => $query->getBindings()
             ]);
@@ -128,8 +111,7 @@ class ScheduleController extends Controller
 
         // Apply pagination
         $perPage = $request->get('per_page', 15);
-        $schedules = $query->orderBy('scheduled_date')
-                          ->orderBy('start_time')
+    $schedules = $query->orderBy('start_at')
                           ->paginate($perPage);
 
         // Debug: Log pagination results
@@ -144,33 +126,25 @@ class ScheduleController extends Controller
 
         // Additional validation to ensure filter consistency - PERBAIKAN: Hapus validasi yang tidak perlu untuk 'today'
         if ($request->has('status') && $request->status !== 'all' && $request->status !== 'today') {
-            $now = now();
-            $today = $now->toDateString();
-            $currentTime = $now->format('H:i:s');
-            
-            // Filter out schedules that don't match the status filter
-            $filteredData = $schedules->getCollection()->filter(function($schedule) use ($request, $now, $today, $currentTime) {
-                $scheduledDate = $schedule->scheduled_date;
-                $startTime = $schedule->start_time;
-                $endTime = $schedule->end_time;
-                
+            $filteredData = $schedules->getCollection()->filter(function($schedule) use ($request, $nowUtc) {
+                $startAt = $schedule->startAtUtc();
+
+                if (!$startAt) {
+                    return false;
+                }
+
                 switch ($request->status) {
                     case 'overdue':
-                        // Must be overdue (past start time)
-                        return $scheduledDate < $today || 
-                               ($scheduledDate == $today && $startTime < $currentTime);
-                    
+                        return $startAt->lessThan($nowUtc);
+
                     case 'upcoming':
-                        // Must be future (not overdue)
-                        return $scheduledDate > $today || 
-                               ($scheduledDate == $today && $startTime > $currentTime);
-                    
+                        return $startAt->greaterThan($nowUtc);
+
                     default:
                         return true;
                 }
             });
-            
-            // Update the collection and create a new paginator with correct total
+
             $schedules = new \Illuminate\Pagination\LengthAwarePaginator(
                 $filteredData,
                 $filteredData->count(),
@@ -242,8 +216,7 @@ class ScheduleController extends Controller
         
         $schedules = InspectionSchedule::where('assigned_user_id', Auth::id())
             ->with(['apar.aparType', 'apar.tankTruck', 'assignedUser'])
-            ->orderBy('scheduled_date')
-            ->orderBy('start_time')
+            ->orderBy('start_at')
             ->get();
 
         // Log for debugging
@@ -294,12 +267,20 @@ class ScheduleController extends Controller
             ], 422);
         }
 
+        $appTimezone = config('app.timezone', 'UTC');
+
+        $startAtLocal = Carbon::parse($request->scheduled_date . ' ' . $request->start_time, $appTimezone);
+        $endAtLocal = Carbon::parse($request->scheduled_date . ' ' . $request->end_time, $appTimezone);
+
+        if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
+            $endAtLocal = $startAtLocal->copy()->addHour();
+        }
+
         $schedule = InspectionSchedule::create([
             'apar_id' => $request->apar_id,
             'assigned_user_id' => $request->assigned_user_id,
-            'scheduled_date' => $request->scheduled_date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_at' => $startAtLocal->copy()->setTimezone('UTC'),
+            'end_at' => $endAtLocal->copy()->setTimezone('UTC'),
             'frequency' => $request->frequency,
             'is_active' => $request->is_active ?? true,
             'notes' => $request->notes,
@@ -358,20 +339,27 @@ class ScheduleController extends Controller
             ], 422);
         }
 
-        $oldAssignedUserId = $schedule->assigned_user_id;
-        $oldScheduledDate = $schedule->scheduled_date;
-        $oldStartTime = $schedule->start_time;
-        $oldEndTime = $schedule->end_time;
+        $appTimezone = config('app.timezone', 'UTC');
+
+    $oldAssignedUserId = $schedule->assigned_user_id;
+    $oldStartAt = $schedule->start_at ? $schedule->start_at->copy() : null;
+    $oldEndAt = $schedule->end_at ? $schedule->end_at->copy() : null;
         $oldAparId = $schedule->apar_id;
         $oldFrequency = $schedule->frequency;
         $oldNotes = $schedule->notes;
-        
+
+        $startAtLocal = Carbon::parse($request->scheduled_date . ' ' . $request->start_time, $appTimezone);
+        $endAtLocal = Carbon::parse($request->scheduled_date . ' ' . $request->end_time, $appTimezone);
+
+        if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
+            $endAtLocal = $startAtLocal->copy()->addHour();
+        }
+
         $schedule->update([
             'apar_id' => $request->apar_id,
             'assigned_user_id' => $request->assigned_user_id,
-            'scheduled_date' => $request->scheduled_date,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
+            'start_at' => $startAtLocal->copy()->setTimezone('UTC'),
+            'end_at' => $endAtLocal->copy()->setTimezone('UTC'),
             'frequency' => $request->frequency,
             'is_active' => $request->is_active,
             'notes' => $request->notes,
@@ -383,25 +371,27 @@ class ScheduleController extends Controller
         $this->clearSchedulesCache();
 
         // Kirim notifikasi jika ada perubahan (sync untuk memastikan terkirim)
-        $hasChanges = $oldAssignedUserId != $request->assigned_user_id ||
-                     $oldScheduledDate != $request->scheduled_date ||
-                     $oldStartTime != $request->start_time ||
-                     $oldEndTime != $request->end_time ||
-                     $oldAparId != $request->apar_id ||
-                     $oldFrequency != $request->frequency ||
-                     $oldNotes != $request->notes;
+    $oldStartAtIso = $oldStartAt ? $oldStartAt->toIso8601String() : null;
+    $oldEndAtIso = $oldEndAt ? $oldEndAt->toIso8601String() : null;
+    $newStartAtIso = $schedule->start_at ? $schedule->start_at->toIso8601String() : null;
+    $newEndAtIso = $schedule->end_at ? $schedule->end_at->toIso8601String() : null;
+
+    $hasChanges = $oldAssignedUserId != $request->assigned_user_id ||
+             $oldStartAtIso !== $newStartAtIso ||
+             $oldEndAtIso !== $newEndAtIso ||
+             $oldAparId != $request->apar_id ||
+             $oldFrequency != $request->frequency ||
+             $oldNotes != $request->notes;
         
         if ($hasChanges) {
             Log::info('Schedule updated, sending notification', [
                 'schedule_id' => $schedule->id,
                 'old_assigned_user' => $oldAssignedUserId,
                 'new_assigned_user' => $request->assigned_user_id,
-                'old_date' => $oldScheduledDate,
-                'new_date' => $request->scheduled_date,
-                'old_time' => $oldStartTime,
-                'new_time' => $request->start_time,
-                'old_end_time' => $oldEndTime,
-                'new_end_time' => $request->end_time,
+                'old_start_at' => $oldStartAtIso,
+                'new_start_at' => $newStartAtIso,
+                'old_end_at' => $oldEndAtIso,
+                'new_end_at' => $newEndAtIso,
                 'old_apar' => $oldAparId,
                 'new_apar' => $request->apar_id,
                 'old_frequency' => $oldFrequency,
@@ -471,16 +461,20 @@ class ScheduleController extends Controller
     public function upcoming(Request $request)
     {
         try {
-            $startDate = $request->get('start_date', now()->toDateString());
-            $endDate = $request->get('end_date', now()->addDays(7)->toDateString());
+            $appTimezone = config('app.timezone', 'UTC');
+            $startDateInput = $request->get('start_date', Carbon::now($appTimezone)->toDateString());
+            $endDateInput = $request->get('end_date', Carbon::now($appTimezone)->addDays(7)->toDateString());
+
+            $startBoundaryUtc = Carbon::parse($startDateInput, $appTimezone)->startOfDay()->setTimezone('UTC');
+            $endBoundaryUtc = Carbon::parse($endDateInput, $appTimezone)->endOfDay()->setTimezone('UTC');
+            $nowUtc = Carbon::now('UTC');
 
             $schedules = InspectionSchedule::with(['apar', 'assignedUser'])
                 ->where('is_active', true)
                 ->where('is_completed', false)
-                ->whereBetween('scheduled_date', [$startDate, $endDate])
-                ->whereRaw('CONCAT(scheduled_date, " ", scheduled_time) > ?', [now()->format('Y-m-d H:i:s')])
-                ->orderBy('scheduled_date')
-                ->orderBy('scheduled_time')
+                ->whereBetween('start_at', [$startBoundaryUtc, $endBoundaryUtc])
+                ->where('start_at', '>', $nowUtc)
+                ->orderBy('start_at')
                 ->get();
 
             return response()->json([
@@ -489,8 +483,8 @@ class ScheduleController extends Controller
                     'schedules' => $schedules,
                     'total' => $schedules->count(),
                     'date_range' => [
-                        'start_date' => $startDate,
-                        'end_date' => $endDate
+                        'start_date' => $startDateInput,
+                        'end_date' => $endDateInput
                     ]
                 ]
             ]);

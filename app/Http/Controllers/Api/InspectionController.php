@@ -40,8 +40,7 @@ class InspectionController extends Controller
             ->whereDoesntHave('inspections', function($query) {
                 $query->where('status', 'completed');
             })
-            ->orderBy('scheduled_date')
-            ->orderBy('scheduled_time')
+            ->orderBy('start_at')
             ->get();
 
         // Convert schedules to inspection-like objects for frontend
@@ -52,6 +51,8 @@ class InspectionController extends Controller
                 'user' => $schedule->assignedUser,
                 'status' => 'pending',
                 'scheduled_date' => $schedule->scheduled_date,
+                'start_at' => optional($schedule->startAtUtc())->toIso8601String(),
+                'end_at' => optional($schedule->endAtUtc())->toIso8601String(),
                 'scheduled_time' => $schedule->scheduled_time,
                 'notes' => $schedule->notes,
                 'is_schedule' => true,
@@ -88,8 +89,7 @@ class InspectionController extends Controller
             ->whereDoesntHave('inspections', function($query) {
                 $query->where('status', 'completed');
             })
-            ->orderBy('scheduled_date')
-            ->orderBy('scheduled_time')
+            ->orderBy('start_at')
             ->get();
 
         // Convert schedules to inspection-like objects for frontend
@@ -99,6 +99,8 @@ class InspectionController extends Controller
                 'apar' => $schedule->apar,
                 'status' => 'pending',
                 'scheduled_date' => $schedule->scheduled_date,
+                'start_at' => optional($schedule->startAtUtc())->toIso8601String(),
+                'end_at' => optional($schedule->endAtUtc())->toIso8601String(),
                 'scheduled_time' => $schedule->scheduled_time,
                 'notes' => $schedule->notes,
                 'is_schedule' => true,
@@ -238,7 +240,7 @@ class InspectionController extends Controller
                 ->where('apar_id', $apar->id)
                 ->where('is_active', true)
                 ->where('is_completed', false)
-                ->orderBy('scheduled_date', 'desc')
+                ->orderBy('start_at', 'desc')
                 ->first();
         }
 
@@ -407,15 +409,18 @@ class InspectionController extends Controller
             }
 
             $aparId = $apar->id;
-            $now = now();
-            
-            // Check if there's a scheduled inspection for this APAR
+            $appTimezone = config('app.timezone', 'UTC');
+            $nowUtc = now('UTC');
+            $startOfDayUtc = $nowUtc->copy()->setTimezone($appTimezone)->startOfDay()->setTimezone('UTC');
+            $endOfDayUtc = $nowUtc->copy()->setTimezone($appTimezone)->endOfDay()->setTimezone('UTC');
 
-            $query = InspectionSchedule::where('apar_id', $aparId)
+            $schedule = InspectionSchedule::where('apar_id', $aparId)
+                ->where('assigned_user_id', Auth::id())
                 ->where('is_active', true)
                 ->where('is_completed', false)
-                ->where('scheduled_date', $now->toDateString());
-            $schedule = $query->where('assigned_user_id', Auth::id())->first();
+                ->whereBetween('start_at', [$startOfDayUtc, $endOfDayUtc])
+                ->orderBy('start_at')
+                ->first();
 
             if (!$schedule) {
                 return response()->json([
@@ -424,37 +429,33 @@ class InspectionController extends Controller
                 ], 422);
             }
 
-            // Prefer authoritative start_time/end_time window if present. Otherwise fall back
-            // to a derived window around scheduled_time (backwards compatible).
-            $scheduledDate = \Carbon\Carbon::parse($schedule->scheduled_date)->format('Y-m-d');
+            $startAtUtc = $schedule->startAtUtc();
+            $endAtUtc = $schedule->endAtUtc();
 
-            if (!empty($schedule->start_time) && !empty($schedule->end_time)) {
-                $startTime = \Carbon\Carbon::parse($scheduledDate . ' ' . $schedule->start_time);
-                $endTime = \Carbon\Carbon::parse($scheduledDate . ' ' . $schedule->end_time);
-                // keep a copy of scheduledTime for response convenience if available
-                $scheduledTime = !empty($schedule->scheduled_time) ? \Carbon\Carbon::parse($schedule->scheduled_time) : null;
-            } else {
-                $scheduledTime = \Carbon\Carbon::parse($schedule->scheduled_time);
-                $startTime = $scheduledTime->copy()->subHours(2);
-                $endTime = $scheduledTime->copy()->addHours(4);
-            }
-
-            if ($now->lt($startTime) || $now->gt($endTime)) {
+            if (!$startAtUtc || !$endAtUtc) {
                 return response()->json([
                     'valid' => false,
-                    'message' => 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan',
-                    'scheduled_time' => $scheduledTime ? $scheduledTime->format('H:i') : null,
-                    'valid_window' => $startTime->format('H:i') . ' - ' . $endTime->format('H:i')
+                    'message' => 'Jadwal tidak memiliki waktu mulai atau selesai yang valid'
                 ], 422);
             }
 
-            // Check if inspection is being done during working hours (optional)
-            $hour = $now->hour;
-            if ($hour < 6 || $hour > 22) {
-                // Log suspicious activity but don't block
+            $windowStartUtc = $startAtUtc->copy()->subHours(2);
+            $windowEndUtc = $endAtUtc->copy()->addHours(2);
+
+            if ($nowUtc->lt($windowStartUtc) || $nowUtc->gt($windowEndUtc)) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan',
+                    'scheduled_time' => $schedule->scheduled_time ? substr($schedule->scheduled_time, 0, 5) : null,
+                    'valid_window' => $schedule->start_time . ' - ' . $schedule->end_time,
+                ], 422);
+            }
+
+            $hourLocal = $schedule->startAtLocal()?->hour ?? $nowUtc->copy()->setTimezone($appTimezone)->hour;
+            if ($hourLocal < 6 || $hourLocal > 22) {
                 Log::warning('Inspection attempted outside normal hours', [
                     'apar_id' => $aparId,
-                    'time' => $now->format('Y-m-d H:i:s'),
+                    'time' => $nowUtc->toIso8601String(),
                     'user_id' => Auth::id()
                 ]);
             }
@@ -465,7 +466,9 @@ class InspectionController extends Controller
                 'schedule' => [
                     'id' => $schedule->id,
                     'scheduled_date' => $schedule->scheduled_date,
-                    'scheduled_time' => $scheduledTime->format('H:i'),
+                    'scheduled_time' => $schedule->scheduled_time ? substr($schedule->scheduled_time, 0, 5) : null,
+                    'start_at' => optional($schedule->startAtUtc())->toIso8601String(),
+                    'end_at' => optional($schedule->endAtUtc())->toIso8601String(),
                 ]
             ], 200);
 

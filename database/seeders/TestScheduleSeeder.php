@@ -32,37 +32,41 @@ class TestScheduleSeeder extends Seeder
         }
 
         // Create test schedules for today
-        $today = Carbon::today();
+    $appTimezone = config('app.timezone', 'UTC');
+    $today = Carbon::today($appTimezone);
         
         foreach ($apars as $index => $apar) {
+            $date = $today->copy()->addDays($index);
+            $startAtLocal = Carbon::parse($date->toDateString() . ' 08:00:00', $appTimezone);
+            $endAtLocal = Carbon::parse($date->toDateString() . ' 12:00:00', $appTimezone);
+
             InspectionSchedule::create([
                 'apar_id' => $apar->id,
                 'assigned_user_id' => $teknisi->id,
-                'scheduled_date' => $today->addDays($index)->toDateString(),
-                'scheduled_time' => '08:00:00',
-                'start_time' => '08:00:00',
-                'end_time' => '12:00:00',
+                'start_at' => $startAtLocal->clone()->setTimezone('UTC'),
+                'end_at' => $endAtLocal->clone()->setTimezone('UTC'),
                 'frequency' => 'weekly',
                 'is_active' => true,
                 'notes' => 'Test jadwal inspeksi untuk teknisi Ikhsanul Arifin - ' . ($index + 1),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at' => now('UTC'),
+                'updated_at' => now('UTC'),
             ]);
         }
 
         // Create a schedule for today specifically
+        $startAtLocal = Carbon::parse($today->toDateString() . ' 14:00:00', $appTimezone);
+        $endAtLocal = Carbon::parse($today->toDateString() . ' 17:00:00', $appTimezone);
+
         InspectionSchedule::create([
             'apar_id' => $apars->first()->id,
             'assigned_user_id' => $teknisi->id,
-            'scheduled_date' => $today->toDateString(),
-            'scheduled_time' => '14:00:00',
-            'start_time' => '14:00:00',
-            'end_time' => '17:00:00',
+            'start_at' => $startAtLocal->clone()->setTimezone('UTC'),
+            'end_at' => $endAtLocal->clone()->setTimezone('UTC'),
             'frequency' => 'weekly',
             'is_active' => true,
             'notes' => 'Jadwal inspeksi hari ini untuk teknisi Ikhsanul Arifin',
-            'created_at' => now(),
-            'updated_at' => now(),
+            'created_at' => now('UTC'),
+            'updated_at' => now('UTC'),
         ]);
 
         $this->command->info('Test schedules created successfully for Ikhsanul Arifin!');

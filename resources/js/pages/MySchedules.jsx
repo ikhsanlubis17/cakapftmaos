@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import {
+    getScheduleWindow,
+    formatScheduleDate,
+    formatScheduleTime,
+    getDaysUntilSchedule,
+} from '../utils/scheduleTime';
+import {
     CalendarIcon,
     ClockIcon,
     MapPinIcon,
@@ -53,8 +59,8 @@ const MySchedules = () => {
     // handle errors from the query via the error state if needed
 
     const getStatusColor = (schedule) => {
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return 'bg-gray-100 text-gray-800';
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return 'bg-gray-100 text-gray-800';
 
         const now = new Date();
 
@@ -66,13 +72,11 @@ const MySchedules = () => {
             return 'bg-green-100 text-green-800';
         }
 
-        // Jika waktu inspeksi sudah lewat (termasuk hari ini tapi sudah lewat jamnya)
-        if (scheduledDateTime < now) {
+        if (start < now) {
             return 'bg-red-100 text-red-800';
         }
 
-        // Jika hari ini dan waktu inspeksi belum lewat
-        if (scheduledDateTime.toDateString() === now.toDateString()) {
+        if (start.toDateString() === now.toDateString()) {
             return 'bg-yellow-100 text-yellow-800';
         }
 
@@ -80,42 +84,38 @@ const MySchedules = () => {
     };
 
     const getStatusText = (schedule) => {
+        const { start, end } = getScheduleWindow(schedule);
         const now = new Date();
-        const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const startTime = schedule.start_time || '00:00:00';
-        const endTime = schedule.end_time || '23:59:59';
-        const scheduledDateTime = new Date(`${scheduledDate}T${startTime}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${endTime}`);
+
+        if (!start) {
+            return 'Tidak diketahui';
+        }
 
         if (!schedule.is_active) {
             return 'Nonaktif';
         }
 
-        // Priority order: today_ongoing > today_not_started > overdue > upcoming
+        const endTime = end || new Date(start.getTime() + 60 * 60 * 1000);
 
-        // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (now >= scheduledDateTime && now <= scheduledEndDateTime) {
+        if (now >= start && now <= endTime) {
             return 'Hari ini (sedang berlangsung)';
         }
 
-        // Check if schedule is today but not started yet - SECOND PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
+        if (start.toDateString() === now.toDateString() && now < start) {
             return 'Hari ini (belum dimulai)';
         }
 
-        // Check if schedule is overdue (past start time) - THIRD PRIORITY
-        if (scheduledDateTime < now) {
+        if (start < now) {
             return 'Terlambat';
         }
 
-        // Future schedule - LOWEST PRIORITY
         return 'Akan datang';
     };
 
 
     const getStatusIcon = (schedule) => {
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return <XCircleIcon className="h-5 w-5" />;
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return <XCircleIcon className="h-5 w-5" />;
 
         const now = new Date();
 
@@ -127,13 +127,11 @@ const MySchedules = () => {
             return <CheckCircleIcon className="h-5 w-5" />;
         }
 
-        // Jika waktu inspeksi sudah lewat (termasuk hari ini tapi sudah lewat jamnya)
-        if (scheduledDateTime < now) {
+        if (start < now) {
             return <ExclamationTriangleIcon className="h-5 w-5" />;
         }
 
-        // Jika hari ini dan waktu inspeksi belum lewat
-        if (scheduledDateTime.toDateString() === now.toDateString()) {
+        if (start.toDateString() === now.toDateString()) {
             return <BellIcon className="h-5 w-5" />;
         }
 
@@ -153,134 +151,35 @@ const MySchedules = () => {
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const options = {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        };
-        return date.toLocaleDateString('id-ID', options);
-    };
+    const formatDate = (schedule) => formatScheduleDate(schedule);
 
-    const formatTime = (timeString) => {
-        return timeString;
-    };
+    const formatTime = (schedule) => formatScheduleTime(schedule);
 
-    // Fungsi helper untuk mendapatkan tanggal dan waktu yang benar
-    const getScheduledDateTime = (schedule) => {
-        try {
-            let dateString = schedule.scheduled_date;
-            let timeString = schedule.scheduled_time;
-
-            // Jika scheduled_date sudah dalam format ISO (dengan timezone)
-            if (dateString.includes('T') || dateString.includes('Z')) {
-                const dateObj = new Date(dateString);
-                dateString = dateObj.toISOString().split('T')[0]; // Ambil hanya tanggal YYYY-MM-DD
-            }
-
-            // Jika scheduled_time null atau undefined, gunakan 00:00:00
-            if (!timeString) {
-                timeString = '00:00:00';
-            }
-
-            const scheduledDateTime = new Date(`${dateString}T${timeString}`);
-
-            if (isNaN(scheduledDateTime.getTime())) {
-                console.error('Invalid date/time after processing:', dateString, timeString);
-                return null;
-            }
-
-            return scheduledDateTime;
-        } catch (error) {
-            console.error('Error processing date/time:', error, schedule);
-            return null;
-        }
-    };
-
-    const getDaysUntil = (dateString, timeString) => {
-        try {
-            const now = new Date();
-            let processedDateString = dateString;
-            let processedTimeString = timeString;
-
-            // Jika dateString sudah dalam format ISO (dengan timezone)
-            if (dateString.includes('T') || dateString.includes('Z')) {
-                const dateObj = new Date(dateString);
-                processedDateString = dateObj.toISOString().split('T')[0]; // Ambil hanya tanggal YYYY-MM-DD
-            }
-
-            // Jika timeString null atau undefined, gunakan 00:00:00
-            if (!processedTimeString) {
-                processedTimeString = '00:00:00';
-            }
-
-            const scheduledDateTime = new Date(`${processedDateString}T${processedTimeString}`);
-
-            // Validasi input
-            if (isNaN(scheduledDateTime.getTime())) {
-                console.error('Invalid date/time:', dateString, timeString);
-                return 'Tanggal tidak valid';
-            }
-
-            const diffTime = scheduledDateTime - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (isNaN(diffDays)) {
-                console.error('Invalid diffDays calculation:', diffTime, diffDays);
-                return 'Perhitungan error';
-            }
-
-            if (diffDays < 0) {
-                return `${Math.abs(diffDays)} hari yang lalu`;
-            } else if (diffDays === 0) {
-                // Jika hari yang sama, cek apakah sudah lewat waktunya
-                if (scheduledDateTime < now) {
-                    return 'Hari ini (terlambat)';
-                } else {
-                    return 'Hari ini';
-                }
-            } else if (diffDays === 1) {
-                // Jika besok, tapi masih hari yang sama, tetap tampilkan "Hari ini"
-                const scheduledDate = new Date(scheduledDateTime);
-                const currentDate = new Date(now);
-                if (scheduledDate.toDateString() === currentDate.toDateString()) {
-                    return 'Hari ini';
-                }
-                return 'Besok';
-            } else {
-                return `${diffDays} hari lagi`;
-            }
-        } catch (error) {
-            console.error('Error in getDaysUntil:', error);
-            return 'Error perhitungan';
-        }
-    };
+    const getDaysUntil = (schedule) => getDaysUntilSchedule(schedule);
 
     // Perbaiki logika summary cards untuk konsisten dengan status
     const todaySchedules = schedules.filter(schedule => {
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return false;
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return false;
 
         const now = new Date();
-        return scheduledDateTime.toDateString() === now.toDateString() && schedule.is_active && !schedule.is_completed;
+        return start.toDateString() === now.toDateString() && schedule.is_active && !schedule.is_completed;
     });
 
     const upcomingSchedules = schedules.filter(schedule => {
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return false;
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return false;
 
         const now = new Date();
-        return scheduledDateTime > now && schedule.is_active && !schedule.is_completed;
+        return start > now && schedule.is_active && !schedule.is_completed;
     });
 
     const overdueSchedules = schedules.filter(schedule => {
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return false;
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return false;
 
         const now = new Date();
-        return scheduledDateTime < now && !schedule.is_completed && schedule.is_active;
+        return start < now && !schedule.is_completed && schedule.is_active;
     });
 
     const completedSchedules = schedules.filter(schedule => schedule.is_completed);
@@ -294,9 +193,9 @@ const MySchedules = () => {
         completedSchedules: completedSchedules.length,
         currentTime: new Date().toISOString(),
         sampleSchedule: schedules[0] ? {
-            scheduled_date: schedules[0].scheduled_date,
-            scheduled_time: schedules[0].scheduled_time,
-            processed: getScheduledDateTime(schedules[0])
+            start_at: schedules[0].start_at,
+            end_at: schedules[0].end_at,
+            processed: getScheduleWindow(schedules[0])
         } : null
     });
 
@@ -324,15 +223,15 @@ const MySchedules = () => {
             schedule.apar?.location_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             schedule.notes?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const scheduledDateTime = getScheduledDateTime(schedule);
-        if (!scheduledDateTime) return false;
+        const { start } = getScheduleWindow(schedule);
+        if (!start) return false;
 
         const now = new Date();
 
         const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'today' && scheduledDateTime.toDateString() === now.toDateString() && schedule.is_active && !schedule.is_completed) ||
-            (statusFilter === 'upcoming' && scheduledDateTime > now && schedule.is_active && !schedule.is_completed) ||
-            (statusFilter === 'overdue' && scheduledDateTime < now && !schedule.is_completed && schedule.is_active) ||
+            (statusFilter === 'today' && start.toDateString() === now.toDateString() && schedule.is_active && !schedule.is_completed) ||
+            (statusFilter === 'upcoming' && start > now && schedule.is_active && !schedule.is_completed) ||
+            (statusFilter === 'overdue' && start < now && !schedule.is_completed && schedule.is_active) ||
             (statusFilter === 'completed' && schedule.is_completed);
 
         let matchesDate = true;
@@ -341,14 +240,12 @@ const MySchedules = () => {
             weekStart.setDate(weekStart.getDate() - weekStart.getDay());
             const weekEnd = new Date(weekStart);
             weekEnd.setDate(weekEnd.getDate() + 6);
-            const scheduleDate = new Date(schedule.scheduled_date);
-            matchesDate = scheduleDate >= weekStart && scheduleDate <= weekEnd;
+            matchesDate = start >= weekStart && start <= weekEnd;
         } else if (dateFilter === 'this_month') {
             const monthStart = new Date();
             monthStart.setDate(1);
             const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
-            const scheduleDate = new Date(schedule.scheduled_date);
-            matchesDate = scheduleDate >= monthStart && scheduleDate <= monthEnd;
+            matchesDate = start >= monthStart && start <= monthEnd;
         }
 
         return matchesSearch && matchesStatus && matchesDate;
@@ -563,14 +460,14 @@ const MySchedules = () => {
                                                 <div className="flex items-center space-x-2">
                                                     <CalendarIcon className="h-4 w-4 text-gray-400" />
                                                     <span className="text-sm text-gray-600">
-                                                        {formatDate(schedule.scheduled_date)}
+                                                        {formatDate(schedule)}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center space-x-2">
                                                     <ClockIcon className="h-4 w-4 text-gray-400" />
                                                     <span className="text-sm text-gray-600">
-                                                        {formatTime(schedule.scheduled_time)}
+                                                        {formatTime(schedule)}
                                                     </span>
                                                 </div>
 
@@ -584,7 +481,7 @@ const MySchedules = () => {
 
                                             <div className="space-y-3">
                                                 <div className="text-sm text-gray-600">
-                                                    <span className="font-medium">Jarak waktu:</span> {getDaysUntil(schedule.scheduled_date, schedule.scheduled_time)}
+                                                    <span className="font-medium">Jarak waktu:</span> {getDaysUntil(schedule)}
                                                 </div>
 
                                                 {schedule.notes && (

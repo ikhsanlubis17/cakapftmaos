@@ -46,10 +46,11 @@ class DashboardController extends Controller
                 }
             }
 
-            // Get inspection statistics - use scheduled_date and scheduled_time
+            // Get inspection statistics using UTC start timestamps
+            $nowUtc = Carbon::now('UTC');
             $overdueInspections = InspectionSchedule::where('is_active', true)
-                ->whereRaw('CONCAT(scheduled_date, " ", scheduled_time) < ?', [now()->format('Y-m-d H:i:s')])
                 ->where('is_completed', false)
+                ->where('start_at', '<', $nowUtc)
                 ->count();
 
             // Get repair approval statistics

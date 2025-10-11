@@ -10,6 +10,11 @@ import {
     ArrowPathIcon,
     PlusIcon
 } from '@heroicons/react/24/outline';
+import {
+    getScheduleWindow,
+    formatScheduleDate,
+    formatScheduleTime,
+} from '../utils/scheduleTime';
 
 const TeknisiDashboard = () => {
     const { user, apiClient } = useAuth();
@@ -74,21 +79,31 @@ const TeknisiDashboard = () => {
             const stats = {
                 totalAssignedSchedules: schedules.length,
                 completedInspections: schedules.filter(s => s.is_completed).length,
-                pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
+                pendingInspections: schedules.filter(s => {
+                    const { start } = getScheduleWindow(s);
+                    return !s.is_completed && start && start >= now;
+                }).length,
                 thisWeekSchedules: schedules.filter(s => {
-                    const scheduleDate = new Date(s.scheduled_date);
-                    return scheduleDate >= thisWeekStart && scheduleDate <= thisWeekEnd;
+                    const { start } = getScheduleWindow(s);
+                    return start && start >= thisWeekStart && start <= thisWeekEnd;
                 }).length,
                 nextWeekSchedules: schedules.filter(s => {
-                    const scheduleDate = new Date(s.scheduled_date);
-                    return scheduleDate > thisWeekEnd && scheduleDate <= nextWeek;
+                    const { start } = getScheduleWindow(s);
+                    return start && start > thisWeekEnd && start <= nextWeek;
                 }).length
             };
             setTeknisiStats(stats);
 
             const upcomingSchedules = schedules
-                .filter(s => !s.is_completed && new Date(s.scheduled_date) >= now)
-                .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                .filter(s => {
+                    const { start } = getScheduleWindow(s);
+                    return !s.is_completed && start && start >= now;
+                })
+                .sort((a, b) => {
+                    const startA = getScheduleWindow(a).start?.getTime() || 0;
+                    const startB = getScheduleWindow(b).start?.getTime() || 0;
+                    return startA - startB;
+                })
                 .slice(0, 5);
             setUpcomingDeadlines(upcomingSchedules);
         }
@@ -109,20 +124,33 @@ const TeknisiDashboard = () => {
         setToast(prev => ({ ...prev, isOpen: false }));
     };
 
-    // Helper function untuk format tanggal
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
+    const formatDate = (schedule, options) => {
+        const { start } = getScheduleWindow(schedule);
+
+        if (!start) {
+            return 'Tanggal tidak valid';
+        }
+
+        const defaultOptions = {
             weekday: 'short',
             day: 'numeric',
             month: 'short',
-            year: 'numeric'
-        });
+            year: 'numeric',
+        };
+
+        return start.toLocaleDateString('id-ID', options || defaultOptions);
     };
 
-    // Helper function untuk format waktu
-    const formatTime = (timeString) => {
-        return timeString ? timeString.substring(0, 5) : '';
+    const formatTimeRange = (schedule) => formatScheduleTime(schedule);
+
+    const formatStartTime = (schedule) => {
+        const { start } = getScheduleWindow(schedule);
+
+        if (!start) {
+            return '-';
+        }
+
+        return start.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     };
 
     if (loading) {
@@ -252,11 +280,11 @@ const TeknisiDashboard = () => {
                                                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                                                     <div className="flex items-center gap-2">
                                                         <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
-                                                        <span>{formatDate(schedule.scheduled_date)}</span>
+                                                        <span>{formatDate(schedule)}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <ClockIcon className="w-4 h-4 text-gray-400" />
-                                                        <span>{formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}</span>
+                                                        <span>{formatTimeRange(schedule)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -315,11 +343,11 @@ const TeknisiDashboard = () => {
                                                 <div className="flex items-center gap-4 mt-2 text-sm text-amber-700">
                                                     <div className="flex items-center gap-2">
                                                         <CalendarDaysIcon className="w-4 h-4" />
-                                                        <span>{formatDate(schedule.scheduled_date)}</span>
+                                                        <span>{formatDate(schedule)}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <ClockIcon className="w-4 h-4" />
-                                                        <span>{formatTime(schedule.start_time)}</span>
+                                                        <span>{formatStartTime(schedule)}</span>
                                                     </div>
                                                 </div>
                                             </div>

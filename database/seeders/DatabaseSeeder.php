@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             AparSeeder::class,
             DamageCategorySeeder::class,
             InspectionSeeder::class,
+            InspectionScheduleSeeder::class,
             RepairApprovalSeeder::class,
         ]);
     }

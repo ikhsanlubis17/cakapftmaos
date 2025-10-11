@@ -20,16 +20,26 @@ class InspectionSchedule extends Model
     protected $fillable = [
         'apar_id',
         'assigned_user_id',
-        'scheduled_date',
-        'scheduled_time',
-        'start_time',
-        'end_time',
+        'start_at',
+        'end_at',
         'frequency',
         'auto_reminder',
         'reminder_days_before',
         'is_active',
         'is_completed',
         'notes',
+    ];
+
+    /**
+     * Attributes appended to array / JSON responses for backwards compatibility.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'scheduled_date',
+        'scheduled_time',
+        'start_time',
+        'end_time',
     ];
 
     /**
@@ -40,10 +50,8 @@ class InspectionSchedule extends Model
     protected function casts(): array
     {
         return [
-            'scheduled_date' => 'date',
-            'scheduled_time' => 'datetime:H:i:s',
-            'start_time' => 'string',
-            'end_time' => 'string',
+            'start_at' => 'datetime',
+            'end_at' => 'datetime',
             'auto_reminder' => 'boolean',
             'reminder_days_before' => 'integer',
             'is_active' => 'boolean',
@@ -88,23 +96,13 @@ class InspectionSchedule extends Model
      */
     public function isOverdue(): bool
     {
-        $now = Carbon::now();
-        $scheduledDate = $this->scheduled_date;
-        $startTime = $this->start_time;
-        
-        // Check if date is past
-        if (Carbon::parse($scheduledDate)->isPast()) {
-            return true;
+        $endAt = $this->end_at;
+
+        if (!$endAt instanceof Carbon) {
+            return false;
         }
-        
-        // Check if today but start time has passed
-        if (Carbon::parse($scheduledDate)->isToday()) {
-            $today = $now->format('Y-m-d');
-            $scheduledDateTime = Carbon::parse($today . ' ' . $startTime);
-            return $scheduledDateTime->isPast();
-        }
-        
-        return false;
+
+        return $this->nowUtc()->greaterThan($endAt->copy()->setTimezone('UTC'));
     }
 
     /**
@@ -112,7 +110,9 @@ class InspectionSchedule extends Model
      */
     public function isDueToday(): bool
     {
-        return Carbon::parse($this->scheduled_date)->isToday();
+        $startAtLocal = $this->startAtLocal();
+
+        return $startAtLocal ? $startAtLocal->isToday() : false;
     }
 
     /**
@@ -120,7 +120,13 @@ class InspectionSchedule extends Model
      */
     public function isDueWithinDays(int $days): bool
     {
-        return Carbon::parse($this->scheduled_date)->diffInDays(now()) <= $days;
+        $startAtLocal = $this->startAtLocal();
+
+        if (!$startAtLocal) {
+            return false;
+        }
+
+        return $startAtLocal->diffInDays($this->nowLocal()) <= $days;
     }
 
     /**
@@ -128,14 +134,22 @@ class InspectionSchedule extends Model
      */
     public function isWithinInspectionWindow(): bool
     {
-        $now = Carbon::now();
-        $scheduledTime = Carbon::parse($this->scheduled_date . ' ' . $this->scheduled_time);
-        
-        // Allow 30 minutes before and after scheduled time
-        $startTime = $scheduledTime->copy()->subMinutes(30);
-        $endTime = $scheduledTime->copy()->addMinutes(30);
+        $now = $this->nowUtc();
+        $startAt = $this->startAtUtc();
 
-        return $now->between($startTime, $endTime);
+        if (!$startAt) {
+            return false;
+        }
+
+        $windowStart = $startAt->copy()->subMinutes(30);
+        $windowEnd = $startAt->copy()->addMinutes(30);
+
+        $endAt = $this->endAtUtc();
+        if ($endAt && $windowEnd->greaterThan($endAt)) {
+            $windowEnd = $endAt;
+        }
+
+        return $now->between($windowStart, $windowEnd);
     }
 
     /**
@@ -143,22 +157,14 @@ class InspectionSchedule extends Model
      */
     public function isOngoing(): bool
     {
-        $now = Carbon::now();
-        $scheduledDate = $this->scheduled_date;
-        $startTime = $this->start_time;
-        $endTime = $this->end_time;
-        
-        // Check if today
-        if (!Carbon::parse($scheduledDate)->isToday()) {
+        $startAt = $this->startAtUtc();
+        $endAt = $this->endAtUtc();
+
+        if (!$startAt || !$endAt) {
             return false;
         }
-        
-        // Check if within time window
-        $today = $now->format('Y-m-d');
-        $scheduledStartTime = Carbon::parse($today . ' ' . $startTime);
-        $scheduledEndTime = Carbon::parse($today . ' ' . $endTime);
-        
-        return $now->between($scheduledStartTime, $scheduledEndTime);
+
+        return $this->nowUtc()->between($startAt, $endAt);
     }
 
     /**
@@ -166,23 +172,13 @@ class InspectionSchedule extends Model
      */
     public function isUpcoming(): bool
     {
-        $now = Carbon::now();
-        $scheduledDate = $this->scheduled_date;
-        $startTime = $this->start_time;
-        
-        // Check if future date
-        if (Carbon::parse($scheduledDate)->isFuture()) {
-            return true;
+        $startAt = $this->startAtUtc();
+
+        if (!$startAt) {
+            return false;
         }
-        
-        // Check if today but not started yet (and not overdue)
-        if (Carbon::parse($scheduledDate)->isToday()) {
-            $today = $now->format('Y-m-d');
-            $scheduledDateTime = Carbon::parse($today . ' ' . $startTime);
-            return $scheduledDateTime->isFuture();
-        }
-        
-        return false;
+
+        return $startAt->greaterThan($this->nowUtc());
     }
 
     /**
@@ -215,6 +211,108 @@ class InspectionSchedule extends Model
      */
     public function daysUntilNextInspection(): int
     {
-        return Carbon::parse($this->scheduled_date)->diffInDays(now());
+        $startAtLocal = $this->startAtLocal();
+
+        if (!$startAtLocal) {
+            return 0;
+        }
+
+        return $startAtLocal->diffInDays($this->nowLocal());
+    }
+
+    /**
+     * Derive scheduled date from the stored UTC start timestamp.
+     */
+    public function getScheduledDateAttribute(): ?string
+    {
+        $startAtLocal = $this->startAtLocal();
+
+        return $startAtLocal ? $startAtLocal->toDateString() : null;
+    }
+
+    /**
+     * Derive scheduled time (backwards compatibility with legacy field).
+     */
+    public function getScheduledTimeAttribute(): ?string
+    {
+        $startAtLocal = $this->startAtLocal();
+
+        return $startAtLocal ? $startAtLocal->format('H:i:s') : null;
+    }
+
+    /**
+     * Alias for start time to satisfy existing consumers.
+     */
+    public function getStartTimeAttribute(): ?string
+    {
+        $startAtLocal = $this->startAtLocal();
+
+        return $startAtLocal ? $startAtLocal->format('H:i:s') : null;
+    }
+
+    /**
+     * Alias for end time to satisfy existing consumers.
+     */
+    public function getEndTimeAttribute(): ?string
+    {
+        $endAtLocal = $this->endAtLocal();
+
+        return $endAtLocal ? $endAtLocal->format('H:i:s') : null;
+    }
+
+    /**
+     * Retrieve the stored start time in UTC.
+     */
+    public function startAtUtc(): ?Carbon
+    {
+        return $this->start_at ? $this->start_at->copy()->setTimezone('UTC') : null;
+    }
+
+    /**
+     * Retrieve the stored end time in UTC.
+     */
+    public function endAtUtc(): ?Carbon
+    {
+        return $this->end_at ? $this->end_at->copy()->setTimezone('UTC') : null;
+    }
+
+    /**
+     * Retrieve the start time in the configured application timezone.
+     */
+    public function startAtLocal(): ?Carbon
+    {
+        return $this->start_at ? $this->start_at->copy()->setTimezone($this->displayTimezone()) : null;
+    }
+
+    /**
+     * Retrieve the end time in the configured application timezone.
+     */
+    public function endAtLocal(): ?Carbon
+    {
+        return $this->end_at ? $this->end_at->copy()->setTimezone($this->displayTimezone()) : null;
+    }
+
+    /**
+     * Provide the current time in UTC.
+     */
+    protected function nowUtc(): Carbon
+    {
+        return Carbon::now('UTC');
+    }
+
+    /**
+     * Provide the current time in local display timezone.
+     */
+    protected function nowLocal(): Carbon
+    {
+        return Carbon::now($this->displayTimezone());
+    }
+
+    /**
+     * Resolve the display timezone used for conversions.
+     */
+    protected function displayTimezone(): string
+    {
+        return config('app.display_timezone', config('app.timezone', 'UTC'));
     }
 }
