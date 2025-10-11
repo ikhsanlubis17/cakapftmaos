@@ -28,7 +28,6 @@ function scannerReducer(state: QRScannerState, action: { type: 'start' | 'barcod
 const QRScanner = () => {
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-
     const [scannerState, dispatch] = useReducer(scannerReducer, { state: 'initial' });
     const { apiClient } = useAuth();
 
@@ -37,7 +36,7 @@ const QRScanner = () => {
             const resp = await apiClient.post('/api/inspections/validate', { apar_qrCode: qrCode });
             return resp.data;
         },
-        throwOnError: true,
+        throwOnError: false,
     });
 
     const onScanSuccess = async (barcode: IDetectedBarcode[]) => {
