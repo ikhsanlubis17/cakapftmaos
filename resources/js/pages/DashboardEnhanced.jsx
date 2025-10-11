@@ -1252,7 +1252,7 @@ const DashboardEnhanced = () => {
                                         </div>
                                     </div>
                                     <Link
-                                        to={`/inspections/${inspection.id}`}
+                                        to={`/apar/${inspection.apar?.id}`}
                                         className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-xs lg:text-sm font-medium transition-colors flex-shrink-0"
                                     >
                                         <EyeIcon className="h-4 w-4" />
