@@ -389,34 +389,36 @@ const DashboardEnhanced = () => {
     const getStatusText = (schedule) => {
         const now = new Date();
         const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+        const startTime = schedule.start_time || '00:00:00';
+        const endTime = schedule.end_time || '23:59:59';
+        const scheduledDateTime = new Date(`${scheduledDate}T${startTime}`);
+        const scheduledEndDateTime = new Date(`${scheduledDate}T${endTime}`);
+
         if (!schedule.is_active) {
             return 'Nonaktif';
         }
-        
+
         // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
+
         // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
-            now >= scheduledDateTime && now <= scheduledEndDateTime) {
+        if (now >= scheduledDateTime && now <= scheduledEndDateTime) {
             return 'Hari ini (sedang berlangsung)';
         }
-        
+
         // Check if schedule is today but not started yet - SECOND PRIORITY
         if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
             return 'Hari ini (belum dimulai)';
         }
-        
+
         // Check if schedule is overdue (past start time) - THIRD PRIORITY
         if (scheduledDateTime < now) {
             return 'Terlambat';
         }
-        
+
         // Future schedule - LOWEST PRIORITY
         return 'Akan datang';
     };
+
 
     const getStatusIcon = (schedule) => {
         const now = new Date();

@@ -114,7 +114,7 @@ const SchedulesManagement = () => {
         } else {
             document.body.style.overflow = 'unset';
         }
-        
+
         return () => {
             document.body.style.overflow = 'unset';
         };
@@ -299,7 +299,7 @@ const SchedulesManagement = () => {
         if (!formData.apar_id || formData.apar_id === '') {
             newErrors.apar_id = 'APAR wajib dipilih';
         }
-        
+
         if (!formData.assigned_user_id || formData.assigned_user_id === '') {
             newErrors.assigned_user_id = 'Teknisi wajib dipilih';
         } else {
@@ -312,7 +312,7 @@ const SchedulesManagement = () => {
                 newErrors.assigned_user_id = 'Teknisi yang dipilih harus memiliki email';
             }
         }
-        
+
         if (!formData.scheduled_date || formData.scheduled_date === '') {
             newErrors.scheduled_date = 'Tanggal wajib diisi';
         } else {
@@ -320,13 +320,13 @@ const SchedulesManagement = () => {
                 const selectedDate = new Date(formData.scheduled_date);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
+
                 if (selectedDate < today) {
                     newErrors.scheduled_date = 'Tanggal tidak boleh di masa lalu';
                 }
             }
         }
-        
+
         if (!formData.start_time || formData.start_time === '') {
             newErrors.start_time = 'Waktu mulai wajib diisi';
         }
@@ -334,7 +334,7 @@ const SchedulesManagement = () => {
         if (!formData.end_time || formData.end_time === '') {
             newErrors.end_time = 'Batas waktu wajib diisi';
         }
-        
+
         if (!formData.frequency || !['weekly', 'monthly', 'quarterly', 'semiannual'].includes(formData.frequency)) {
             newErrors.frequency = 'Frekuensi wajib dipilih';
         }
@@ -386,7 +386,7 @@ const SchedulesManagement = () => {
             showError('ID jadwal tidak valid untuk dihapus');
             return;
         }
-        
+
         const confirmed = await confirm({
             title: 'Konfirmasi Hapus',
             message: 'Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.',
@@ -408,18 +408,18 @@ const SchedulesManagement = () => {
 
     const sendNotificationByType = async (type) => {
         setShowNotificationModal(false);
-        
+
         let message = '';
         let endpoint = '';
-        
-                    if (type === 'today') {
-                message = 'Apakah Anda yakin ingin mengirim notifikasi reminder untuk jadwal yang sedang berlangsung?';
+
+        if (type === 'today') {
+            message = 'Apakah Anda yakin ingin mengirim notifikasi reminder untuk jadwal yang sedang berlangsung?';
             endpoint = '/api/notifications/bulk';
         } else if (type === 'all') {
             message = 'Apakah Anda yakin ingin mengirim notifikasi reminder untuk semua jadwal aktif?';
             endpoint = '/api/notifications/bulk-all';
         }
-        
+
         const confirmed = await confirm({
             title: 'Konfirmasi Kirim Notifikasi',
             message: message,
@@ -479,14 +479,14 @@ const SchedulesManagement = () => {
 
     const handleChange = React.useCallback((e) => {
         const { name, value, type, checked } = e.target;
-        
+
         const safeValue = type === 'checkbox' ? checked : (value || '');
-        
+
         setFormData(prev => ({
             ...prev,
             [name]: safeValue
         }));
-        
+
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -515,29 +515,29 @@ const SchedulesManagement = () => {
         const scheduledDate = schedule.scheduled_date.split('T')[0];
         const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
         const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+
         if (!schedule.is_active) {
             return 'bg-gray-100 text-gray-700';
         }
-        
+
         // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
+
         // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
+        if (scheduledDate === now.toISOString().split('T')[0] &&
             now >= scheduledDateTime && now <= scheduledEndDateTime) {
             return 'bg-amber-100 text-amber-700';
         }
-        
+
         // Check if schedule is today but not started yet - SECOND PRIORITY
         if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
             return 'bg-blue-100 text-blue-700';
         }
-        
+
         // Check if schedule is overdue (past start time) - THIRD PRIORITY
         if (scheduledDateTime < now) {
             return 'bg-red-100 text-red-700';
         }
-        
+
         // Future schedule - LOWEST PRIORITY
         return 'bg-emerald-100 text-emerald-700';
     };
@@ -545,31 +545,32 @@ const SchedulesManagement = () => {
     const getStatusText = (schedule) => {
         const now = new Date();
         const scheduledDate = schedule.scheduled_date.split('T')[0];
-        const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
-        const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+        const startTime = schedule.start_time || '00:00:00';
+        const endTime = schedule.end_time || '23:59:59';
+        const scheduledDateTime = new Date(`${scheduledDate}T${startTime}`);
+        const scheduledEndDateTime = new Date(`${scheduledDate}T${endTime}`);
+
         if (!schedule.is_active) {
             return 'Nonaktif';
         }
-        
+
         // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
+
         // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
-            now >= scheduledDateTime && now <= scheduledEndDateTime) {
+        if (now >= scheduledDateTime && now <= scheduledEndDateTime) {
             return 'Hari ini (sedang berlangsung)';
         }
-        
+
         // Check if schedule is today but not started yet - SECOND PRIORITY
         if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
             return 'Hari ini (belum dimulai)';
         }
-        
+
         // Check if schedule is overdue (past start time) - THIRD PRIORITY
         if (scheduledDateTime < now) {
             return 'Terlambat';
         }
-        
+
         // Future schedule - LOWEST PRIORITY
         return 'Akan datang';
     };
@@ -579,29 +580,29 @@ const SchedulesManagement = () => {
         const scheduledDate = schedule.scheduled_date.split('T')[0];
         const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
         const scheduledEndDateTime = new Date(`${scheduledDate}T${schedule.end_time}`);
-        
+
         if (!schedule.is_active) {
             return XCircleIcon;
         }
-        
+
         // Priority order: today_ongoing > today_not_started > overdue > upcoming
-        
+
         // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-        if (scheduledDate === now.toISOString().split('T')[0] && 
+        if (scheduledDate === now.toISOString().split('T')[0] &&
             now >= scheduledDateTime && now <= scheduledEndDateTime) {
             return ClockIcon;
         }
-        
+
         // Check if schedule is today but not started yet - SECOND PRIORITY
         if (scheduledDate === now.toISOString().split('T')[0] && now < scheduledDateTime) {
             return CalendarIcon;
         }
-        
+
         // Check if schedule is overdue (past start time) - THIRD PRIORITY
         if (scheduledDateTime < now) {
             return ExclamationTriangleIcon;
         }
-        
+
         // Future schedule - LOWEST PRIORITY
         return CheckCircleIcon;
     };
@@ -649,7 +650,7 @@ const SchedulesManagement = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             <button
                                 onClick={handleSendNotifications}
@@ -670,7 +671,7 @@ const SchedulesManagement = () => {
                                     </>
                                 )}
                             </button>
-                            
+
                             <button
                                 onClick={openCreateModal}
                                 className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500/20 transition-all duration-200"
@@ -718,7 +719,7 @@ const SchedulesManagement = () => {
                                 )}
                             </div>
                         </div>
-                        
+
                         <div>
                             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                                 Filter Status Jadwal
@@ -734,7 +735,7 @@ const SchedulesManagement = () => {
                                 <option value="upcoming">Akan Datang</option>
                             </select>
                         </div>
-                        
+
                         <div>
                             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                                 Filter Status Aktif
@@ -750,7 +751,7 @@ const SchedulesManagement = () => {
                             </select>
                         </div>
                     </div>
-                    
+
                     {/* Filter Actions */}
                     <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-2 sm:gap-3">
                         <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
@@ -777,7 +778,7 @@ const SchedulesManagement = () => {
                                 </span>
                             )}
                         </div>
-                        
+
                         {(searchTerm || statusFilter !== 'all' || activeFilter !== 'all') && (
                             <button
                                 onClick={resetFilters}
@@ -849,104 +850,103 @@ const SchedulesManagement = () => {
                             {schedules
                                 .filter(schedule => schedule && schedule.id)
                                 .map((schedule) => {
-                                const StatusIcon = getStatusIcon(schedule);
-                                return (
-                                    <div key={schedule.id} className="p-3 sm:p-4 lg:p-6 hover:bg-gray-50 transition-colors duration-200">
-                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                                            <div className="flex gap-3 sm:gap-4 flex-1">
-                                                <div className="flex-shrink-0">
-                                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-red-100 to-red-200 rounded-lg sm:rounded-xl flex items-center justify-center">
-                                                        <FireIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                                                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
-                                                            {schedule.apar?.serial_number} - {schedule.apar?.location_name}
-                                                        </h3>
-                                                        <div className="flex items-center gap-2">
-                                                            {/* Status Aktif/Nonaktif */}
-                                                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium ${
-                                                                schedule.is_active 
-                                                                    ? 'bg-green-100 text-green-700 border border-green-200' 
-                                                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
-                                                            }`}>
-                                                                {schedule.is_active ? '🟢 Aktif' : '⚫ Nonaktif'}
-                                                            </span>
-                                                            {/* Status Jadwal */}
-                                                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium ${getStatusColor(schedule)}`}>
-                                                                <StatusIcon className="w-3 h-3 mr-1" />
-                                                                {getStatusText(schedule)}
-                                                            </span>
+                                    const StatusIcon = getStatusIcon(schedule);
+                                    return (
+                                        <div key={schedule.id} className="p-3 sm:p-4 lg:p-6 hover:bg-gray-50 transition-colors duration-200">
+                                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                                                <div className="flex gap-3 sm:gap-4 flex-1">
+                                                    <div className="flex-shrink-0">
+                                                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-red-100 to-red-200 rounded-lg sm:rounded-xl flex items-center justify-center">
+                                                            <FireIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                                                         </div>
                                                     </div>
-                                                    
-                                                    <div className="space-y-1.5 sm:space-y-1 text-xs sm:text-sm text-gray-600">
-                                                        <div className="flex items-center gap-2">
-                                                            <UserIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                                            <span className="truncate">{schedule.assigned_user?.name || "Teknisi tidak ditugaskan"}</span>
-                                                        </div>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                                                            <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
+                                                                {schedule.apar?.serial_number} - {schedule.apar?.location_name}
+                                                            </h3>
                                                             <div className="flex items-center gap-2">
-                                                                <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                                                <span>
-                                                                    {schedule.scheduled_date ? 
-                                                                        new Date(schedule.scheduled_date).toLocaleDateString("id-ID", {
-                                                                            day: "numeric",
-                                                                            month: "short",
-                                                                            year: "numeric",
-                                                                        }) : 'Tanggal tidak valid'
-                                                                    }
+                                                                {/* Status Aktif/Nonaktif */}
+                                                                <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium ${schedule.is_active
+                                                                        ? 'bg-green-100 text-green-700 border border-green-200'
+                                                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                                                    }`}>
+                                                                    {schedule.is_active ? '🟢 Aktif' : '⚫ Nonaktif'}
+                                                                </span>
+                                                                {/* Status Jadwal */}
+                                                                <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium ${getStatusColor(schedule)}`}>
+                                                                    <StatusIcon className="w-3 h-3 mr-1" />
+                                                                    {getStatusText(schedule)}
                                                                 </span>
                                                             </div>
+                                                        </div>
+
+                                                        <div className="space-y-1.5 sm:space-y-1 text-xs sm:text-sm text-gray-600">
                                                             <div className="flex items-center gap-2">
-                                                                <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                                                                <span>{schedule.start_time} - {schedule.end_time}</span>
+                                                                <UserIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                                                                <span className="truncate">{schedule.assigned_user?.name || "Teknisi tidak ditugaskan"}</span>
                                                             </div>
-                                                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full w-fit">
-                                                                {getFrequencyText(schedule.frequency)}
-                                                            </span>
+                                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                                                                <div className="flex items-center gap-2">
+                                                                    <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                                                                    <span>
+                                                                        {schedule.scheduled_date ?
+                                                                            new Date(schedule.scheduled_date).toLocaleDateString("id-ID", {
+                                                                                day: "numeric",
+                                                                                month: "short",
+                                                                                year: "numeric",
+                                                                            }) : 'Tanggal tidak valid'
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                                                                    <span>{schedule.start_time} - {schedule.end_time}</span>
+                                                                </div>
+                                                                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full w-fit">
+                                                                    {getFrequencyText(schedule.frequency)}
+                                                                </span>
+                                                            </div>
                                                         </div>
+
+                                                        {schedule.notes && (
+                                                            <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg border-l-4 border-blue-400">
+                                                                <p className="text-xs sm:text-sm text-gray-700">
+                                                                    <span className="font-medium">Catatan:</span> {schedule.notes}
+                                                                </p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    
-                                                    {schedule.notes && (
-                                                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-gray-50 rounded-lg border-l-4 border-blue-400">
-                                                            <p className="text-xs sm:text-sm text-gray-700">
-                                                                <span className="font-medium">Catatan:</span> {schedule.notes}
-                                                            </p>
-                                                        </div>
-                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center justify-end sm:justify-start gap-1 sm:gap-2">
+                                                    <button
+                                                        onClick={() => handleShow(schedule)}
+                                                        className="p-1.5 sm:p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors duration-200"
+                                                        title="Lihat Detail"
+                                                    >
+                                                        <EyeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEdit(schedule)}
+                                                        className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                                                        title="Edit"
+                                                    >
+                                                        <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(schedule.id)}
+                                                        className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                                                        title="Hapus"
+                                                    >
+                                                        <TrashIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                                    </button>
                                                 </div>
                                             </div>
-                                            
-                                            <div className="flex items-center justify-end sm:justify-start gap-1 sm:gap-2">
-                                                <button
-                                                    onClick={() => handleShow(schedule)}
-                                                    className="p-1.5 sm:p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors duration-200"
-                                                    title="Lihat Detail"
-                                                >
-                                                    <EyeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(schedule)}
-                                                    className="p-1.5 sm:p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                                                    title="Edit"
-                                                >
-                                                    <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(schedule.id)}
-                                                    className="p-1.5 sm:p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                                    title="Hapus"
-                                                >
-                                                    <TrashIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                </button>
-                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                         </div>
 
                         {/* Pagination */}
@@ -971,7 +971,7 @@ const SchedulesManagement = () => {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 <div className="flex items-center justify-center gap-1 sm:gap-2">
                                     <button
                                         onClick={() => handlePageChange(pagination.current_page - 1)}
@@ -980,7 +980,7 @@ const SchedulesManagement = () => {
                                     >
                                         <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
-                                    
+
                                     <div className="flex gap-1">
                                         {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
                                             let pageNum;
@@ -998,18 +998,17 @@ const SchedulesManagement = () => {
                                                 <button
                                                     key={pageNum}
                                                     onClick={() => handlePageChange(pageNum)}
-                                                    className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 ${
-                                                        pageNum === pagination.current_page
+                                                    className={`px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 ${pageNum === pagination.current_page
                                                             ? "bg-red-500 text-white"
                                                             : "text-gray-600 hover:bg-gray-100"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {pageNum}
                                                 </button>
                                             );
                                         })}
                                     </div>
-                                    
+
                                     <button
                                         onClick={() => handlePageChange(pagination.current_page + 1)}
                                         disabled={pagination.current_page === pagination.last_page}
@@ -1067,9 +1066,8 @@ const SchedulesManagement = () => {
                                         value={formData.apar_id || ''}
                                         onChange={handleChange}
                                         disabled={submitting}
-                                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${
-                                            errors.apar_id ? "border-red-300 bg-red-50" : "border-gray-300"
-                                        }`}
+                                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${errors.apar_id ? "border-red-300 bg-red-50" : "border-gray-300"
+                                            }`}
                                     >
                                         <option value="">Pilih APAR</option>
                                         {apars.map((apar) => (
@@ -1096,9 +1094,8 @@ const SchedulesManagement = () => {
                                         value={formData.assigned_user_id || ''}
                                         onChange={handleChange}
                                         disabled={submitting}
-                                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${
-                                            errors.assigned_user_id ? "border-red-300 bg-red-50" : "border-gray-300"
-                                        }`}
+                                        className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${errors.assigned_user_id ? "border-red-300 bg-red-50" : "border-gray-300"
+                                            }`}
                                     >
                                         <option value="">Pilih Teknisi</option>
                                         {teknisi.map((user) => (
@@ -1128,9 +1125,8 @@ const SchedulesManagement = () => {
                                             onChange={handleChange}
                                             disabled={submitting}
                                             min={editingSchedule ? undefined : new Date().toISOString().split("T")[0]}
-                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${
-                                                errors.scheduled_date ? "border-red-300 bg-red-50" : "border-gray-300"
-                                            }`}
+                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${errors.scheduled_date ? "border-red-300 bg-red-50" : "border-gray-300"
+                                                }`}
                                         />
                                         {errors.scheduled_date && (
                                             <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center gap-1">
@@ -1150,9 +1146,8 @@ const SchedulesManagement = () => {
                                             value={formData.start_time || ''}
                                             onChange={handleChange}
                                             disabled={submitting}
-                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${
-                                                errors.start_time ? "border-red-300 bg-red-50" : "border-gray-300"
-                                            }`}
+                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${errors.start_time ? "border-red-300 bg-red-50" : "border-gray-300"
+                                                }`}
                                         />
                                         {errors.start_time && (
                                             <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center gap-1">
@@ -1172,9 +1167,8 @@ const SchedulesManagement = () => {
                                             value={formData.end_time || ''}
                                             onChange={handleChange}
                                             disabled={submitting}
-                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${
-                                                errors.end_time ? "border-red-300 bg-red-50" : "border-gray-300"
-                                            }`}
+                                            className={`w-full px-3 py-2 sm:py-2.5 border rounded-lg sm:rounded-xl text-sm sm:text-base focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 ${errors.end_time ? "border-red-300 bg-red-50" : "border-gray-300"
+                                                }`}
                                         />
                                         {errors.end_time && (
                                             <p className="mt-1 text-xs sm:text-sm text-red-600 flex items-center gap-1">
@@ -1249,11 +1243,10 @@ const SchedulesManagement = () => {
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className={`flex-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium focus:ring-2 focus:ring-red-500/20 transition-all duration-200 disabled:opacity-50 ${
-                                            submitted
+                                        className={`flex-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-sm sm:text-base font-medium focus:ring-2 focus:ring-red-500/20 transition-all duration-200 disabled:opacity-50 ${submitted
                                                 ? "bg-emerald-600 text-white"
                                                 : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700"
-                                        }`}
+                                            }`}
                                     >
                                         {submitting ? (
                                             <div className="flex items-center justify-center gap-2">
@@ -1349,7 +1342,7 @@ const SchedulesManagement = () => {
                                         <div>
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal</p>
                                             <p className="text-sm font-semibold text-gray-900 mt-1">
-                                                {showScheduleDetail.scheduled_date ? 
+                                                {showScheduleDetail.scheduled_date ?
                                                     new Date(showScheduleDetail.scheduled_date).toLocaleDateString('id-ID', {
                                                         weekday: 'long',
                                                         year: 'numeric',
@@ -1377,11 +1370,10 @@ const SchedulesManagement = () => {
                                         </div>
                                         <div>
                                             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status Aktif</p>
-                                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium mt-1 ${
-                                                showScheduleDetail.is_active 
-                                                    ? 'bg-green-100 text-green-700 border border-green-200' 
+                                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 rounded-full text-xs font-medium mt-1 ${showScheduleDetail.is_active
+                                                    ? 'bg-green-100 text-green-700 border border-green-200'
                                                     : 'bg-gray-100 text-gray-700 border border-gray-200'
-                                            }`}>
+                                                }`}>
                                                 {showScheduleDetail.is_active ? '🟢 Aktif' : '⚫ Nonaktif'}
                                             </span>
                                         </div>
@@ -1486,7 +1478,7 @@ const SchedulesManagement = () => {
                                     <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                                     <span>Jadwal Sedang Berlangsung</span>
                                 </button>
-                                
+
                                 <button
                                     onClick={() => sendNotificationByType('all')}
                                     className="w-full p-3 sm:p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2"

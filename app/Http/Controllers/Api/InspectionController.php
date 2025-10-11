@@ -410,10 +410,12 @@ class InspectionController extends Controller
             $now = now();
             
             // Check if there's a scheduled inspection for this APAR
-            $schedule = \App\Models\InspectionSchedule::where('apar_id', $aparId)
-                ->where('scheduled_date', $now->toDateString())
+
+            $query = InspectionSchedule::where('apar_id', $aparId)
+                ->where('is_active', true)
                 ->where('is_completed', false)
-                ->first();
+                ->where('scheduled_date', $now->toDateString());
+            $schedule = $query->where('assigned_user_id', Auth::id())->first();
 
             if (!$schedule) {
                 return response()->json([
