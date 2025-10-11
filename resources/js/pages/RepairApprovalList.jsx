@@ -62,6 +62,8 @@ const RepairApprovalList = () => {
             const res = await apiClient.get(url);
             return res.data?.data || [];
         },
+        refetchOnWindowFocus: false,
+        staleTime: 60000,
         keepPreviousData: true,
         throwOnError: false,
     });
@@ -75,6 +77,8 @@ const RepairApprovalList = () => {
             const res = await apiClient.get('/api/repair-approvals/stats');
             return res.data?.data || {};
         },
+        refetchOnWindowFocus: false,
+        staleTime: 60000,
         throwOnError: false,
     });
 
@@ -272,13 +276,13 @@ const RepairApprovalList = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
+        <div className="space-y-6">
             <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
                 {/* Header */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 lg:p-8 border border-gray-100">
+                <div className="bg-white shadow-md rounded-2xl p-6 lg:p-8 border border-gray-100">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-4 sm:space-y-0">
                         <div className="flex-shrink-0">
-                            <div className="h-16 w-16 lg:h-20 lg:w-20 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
+                            <div className="h-16 w-16 lg:h-20 lg:w-20 rounded-2xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-md">
                                 <FireIcon className="h-8 w-8 lg:h-10 lg:w-10 text-white" />
                             </div>
                         </div>
@@ -291,7 +295,7 @@ const RepairApprovalList = () => {
 
                 {/* Statistics */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-md border border-gray-100 hover:shadow-sm transition-shadow duration-300">
                         <div className="flex items-center">
                             <div className="p-3 bg-yellow-100 rounded-xl">
                                 <ClockIcon className="h-6 w-6 lg:h-8 lg:w-8 text-yellow-600" />
@@ -303,7 +307,7 @@ const RepairApprovalList = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-md border border-gray-100 hover:shadow-sm transition-shadow duration-300">
                         <div className="flex items-center">
                             <div className="p-3 bg-green-100 rounded-xl">
                                 <CheckCircleIcon className="h-6 w-6 lg:h-8 lg:w-8 text-green-600" />
@@ -315,7 +319,7 @@ const RepairApprovalList = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-md border border-gray-100 hover:shadow-sm transition-shadow duration-300">
                         <div className="flex items-center">
                             <div className="p-3 bg-red-100 rounded-xl">
                                 <XCircleIcon className="h-6 w-6 lg:h-8 lg:w-8 text-red-600" />
@@ -327,7 +331,7 @@ const RepairApprovalList = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                    <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-md border border-gray-100 hover:shadow-sm transition-shadow duration-300">
                         <div className="flex items-center">
                             <div className="p-3 bg-blue-100 rounded-xl">
                                 <CheckCircleIcon className="h-6 w-6 lg:h-8 lg:w-8 text-blue-600" />
@@ -341,7 +345,7 @@ const RepairApprovalList = () => {
                 </div>
 
                 {/* Filter */}
-                <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-lg border border-gray-100">
+                <div className="bg-white rounded-2xl p-4 lg:p-6 shadow-md border border-gray-100">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-3 sm:space-y-0">
                         <label className="text-sm lg:text-base font-medium text-gray-700">Filter Status:</label>
                         <select
@@ -359,7 +363,7 @@ const RepairApprovalList = () => {
                 </div>
 
                 {/* Approvals List */}
-                <div className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
                     <div className="px-6 py-4 lg:py-6 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-center justify-between">
                             <h3 className="text-lg lg:text-xl font-semibold text-gray-900">
@@ -373,7 +377,7 @@ const RepairApprovalList = () => {
                                         {pusherConnected ? 'Real-time Aktif' : 'Real-time Offline'}
                                     </span>
                                 </div>
-                                
+
                                 <button
                                     onClick={handleManualRefresh}
                                     disabled={refreshing}
@@ -395,7 +399,7 @@ const RepairApprovalList = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     {approvals.length > 0 ? (
                         <div className="divide-y divide-gray-200">
                             {approvals.map((approval) => (
@@ -411,7 +415,7 @@ const RepairApprovalList = () => {
                                                     {getConditionBadge(approval.inspection?.condition)}
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                                                 <div className="space-y-3">
                                                     <div className="flex items-center space-x-3 text-sm lg:text-base text-gray-600">
@@ -424,13 +428,13 @@ const RepairApprovalList = () => {
                                                     </div>
                                                     <div className="text-sm lg:text-base text-gray-600">
                                                         <span className="font-medium">Tanggal Inspeksi:</span>{' '}
-                                                        {approval.inspection?.created_at 
+                                                        {approval.inspection?.created_at
                                                             ? new Date(approval.inspection.created_at).toLocaleDateString('id-ID')
                                                             : 'Tanggal tidak tersedia'
                                                         }
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="space-y-3">
                                                     {approval.inspection?.notes && (
                                                         <div className="text-sm lg:text-base text-gray-600">
@@ -554,7 +558,7 @@ const RepairApprovalList = () => {
                                     Tidak ada persetujuan
                                 </h3>
                                 <p className="text-gray-500 text-lg leading-relaxed">
-                                    {filter === 'all' 
+                                    {filter === 'all'
                                         ? 'Belum ada permintaan perbaikan APAR yang perlu ditinjau. Sistem akan menampilkan data secara otomatis ketika ada permintaan baru.'
                                         : `Tidak ada persetujuan dengan status "${filter}" saat ini.`
                                     }

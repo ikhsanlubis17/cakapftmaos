@@ -43,9 +43,9 @@ const MyRepairApprovals = () => {
 
     // Listen for repair approval updates
     useRepairApprovalUpdates((updateData) => {
-    console.log('Repair approval update received:', updateData);
-    // Refresh data immediately
-    refetch();
+        console.log('Repair approval update received:', updateData);
+        // Refresh data immediately
+        refetch();
     });
 
     // Auto-refresh interval (reduced to 15 seconds for better responsiveness)
@@ -61,6 +61,8 @@ const MyRepairApprovals = () => {
             const currentUser = JSON.parse(localStorage.getItem('user'));
             return all.filter(approval => approval.inspection?.user?.id === currentUser?.id);
         },
+        staleTime: 10000,
+        refetchOnWindowFocus: false,
         keepPreviousData: true,
         throwOnError: false,
     });
@@ -171,7 +173,7 @@ const MyRepairApprovals = () => {
                         </p>
                     </div>
                 );
-            
+
             case 'approved':
                 return (
                     <div className="space-y-3">
@@ -193,7 +195,7 @@ const MyRepairApprovals = () => {
                         </button>
                     </div>
                 );
-            
+
             case 'rejected':
                 return (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -206,7 +208,7 @@ const MyRepairApprovals = () => {
                         </p>
                     </div>
                 );
-            
+
             case 'completed':
                 return (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -219,7 +221,7 @@ const MyRepairApprovals = () => {
                         </p>
                     </div>
                 );
-            
+
             default:
                 return null;
         }
@@ -234,180 +236,177 @@ const MyRepairApprovals = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
-            <div className="max-w-6xl mx-auto p-4 space-y-6">
-                {/* Header */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                                <FireIcon className="h-7 w-7 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Perbaikan APAR Saya</h1>
-                                <p className="text-gray-600">Kelola dan pantau status perbaikan APAR yang Anda lakukan</p>
-                                {lastUpdate && (
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        Terakhir diperbarui: {lastUpdate.toLocaleTimeString('id-ID')}
-                                    </p>
-                                )}
-                            </div>
+        <div className="space-y-6">
+            <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl">
+                            <FireIcon className="h-6 w-6 text-red-600" />
                         </div>
-                        <div className="flex items-center space-x-3">
-                            {/* Pusher Status Indicator */}
-                            <div className="flex items-center space-x-2">
-                                <div className={`w-3 h-3 rounded-full ${pusherConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                <span className="text-xs text-gray-600">
-                                    {pusherConnected ? 'Real-time Aktif' : 'Real-time Offline'}
-                                </span>
-                            </div>
-                            
-                            <button
-                                onClick={handleManualRefresh}
-                                disabled={refreshing}
-                                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                            >
-                                <ArrowPathIcon className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                                {refreshing ? 'Memperbarui...' : 'Perbarui'}
-                            </button>
-                            <div className="text-xs text-gray-500 text-center">
-                                <div>Auto-refresh setiap</div>
-                                <div className="font-medium">{AUTO_REFRESH_INTERVAL / 1000}s</div>
-                            </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Perbaikan APAR Saya</h1>
+                            <p className="text-gray-600">Kelola dan pantau status perbaikan APAR yang Anda lakukan</p>
+                            {lastUpdate && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Terakhir diperbarui: {lastUpdate.toLocaleTimeString('id-ID')}
+                                </p>
+                            )}
                         </div>
                     </div>
-                </div>
+                    <div className="flex items-center space-x-3">
+                        {/* Pusher Status Indicator */}
+                        <div className="flex items-center space-x-2">
+                            <div className={`w-3 h-3 rounded-full ${pusherConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                            <span className="text-xs text-gray-600">
+                                {pusherConnected ? 'Real-time Aktif' : 'Real-time Offline'}
+                            </span>
+                        </div>
 
-                {/* Filter */}
-                <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-100">
-                    <div className="flex items-center space-x-4">
-                        <label className="text-sm font-medium text-gray-700">Filter Status:</label>
-                        <select
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        <button
+                            onClick={handleManualRefresh}
+                            disabled={refreshing}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Menunggu</option>
-                            <option value="approved">Disetujui</option>
-                            <option value="rejected">Ditolak</option>
-                            <option value="completed">Selesai</option>
-                        </select>
+                            <ArrowPathIcon className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                            {refreshing ? 'Memperbarui...' : 'Perbarui'}
+                        </button>
+                        <div className="text-xs text-gray-500 text-center">
+                            <div>Auto-refresh setiap</div>
+                            <div className="font-medium">{AUTO_REFRESH_INTERVAL / 1000}s</div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Approvals List */}
-                <div className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            Daftar Perbaikan ({approvals.length})
-                        </h3>
-                    </div>
-                    
-                    <div className="divide-y divide-gray-200">
-                        {approvals.map((approval) => (
-                            <div key={approval.id} className="p-6 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-3">
-                                            <h4 className="text-lg font-semibold text-gray-900">
-                                                APAR {approval.inspection?.apar?.serial_number}
-                                            </h4>
-                                            {getStatusBadge(approval.status)}
-                                            {getConditionBadge(approval.inspection?.condition)}
+            {/* Filter */}
+            <div className="bg-white shadow-sm rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center space-x-4">
+                    <label className="text-sm font-medium text-gray-700">Filter Status:</label>
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+                        <option value="all">Semua Status</option>
+                        <option value="pending">Menunggu</option>
+                        <option value="approved">Disetujui</option>
+                        <option value="rejected">Ditolak</option>
+                        <option value="completed">Selesai</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Approvals List */}
+            <div className="bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Daftar Perbaikan ({approvals.length})
+                    </h3>
+                </div>
+
+                <div className="divide-y divide-gray-200">
+                    {approvals.map((approval) => (
+                        <div key={approval.id} className="p-6 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center space-x-3 mb-3">
+                                        <h4 className="text-lg font-semibold text-gray-900">
+                                            APAR {approval.inspection?.apar?.serial_number}
+                                        </h4>
+                                        {getStatusBadge(approval.status)}
+                                        {getConditionBadge(approval.inspection?.condition)}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                <MapPinIcon className="h-4 w-4" />
+                                                <span>{approval.inspection?.apar?.location_name}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                <UserIcon className="h-4 w-4" />
+                                                <span>Anda</span>
+                                            </div>
+                                            <div className="text-sm text-gray-600">
+                                                <span className="font-medium">Tanggal Inspeksi:</span>{' '}
+                                                {new Date(approval.inspection?.created_at).toLocaleDateString('id-ID')}
+                                            </div>
                                         </div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                    <MapPinIcon className="h-4 w-4" />
-                                                    <span>{approval.inspection?.apar?.location_name}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                    <UserIcon className="h-4 w-4" />
-                                                    <span>Anda</span>
-                                                </div>
+
+                                        <div className="space-y-2">
+                                            {approval.inspection?.notes && (
                                                 <div className="text-sm text-gray-600">
-                                                    <span className="font-medium">Tanggal Inspeksi:</span>{' '}
-                                                    {new Date(approval.inspection?.created_at).toLocaleDateString('id-ID')}
+                                                    <span className="font-medium">Catatan Inspeksi:</span>{' '}
+                                                    {approval.inspection.notes}
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="space-y-2">
-                                                {approval.inspection?.notes && (
-                                                    <div className="text-sm text-gray-600">
-                                                        <span className="font-medium">Catatan Inspeksi:</span>{' '}
-                                                        {approval.inspection.notes}
-                                                    </div>
-                                                )}
-                                                {approval.admin_notes && (
-                                                    <div className="text-sm text-gray-600">
-                                                        <span className="font-medium">Catatan Admin:</span>{' '}
-                                                        {approval.admin_notes}
-                                                    </div>
-                                                )}
+                                            )}
+                                            {approval.admin_notes && (
+                                                <div className="text-sm text-gray-600">
+                                                    <span className="font-medium">Catatan Admin:</span>{' '}
+                                                    {approval.admin_notes}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Damage Categories */}
+                                    {approval.inspection?.inspectionDamages && approval.inspection.inspectionDamages.length > 0 && (
+                                        <div className="mb-4">
+                                            <h5 className="text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan:</h5>
+                                            <div className="flex flex-wrap gap-2">
+                                                {approval.inspection.inspectionDamages.map((damage, index) => (
+                                                    <span key={index} className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                        {damage.damageCategory?.name}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
+                                    )}
 
-                                        {/* Damage Categories */}
-                                        {approval.inspection?.inspectionDamages && approval.inspection.inspectionDamages.length > 0 && (
-                                            <div className="mb-4">
-                                                <h5 className="text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan:</h5>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {approval.inspection.inspectionDamages.map((damage, index) => (
-                                                        <span key={index} className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                                            {damage.damageCategory?.name}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
+                                    {/* Action Section */}
+                                    {getActionButton(approval)}
+                                </div>
 
-                                        {/* Action Section */}
-                                        {getActionButton(approval)}
-                                    </div>
-
-                                    <div className="ml-4">
-                                        <button
-                                            onClick={() => navigate(`/repair-approvals/${approval.id}`)}
-                                            className="text-blue-600 hover:text-blue-800 p-2 rounded hover:bg-blue-50 transition-colors"
-                                            title="Lihat Detail"
-                                        >
-                                            <EyeIcon className="h-5 w-5" />
-                                        </button>
-                                    </div>
+                                <div className="ml-4">
+                                    <button
+                                        onClick={() => navigate(`/repair-approvals/${approval.id}`)}
+                                        className="text-blue-600 hover:text-blue-800 p-2 rounded hover:bg-blue-50 transition-colors"
+                                        title="Lihat Detail"
+                                    >
+                                        <EyeIcon className="h-5 w-5" />
+                                    </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-
-                    {approvals.length === 0 && (
-                        <div className="text-center py-12">
-                            <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada perbaikan</h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                {filter === 'all' 
-                                    ? 'Belum ada permintaan perbaikan APAR' 
-                                    : `Tidak ada perbaikan dengan status "${filter}"`
-                                }
-                            </p>
                         </div>
-                    )}
+                    ))}
                 </div>
 
-                {/* Info Card */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                    <div className="flex items-start space-x-3">
-                        <div className="text-blue-600 text-lg">💡</div>
-                        <div className="text-sm text-blue-800">
-                            <div className="font-medium mb-1">Panduan Status Perbaikan:</div>
-                            <ul className="space-y-1">
-                                <li>• <strong>Menunggu:</strong> Permintaan sedang ditinjau admin</li>
-                                <li>• <strong>Disetujui:</strong> Anda dapat melakukan perbaikan</li>
-                                <li>• <strong>Ditolak:</strong> Perbaikan tidak disetujui dengan alasan tertentu</li>
-                                <li>• <strong>Selesai:</strong> Perbaikan telah selesai dan dilaporkan</li>
-                            </ul>
-                        </div>
+                {approvals.length === 0 && (
+                    <div className="text-center py-12">
+                        <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada perbaikan</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            {filter === 'all'
+                                ? 'Belum ada permintaan perbaikan APAR'
+                                : `Tidak ada perbaikan dengan status "${filter}"`
+                            }
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* Info Card */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start space-x-3">
+                    <div className="text-blue-600 text-lg">💡</div>
+                    <div className="text-sm text-blue-800">
+                        <div className="font-medium mb-1">Panduan Status Perbaikan:</div>
+                        <ul className="space-y-1">
+                            <li>• <strong>Menunggu:</strong> Permintaan sedang ditinjau admin</li>
+                            <li>• <strong>Disetujui:</strong> Anda dapat melakukan perbaikan</li>
+                            <li>• <strong>Ditolak:</strong> Perbaikan tidak disetujui dengan alasan tertentu</li>
+                            <li>• <strong>Selesai:</strong> Perbaikan telah selesai dan dilaporkan</li>
+                        </ul>
                     </div>
                 </div>
             </div>

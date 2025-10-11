@@ -237,6 +237,14 @@ const inspectionsRoute = createRoute({
     beforeLoad: checkRoles(['admin', 'supervisor']),
     component: InspectionsList,
 });
+
+// const inspectionsDetailRoute = createRoute({
+//     getParentRoute: () => authenticatedRoute,
+//     path: 'inspections/$id',
+//     beforeLoad: checkRoles(['admin', 'supervisor']),
+//     component: InspectionFormEnhanced,
+// });
+
 const myInspectionsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: 'my-inspections',
