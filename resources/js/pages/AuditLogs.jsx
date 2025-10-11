@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
     MagnifyingGlassIcon,
@@ -17,9 +18,10 @@ import {
 
 const AuditLogs = () => {
     const { showSuccess, showError } = useToast();
+    const { apiClient } = useAuth();
     const [logs, setLogs] = useState([]);
     const [stats, setStats] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [selectedLog, setSelectedLog] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     
@@ -34,47 +36,45 @@ const AuditLogs = () => {
         ip_address: '',
     });
 
-    useEffect(() => {
-        fetchAuditLogs();
-        fetchStats();
+    // Use react-query for logs and stats
+    const paramsString = React.useMemo(() => {
+        const params = new URLSearchParams();
+        Object.keys(filters).forEach((key) => {
+            if (filters[key]) params.append(key, filters[key]);
+        });
+        return params.toString();
     }, [filters]);
 
-    const fetchAuditLogs = async () => {
-        try {
-            setLoading(true);
-            const params = new URLSearchParams();
-            Object.keys(filters).forEach(key => {
-                if (filters[key]) {
-                    params.append(key, filters[key]);
-                }
-            });
+    const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useQuery({
+        queryKey: ['auditLogs', paramsString],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/audit-logs?${paramsString}`);
+            return res.data.data || [];
+        },
+        keepPreviousData: true,
+        throwOnError: false,
+    });
 
-            const response = await axios.get(`/api/audit-logs?${params.toString()}`);
-            setLogs(response.data.data || []);
-        } catch (error) {
-            console.error('Error fetching audit logs:', error);
-            // Show error message to user
-            showError('Gagal memuat data audit log. Silakan coba lagi.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+        queryKey: ['auditStats'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/audit-logs/stats');
+            return res.data;
+        },
+        throwOnError: false,
+    });
 
-    const fetchStats = async () => {
-        try {
-            const response = await axios.get('/api/audit-logs/stats');
-            setStats(response.data);
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-            // Set default stats if error
-            setStats({
-                total_logs: 0,
-                successful_logs: 0,
-                failed_logs: 0,
-                unique_users: 0,
-            });
-        }
-    };
+    useEffect(() => {
+        setLoading(logsLoading || statsLoading);
+    }, [logsLoading, statsLoading]);
+
+    useEffect(() => {
+        if (logsData) setLogs(logsData);
+    }, [logsData]);
+
+    useEffect(() => {
+        if (statsData) setStats(statsData);
+    }, [statsData]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({
@@ -97,7 +97,7 @@ const AuditLogs = () => {
 
     const viewLogDetail = async (logId) => {
         try {
-            const response = await axios.get(`/api/audit-logs/${logId}`);
+            const response = await apiClient.get(`/api/audit-logs/${logId}`);
             setSelectedLog(response.data);
             setShowDetailModal(true);
         } catch (error) {
@@ -108,15 +108,8 @@ const AuditLogs = () => {
 
     const exportLogs = async () => {
         try {
-            const params = new URLSearchParams();
-            Object.keys(filters).forEach(key => {
-                if (filters[key]) {
-                    params.append(key, filters[key]);
-                }
-            });
+            const response = await apiClient.get(`/api/audit-logs/export?${paramsString}`);
 
-            const response = await axios.get(`/api/audit-logs/export?${params.toString()}`);
-            
             // Create and download file
             const dataStr = JSON.stringify(response.data.data, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });

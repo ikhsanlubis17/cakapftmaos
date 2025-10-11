@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
-import axios from 'axios';
+// replaced axios usage with apiClient from useAuth + react-query
 import {
     BellIcon,
     PlusIcon,
@@ -24,13 +25,13 @@ import {
 } from '@heroicons/react/24/outline';
 
 const SchedulesManagement = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
     const [schedules, setSchedules] = useState([]);
     const [apars, setApars] = useState([]);
     const [teknisi, setTeknisi] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchLoading, setSearchLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showNotificationModal, setShowNotificationModal] = useState(false);
@@ -60,10 +61,51 @@ const SchedulesManagement = () => {
     });
     const [errors, setErrors] = useState({});
 
-    // Existing useEffect hooks and functions remain the same
-    useEffect(() => {
-        fetchData();
-    }, []);
+    // Queries: apars, users (teknisi), schedules (with pagination/filters)
+    const { data: aparData, isLoading: aparLoading, isError: aparError } = useQuery({
+        queryKey: ['apars'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar');
+            return res.data;
+        },
+        staleTime: 1000 * 60, // 1 minute
+    });
+
+    const { data: usersData, isLoading: usersLoading, isError: usersError } = useQuery({
+        queryKey: ['users'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users');
+            return res.data;
+        },
+        staleTime: 1000 * 60,
+    });
+
+    const {
+        data: schedulesData,
+        isLoading: schedulesLoading,
+        isError: schedulesError,
+        refetch: schedulesRefetch
+    } = useQuery({
+        queryKey: ['schedules', pagination.current_page, pagination.per_page, searchTerm, statusFilter, activeFilter],
+        queryFn: async () => {
+            const params = {
+                page: pagination.current_page,
+                per_page: pagination.per_page,
+                _t: Date.now()
+            };
+            if (searchTerm.trim()) params.search = searchTerm.trim();
+            if (statusFilter !== 'all') params.status = statusFilter;
+            if (activeFilter !== 'all') params.active = activeFilter;
+
+            const res = await apiClient.get('/api/schedules', { params });
+            return res.data;
+        },
+        keepPreviousData: true,
+        staleTime: 1000 * 30,
+    });
+
+    // derive loading state from react-query hooks instead of local flag
+    const combinedLoading = aparLoading || usersLoading || schedulesLoading;
 
     // Modal styles
     useEffect(() => {
@@ -83,7 +125,9 @@ const SchedulesManagement = () => {
         const timeoutId = setTimeout(() => {
             if (searchTerm.trim() || statusFilter !== 'all' || activeFilter !== 'all') {
                 setSearchLoading(true);
-                fetchData(1).finally(() => setSearchLoading(false));
+                // reset to page 1
+                setPagination(prev => ({ ...prev, current_page: 1 }));
+                schedulesRefetch().finally(() => setSearchLoading(false));
             }
         }, 300); // Reduced debounce time for better responsiveness
 
@@ -93,173 +137,124 @@ const SchedulesManagement = () => {
     // Immediate fetch when filters are reset to 'all'
     useEffect(() => {
         if (statusFilter === 'all' && activeFilter === 'all' && !searchTerm.trim()) {
-            fetchData(1);
+            setPagination(prev => ({ ...prev, current_page: 1 }));
+            if (schedulesRefetch) schedulesRefetch();
         }
     }, [statusFilter, activeFilter, searchTerm]);
 
     // Reset pagination when filters change
     useEffect(() => {
         if (pagination.current_page !== 1) {
-            fetchData(1);
+            setPagination(prev => ({ ...prev, current_page: 1 }));
         }
     }, [statusFilter, activeFilter]);
 
-    const fetchData = async (page = 1) => {
-        try {
-            setLoading(true);
-            
-            // Build query parameters
-            const queryParams = {
-                page: page,
-                per_page: pagination.per_page,
-                _t: Date.now()
-            };
+    // Update local state from queries when data arrives
+    useEffect(() => {
+        if (schedulesData) {
+            try {
+                const schedulesRes = schedulesData;
+                const schedulesDataInner = schedulesRes.data || schedulesRes;
+                let validSchedules = Array.isArray(schedulesData.data ? schedulesData.data : schedulesData)
+                    ? (schedulesDataInner.data || schedulesDataInner).filter(schedule =>
+                        schedule && schedule.id && schedule.apar_id && schedule.assigned_user_id && schedule.scheduled_date && schedule.start_time
+                    ) : [];
 
-            // Add search parameter if not empty
-            if (searchTerm.trim()) {
-                queryParams.search = searchTerm.trim();
-            }
-
-            // Add status filter if not 'all'
-            if (statusFilter !== 'all') {
-                queryParams.status = statusFilter;
-            }
-
-            // Add active filter if not 'all'
-            if (activeFilter !== 'all') {
-                queryParams.active = activeFilter;
-            }
-
-            const [aparsRes, teknisiRes, schedulesRes] = await Promise.all([
-                axios.get('/api/apar'),
-                axios.get('/api/users'),
-                axios.get('/api/schedules', { params: queryParams })
-            ]);
-
-            // Process schedules data
-            const schedulesData = schedulesRes.data.data || schedulesRes.data;
-            let validSchedules = Array.isArray(schedulesData) 
-                ? schedulesData.filter(schedule => 
-                    schedule && 
-                    schedule.id && 
-                    schedule.apar_id && 
-                    schedule.assigned_user_id && 
-                    schedule.scheduled_date && 
-                    schedule.start_time
-                )
-                : [];
-
-            // Additional client-side validation to ensure filter consistency
-            if (statusFilter !== 'all' || activeFilter !== 'all') {
-                validSchedules = validSchedules.filter(schedule => {
-                    // Check active filter
-                    if (activeFilter !== 'all') {
-                        if (activeFilter === 'active' && !schedule.is_active) return false;
-                        if (activeFilter === 'inactive' && schedule.is_active) return false;
-                    }
-                    
-                    // Check status filter (additional validation)
-                    if (statusFilter !== 'all') {
-                        const now = new Date();
-                        const scheduledDate = schedule.scheduled_date.split('T')[0];
-                        const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
-                        const today = now.toISOString().split('T')[0];
-                        
-                        switch (statusFilter) {
-                            case 'overdue':
-                                // Must be overdue (past start time)
-                                if (scheduledDateTime >= now) return false;
-                                break;
-                            case 'today':
-                                // Must be today
-                                if (scheduledDate !== today) return false;
-                                break;
-                            case 'upcoming':
-                                // Must be future (not overdue)
-                                if (scheduledDateTime <= now) return false;
-                                break;
+                // Additional client-side validation to ensure filter consistency
+                if (statusFilter !== 'all' || activeFilter !== 'all') {
+                    validSchedules = validSchedules.filter(schedule => {
+                        if (activeFilter !== 'all') {
+                            if (activeFilter === 'active' && !schedule.is_active) return false;
+                            if (activeFilter === 'inactive' && schedule.is_active) return false;
                         }
-                    }
-                    
-                    return true;
-                });
-            }
 
-            setSchedules(validSchedules);
-            
-            // Update pagination with correct data
-            setPagination({
-                current_page: schedulesRes.data.current_page || 1,
-                last_page: schedulesRes.data.last_page || 1,
-                per_page: schedulesRes.data.per_page || 15,
-                total: schedulesRes.data.total || validSchedules.length
-            });
-            
-            // Process APARs data
-            const validApars = Array.isArray(aparsRes.data) 
-                ? aparsRes.data.filter(apar => apar && apar.id)
-                : [];
-            setApars(validApars);
-            
-            // Process teknisi data (only users with teknisi role)
-            const validTeknisi = Array.isArray(teknisiRes.data) 
-                ? teknisiRes.data.filter(user => user && user.id && user.role === 'teknisi')
-                : [];
-            setTeknisi(validTeknisi);
-            
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            showError('Gagal memuat data jadwal');
-        } finally {
-            setLoading(false);
-        }
-    };
+                        if (statusFilter !== 'all') {
+                            const now = new Date();
+                            const scheduledDate = schedule.scheduled_date.split('T')[0];
+                            const scheduledDateTime = new Date(`${scheduledDate}T${schedule.start_time}`);
+                            const today = now.toISOString().split('T')[0];
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!validateForm()) {
-            return;
-        }
+                            switch (statusFilter) {
+                                case 'overdue':
+                                    if (scheduledDateTime >= now) return false;
+                                    break;
+                                case 'today':
+                                    if (scheduledDate !== today) return false;
+                                    break;
+                                case 'upcoming':
+                                    if (scheduledDateTime <= now) return false;
+                                    break;
+                            }
+                        }
 
-        setSubmitting(true);
-
-        try {
-            if (editingSchedule) {
-                if (!editingSchedule.id) {
-                    throw new Error('ID jadwal tidak valid untuk diedit');
+                        return true;
+                    });
                 }
-                
-                const response = await axios.put(`/api/schedules/${editingSchedule.id}`, formData);
-                
-                setSchedules(prevSchedules => 
-                    prevSchedules.map(schedule => 
-                        schedule.id === editingSchedule.id ? response.data : schedule
-                    )
-                );
-            } else {
-                const response = await axios.post('/api/schedules', formData);
-                
-                setSchedules(prevSchedules => [response.data, ...prevSchedules]);
-                
+
+                setSchedules(validSchedules);
+
+                // Update pagination
+                const meta = schedulesRes.data || schedulesRes;
                 setPagination(prev => ({
                     ...prev,
-                    total: prev.total + 1
+                    current_page: meta.current_page || prev.current_page,
+                    last_page: meta.last_page || prev.last_page,
+                    per_page: meta.per_page || prev.per_page,
+                    total: meta.total || validSchedules.length,
                 }));
+            } catch (e) {
+                console.error('Error processing schedules data', e);
             }
-            
+        }
+
+        if (schedulesError) {
+            showError('Gagal memuat data jadwal');
+        }
+    }, [schedulesData, schedulesError]);
+
+    useEffect(() => {
+        if (aparData) {
+            const validApars = Array.isArray(aparData) ? aparData.filter(a => a && a.id) : [];
+            setApars(validApars);
+        }
+    }, [aparData]);
+
+    useEffect(() => {
+        if (usersData) {
+            const validTeknisi = Array.isArray(usersData)
+                ? usersData.filter(u => u && u.id && u.role === 'teknisi')
+                : [];
+            setTeknisi(validTeknisi);
+        }
+    }, [usersData]);
+
+    const scheduleMutation = useMutation({
+        mutationFn: async ({ id, payload }) => {
+            if (id) {
+                const res = await apiClient.put(`/api/schedules/${id}`, payload);
+                return res.data;
+            }
+            const res = await apiClient.post('/api/schedules', payload);
+            return res.data;
+        },
+        onMutate: () => {
+            setSubmitting(true);
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['schedules'] });
             setSubmitted(true);
             setTimeout(() => {
                 setShowModal(false);
                 setEditingSchedule(null);
                 resetForm();
                 setSubmitted(false);
-                
-                const action = editingSchedule ? 'diperbarui' : 'dibuat';
-                const notificationText = editingSchedule ? 'dan notifikasi telah dikirim kembali ke teknisi' : 'dan notifikasi telah dikirim ke teknisi yang ditugaskan';
+
+                const action = variables.id ? 'diperbarui' : 'dibuat';
+                const notificationText = variables.id ? 'dan notifikasi telah dikirim kembali ke teknisi' : 'dan notifikasi telah dikirim ke teknisi yang ditugaskan';
                 showSuccess(`Jadwal berhasil ${action} ${notificationText}.`);
             }, 1000);
-        } catch (error) {
+        },
+        onError: (error) => {
             if (error.response?.data?.errors) {
                 setErrors(error.response.data.errors);
                 showError('Mohon periksa kembali data yang diisi');
@@ -270,9 +265,31 @@ const SchedulesManagement = () => {
             } else {
                 showError('Gagal menyimpan jadwal');
             }
-        } finally {
+        },
+        onSettled: () => {
             setSubmitting(false);
         }
+    });
+
+    // top-level mutation for sending notifications - accepts endpoint as variable
+    const sendNotificationsMutation = useMutation({
+        mutationFn: async (endpoint) => {
+            const res = await apiClient.post(endpoint);
+            return res.data;
+        },
+        onMutate: () => setSendingNotifications(true),
+        onSuccess: (data) => showSuccess(`Berhasil mengirim ${data.sent_count} notifikasi`),
+        onError: () => showError('Gagal mengirim notifikasi'),
+        onSettled: () => setSendingNotifications(false)
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        if (!validateForm()) return;
+
+        const payload = { ...formData };
+        scheduleMutation.mutate({ id: editingSchedule?.id, payload });
     };
 
     // All other existing functions remain the same (validateForm, handleEdit, handleShow, handleDelete, etc.)
@@ -345,6 +362,25 @@ const SchedulesManagement = () => {
         setShowScheduleDetail(schedule);
     };
 
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            const res = await apiClient.delete(`/api/schedules/${id}`);
+            return res.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['schedules'] });
+            showSuccess('Jadwal berhasil dihapus');
+        },
+        onError: (error) => {
+            if (error.response?.status === 404) {
+                showError('Jadwal tidak ditemukan atau sudah dihapus');
+                if (schedulesRefetch) schedulesRefetch();
+            } else {
+                showError('Gagal menghapus jadwal');
+            }
+        }
+    });
+
     const handleDelete = async (scheduleId) => {
         if (!scheduleId) {
             showError('ID jadwal tidak valid untuk dihapus');
@@ -361,27 +397,7 @@ const SchedulesManagement = () => {
         });
 
         if (confirmed) {
-            try {
-                await axios.delete(`/api/schedules/${scheduleId}`);
-                
-                setSchedules(prevSchedules => 
-                    prevSchedules.filter(schedule => schedule.id !== scheduleId)
-                );
-                
-                setPagination(prev => ({
-                    ...prev,
-                    total: Math.max(0, prev.total - 1)
-                }));
-                
-                showSuccess('Jadwal berhasil dihapus');
-            } catch (error) {
-                if (error.response?.status === 404) {
-                    showError('Jadwal tidak ditemukan atau sudah dihapus');
-                    fetchData();
-                } else {
-                    showError('Gagal menghapus jadwal');
-                }
-            }
+            deleteMutation.mutate(scheduleId);
         }
     };
 
@@ -414,15 +430,8 @@ const SchedulesManagement = () => {
         });
 
         if (confirmed) {
-            try {
-                setSendingNotifications(true);
-                const response = await axios.post(endpoint);
-                showSuccess(`Berhasil mengirim ${response.data.sent_count} notifikasi`);
-            } catch (error) {
-                showError('Gagal mengirim notifikasi');
-            } finally {
-                setSendingNotifications(false);
-            }
+            // trigger top-level mutation with chosen endpoint
+            sendNotificationsMutation.mutate(endpoint);
         }
     };
 
@@ -446,7 +455,6 @@ const SchedulesManagement = () => {
         setStatusFilter('all');
         setActiveFilter('all');
         // Force immediate data fetch without waiting for useEffect
-        setLoading(true);
         fetchData(1);
     };
 
@@ -602,7 +610,14 @@ const SchedulesManagement = () => {
         fetchData(page);
     };
 
-    if (loading) {
+    // helper to change page and trigger refetch; schedulesQuery key depends on pagination
+    const fetchData = (page = 1) => {
+        setPagination(prev => ({ ...prev, current_page: page }));
+        // calling refetch ensures immediate update for interactive actions
+        if (schedulesRefetch) schedulesRefetch();
+    };
+
+    if (combinedLoading) {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="flex flex-col items-center gap-4">
@@ -777,7 +792,7 @@ const SchedulesManagement = () => {
 
             {/* Schedules List */}
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                {loading ? (
+                {combinedLoading ? (
                     <div className="text-center py-12 sm:py-16">
                         <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-2 border-red-500 border-t-transparent mx-auto mb-3 sm:mb-4"></div>
                         <p className="text-gray-600 font-medium">Memuat data...</p>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { usePusher, useRepairApprovalUpdates } from '../hooks/usePusher';
 import {
@@ -19,7 +20,6 @@ import {
 
 const MyRepairApprovals = () => {
     const [approvals, setApprovals] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState(null);
@@ -27,6 +27,7 @@ const MyRepairApprovals = () => {
     const [hasShownInitialAlert, setHasShownInitialAlert] = useState(false);
     const navigate = useNavigate();
     const { showError, showSuccess } = useToast();
+    const { apiClient } = useAuth();
 
     // Pusher connection for real-time updates
     const { isConnected: pusherConnected, error: pusherError } = usePusher({
@@ -35,118 +36,80 @@ const MyRepairApprovals = () => {
         onMessage: (data) => {
             console.log('Real-time update received:', data);
             // Refresh data immediately when status changes
-            fetchMyApprovals(true);
+            refetch();
             showSuccess(`Status perbaikan APAR ${data.apar_serial} telah berubah: ${data.message}`);
         }
     });
 
     // Listen for repair approval updates
     useRepairApprovalUpdates((updateData) => {
-        console.log('Repair approval update received:', updateData);
-        // Refresh data immediately
-        fetchMyApprovals(true);
+    console.log('Repair approval update received:', updateData);
+    // Refresh data immediately
+    refetch();
     });
 
     // Auto-refresh interval (reduced to 15 seconds for better responsiveness)
     const AUTO_REFRESH_INTERVAL = 15000;
 
+    // Use react-query to fetch approvals
+    const { data: approvalsData = [], isLoading: loading, isFetching, refetch } = useQuery({
+        queryKey: ['repair-approvals', filter, 'my'],
+        queryFn: async () => {
+            const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
+            const res = await apiClient.get(url);
+            const all = res.data?.data || [];
+            const currentUser = JSON.parse(localStorage.getItem('user'));
+            return all.filter(approval => approval.inspection?.user?.id === currentUser?.id);
+        },
+        keepPreviousData: true,
+        throwOnError: false,
+    });
+
     useEffect(() => {
-        fetchMyApprovals();
         setIsInitialized(true);
-        
-        // Set up auto-refresh interval
         const intervalId = setInterval(() => {
             console.log('Auto-refreshing repair approvals...');
-            fetchMyApprovals(true); // Silent refresh
+            refetch();
         }, AUTO_REFRESH_INTERVAL);
-
-        // Cleanup interval on unmount
         return () => clearInterval(intervalId);
-    }, []); // Remove filter dependency to prevent unnecessary re-renders
+    }, [refetch]);
 
     // Separate effect for filter changes - but only after initial load
     useEffect(() => {
         if (isInitialized && approvals.length > 0) { // Only fetch if component is already initialized and has data
-            fetchMyApprovals();
+            refetch();
         }
     }, [filter, isInitialized]);
 
-    const fetchMyApprovals = useCallback(async (silent = false) => {
-        try {
-            if (!silent) {
-                setLoading(true);
-            }
-            
-            const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
-            console.log('Fetching repair approvals from:', url);
-            
-            const response = await axios.get(url);
-            console.log('API Response:', response.data);
-            
-            if (response.data && response.data.data) {
-                // Filter only approvals for current user
-                const currentUser = JSON.parse(localStorage.getItem('user'));
-                const myApprovals = response.data.data.filter(approval => 
-                    approval.inspection?.user?.id === currentUser?.id
-                );
-                
-                console.log('Filtered approvals for user:', myApprovals.length);
-                console.log('User ID from localStorage:', currentUser?.id);
-                
-                // Check for status changes and prepare notification message
-                let statusChangeMessage = '';
-                if (!silent && approvals.length > 0) {
-                    const statusChanges = [];
-                    myApprovals.forEach(newApproval => {
-                        const oldApproval = approvals.find(old => old.id === newApproval.id);
-                        if (oldApproval && oldApproval.status !== newApproval.status) {
-                            const statusText = {
-                                'pending': 'Menunggu',
-                                'approved': 'Disetujui',
-                                'rejected': 'Ditolak',
-                                'completed': 'Selesai'
-                            };
-                            
-                            statusChanges.push(`APAR ${newApproval.inspection?.apar?.serial_number}: ${statusText[newApproval.status] || newApproval.status}`);
-                        }
-                    });
-                    
-                    if (statusChanges.length > 0) {
-                        statusChangeMessage = `Status berubah: ${statusChanges.join(', ')}. `;
-                    }
-                }
-                
-                setApprovals(myApprovals);
-                setLastUpdate(new Date());
-                
-                // Show combined success message
-                if (!silent && !refreshing && isInitialized && !hasShownInitialAlert) {
-                    const message = statusChangeMessage + `Berhasil memuat ${myApprovals.length} data perbaikan`;
-                    showSuccess(message);
-                    setHasShownInitialAlert(true);
-                }
-            } else {
-                console.warn('No data property in response:', response.data);
-                setApprovals([]);
-            }
-        } catch (error) {
-            console.error('Error fetching repair approvals:', error);
-            if (!silent) {
-                showError('Gagal memuat daftar perbaikan');
-            }
-            setApprovals([]);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
+    // Sync local approvals from query
+    useEffect(() => {
+        setApprovals(approvalsData || []);
+        if (approvalsData && approvalsData.length) {
+            setLastUpdate(new Date());
         }
-    }, [filter, showError, showSuccess]);
+    }, [approvalsData]);
+
+    // Show initial message once
+    const prevRef = useRef([]);
+    useEffect(() => {
+        if (!isInitialized) return;
+        const prev = prevRef.current || [];
+        if (!isFetching && approvalsData && approvalsData.length >= 0) {
+            if (!hasShownInitialAlert && approvalsData.length > 0) {
+                showSuccess(`Berhasil memuat ${approvalsData.length} data perbaikan`);
+                setHasShownInitialAlert(true);
+            }
+        }
+        prevRef.current = approvalsData;
+    }, [approvalsData, isFetching, isInitialized]);
 
     // Manual refresh function
     const handleManualRefresh = async () => {
-        if (refreshing) return; // Prevent multiple simultaneous refreshes
+        if (refreshing) return;
         setRefreshing(true);
-        setHasShownInitialAlert(false); // Reset flag to allow showing refresh alert
-        await fetchMyApprovals();
+        setHasShownInitialAlert(false);
+        await refetch();
+        setRefreshing(false);
     };
 
     // Get current user ID safely

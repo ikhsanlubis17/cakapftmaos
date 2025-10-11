@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
     UserIcon,
@@ -13,9 +14,18 @@ const UserEdit = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const { showSuccess, showError } = useToast();
-    const [loading, setLoading] = useState(true);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const [saving, setSaving] = useState(false);
-    const [user, setUser] = useState(null);
+    const { data: user, isLoading: loading, isError } = useQuery({
+        queryKey: ['users', id],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/users/${id}`);
+            return res.data;
+        },
+        enabled: !!id,
+        throwOnError: false,
+    });
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -28,35 +38,22 @@ const UserEdit = () => {
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
-        fetchUser();
-    }, [id]);
-
-    const fetchUser = async () => {
-        try {
-            const response = await axios.get(`/api/users/${id}`);
-            const userData = response.data;
-            setUser(userData);
+        if (user) {
             setFormData({
-                name: userData.name || '',
-                email: userData.email || '',
+                name: user.name || '',
+                email: user.email || '',
                 password: '',
                 confirmPassword: '',
-                phone: userData.phone || '',
-                role: userData.role || 'teknisi',
-                is_active: userData.is_active !== undefined ? userData.is_active : true,
+                phone: user.phone || '',
+                role: user.role || 'teknisi',
+                is_active: user.is_active !== undefined ? user.is_active : true,
             });
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            if (error.response?.status === 404) {
-                showError('Pengguna tidak ditemukan');
-                navigate({ to: '/users' });
-                return;
-            }
-            showError('Gagal memuat data pengguna');
-        } finally {
-            setLoading(false);
         }
-    };
+
+        if (isError) {
+            showError('Gagal memuat data pengguna');
+        }
+    }, [user, isError]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -122,25 +119,25 @@ const UserEdit = () => {
                 is_active: formData.is_active,
             };
 
-            // Only include password if it's being changed
             if (formData.password) {
                 updateData.password = formData.password;
             }
 
-            const response = await axios.put(`/api/users/${id}`, updateData);
+            await apiClient.put(`/api/users/${id}`, updateData);
 
             showSuccess('Pengguna berhasil diperbarui!');
+            queryClient.invalidateQueries({ queryKey: ['users'] });
             navigate({ to: '/users' });
         } catch (error) {
             console.error('Error updating user:', error);
-            if (error.response?.data?.errors) {
+            if (error?.response?.data?.errors) {
                 const serverErrors = {};
                 Object.keys(error.response.data.errors).forEach(key => {
                     serverErrors[key] = error.response.data.errors[key][0];
                 });
                 setErrors(serverErrors);
             } else {
-                showError(error.response?.data?.message || 'Gagal memperbarui pengguna. Silakan coba lagi.');
+                showError(error?.response?.data?.message || 'Gagal memperbarui pengguna. Silakan coba lagi.');
             }
         } finally {
             setSaving(false);

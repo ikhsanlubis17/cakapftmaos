@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
     CameraIcon,
@@ -21,7 +22,7 @@ const RepairReportForm = () => {
     const afterCanvasRef = useRef(null);
     
     const [approval, setApproval] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [currentLocation, setCurrentLocation] = useState(null);
     const { showSuccess, showError } = useToast();
@@ -40,10 +41,21 @@ const RepairReportForm = () => {
     const [beforeCameraLoading, setBeforeCameraLoading] = useState(false);
     const [afterCameraLoading, setAfterCameraLoading] = useState(false);
 
+    const { apiClient } = useAuth();
+
+    const { data: approvalData, isLoading: approvalLoading, refetch: refetchApproval } = useQuery({
+        queryKey: ['repairApproval', approvalId],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/repair-approvals/${approvalId}`);
+            return res.data.data;
+        },
+        enabled: !!approvalId,
+        throwOnError: false,
+    });
+
     useEffect(() => {
-        fetchApprovalData();
         getCurrentLocation();
-        
+
         return () => {
             if (beforeVideoRef.current && beforeVideoRef.current.srcObject) {
                 beforeVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -52,19 +64,21 @@ const RepairReportForm = () => {
                 afterVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
             }
         };
-    }, [approvalId]);
+    }, []);
 
-    const fetchApprovalData = async () => {
-        try {
-            const response = await axios.get(`/api/repair-approvals/${approvalId}`);
-            setApproval(response.data.data);
-        } catch (error) {
-            showError('Data persetujuan tidak ditemukan');
+    useEffect(() => {
+        setLoading(approvalLoading);
+    }, [approvalLoading]);
+
+    useEffect(() => {
+        if (approvalData) setApproval(approvalData);
+        if (!approvalData && !approvalLoading) {
+            // if no approval found, navigate away
+            // keep behavior same as before
+            // but only navigate when approvalId was present
             navigate({ to: '/my-repairs' });
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [approvalData, approvalLoading, navigate]);
 
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
@@ -191,13 +205,13 @@ const RepairReportForm = () => {
             submitData.append('before_photo', formData.before_photo);
             submitData.append('after_photo', formData.after_photo);
             submitData.append('repair_completed_at', formData.repair_completed_at);
-            
+
             if (currentLocation) {
                 submitData.append('repair_lat', currentLocation.lat);
                 submitData.append('repair_lng', currentLocation.lng);
             }
 
-            await axios.post('/api/repair-reports', submitData, {
+            await apiClient.post('/api/repair-reports', submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

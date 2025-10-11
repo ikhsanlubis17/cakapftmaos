@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import {
     ClipboardDocumentListIcon,
     CheckCircleIcon,
@@ -13,27 +13,28 @@ import {
 } from '@heroicons/react/24/outline';
 
 const MyInspections = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const [inspections, setInspections] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        fetchMyInspections();
-    }, []);
+    const { data: inspectionsData, isLoading: inspectionsLoading, refetch } = useQuery({
+        queryKey: ['myInspections'],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/inspections/my-inspections`);
+            return res.data;
+        },
+        keepPreviousData: true,
+        throwOnError: false,
+    });
 
-    const fetchMyInspections = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`/api/inspections/my-inspections`);
-            setInspections(response.data);
-        } catch (error) {
-            console.error('Error fetching inspections:', error);
-            setError('Gagal memuat riwayat inspeksi');
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        setLoading(inspectionsLoading);
+    }, [inspectionsLoading]);
+
+    useEffect(() => {
+        if (inspectionsData) setInspections(inspectionsData);
+    }, [inspectionsData]);
 
     const getStatusIcon = (status) => {
         switch (status) {

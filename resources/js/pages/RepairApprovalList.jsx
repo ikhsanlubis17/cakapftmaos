@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { usePusher } from '../hooks/usePusher';
 import {
@@ -18,7 +19,6 @@ import {
 
 const RepairApprovalList = () => {
     const [approvals, setApprovals] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [stats, setStats] = useState({});
     const [error, setError] = useState(null);
@@ -28,6 +28,9 @@ const RepairApprovalList = () => {
     const [hasShownInitialAlert, setHasShownInitialAlert] = useState(false);
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
+
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
 
     // Pusher connection for real-time updates
     const { isConnected: pusherConnected, error: pusherError } = usePusher({
@@ -45,154 +48,150 @@ const RepairApprovalList = () => {
     // Auto-refresh interval (reduced to 10 seconds for admin)
     const AUTO_REFRESH_INTERVAL = 10000;
 
+    // Use react-query for approvals list
+    const {
+        data: approvalsData = [],
+        isLoading: loading,
+        isFetching: isFetchingApprovals,
+        refetch: refetchApprovals,
+        error: approvalsError,
+    } = useQuery({
+        queryKey: ['repair-approvals', filter],
+        queryFn: async () => {
+            const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
+            const res = await apiClient.get(url);
+            return res.data?.data || [];
+        },
+        keepPreviousData: true,
+        throwOnError: false,
+    });
+
+    const {
+        data: statsData = {},
+        refetch: refetchStats,
+    } = useQuery({
+        queryKey: ['repair-approvals-stats'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/repair-approvals/stats');
+            return res.data?.data || {};
+        },
+        throwOnError: false,
+    });
+
+    // initialize and auto-refresh
     useEffect(() => {
         console.log('RepairApprovalList component mounted');
-        fetchApprovals();
-        fetchStats();
         setIsInitialized(true);
-        
-        // Set up auto-refresh interval
+
         const intervalId = setInterval(() => {
             console.log('Auto-refreshing admin repair approvals...');
-            fetchApprovals(true); // Silent refresh
-            fetchStats();
+            refetchApprovals();
+            refetchStats();
         }, AUTO_REFRESH_INTERVAL);
 
-        // Cleanup interval on unmount
         return () => clearInterval(intervalId);
-    }, []); // Remove filter dependency to prevent unnecessary re-renders
+    }, [refetchApprovals, refetchStats]);
 
     // Separate effect for filter changes - but only after initial load
-    useEffect(() => {
-        if (isInitialized && approvals.length > 0) { // Only fetch if component is already initialized and has data
-            fetchApprovals();
-        }
-    }, [filter, isInitialized]);
+    // when filter changes, react-query will refetch automatically due to queryKey
 
-    const fetchApprovals = useCallback(async (silent = false) => {
-        try {
-            if (!silent) {
-                setLoading(true);
-            }
-            console.log('Fetching approvals with filter:', filter);
-            setError(null);
-            
-            const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
-            console.log('API URL:', url);
-            
-            const response = await axios.get(url);
-            console.log('API Response:', response.data);
-            
-            if (response.data && response.data.data) {
-                setApprovals(response.data.data);
-                setLastUpdate(new Date());
-                
-                // Only show success message if not silent, not refreshing, and not in initial load
-                if (!silent && !refreshing && isInitialized && !hasShownInitialAlert) {
-                    showSuccess(`Berhasil memuat ${response.data.data.length} data persetujuan`);
-                    setHasShownInitialAlert(true);
-                }
-            } else {
-                setApprovals([]);
-                console.warn('No data property in response:', response.data);
-            }
-        } catch (error) {
-            console.error('Error fetching approvals:', error);
-            setError(error.response?.data?.message || 'Gagal memuat daftar persetujuan');
-            if (!silent) {
-                showError('Gagal memuat daftar persetujuan');
-            }
-            setApprovals([]);
-        } finally {
-            if (!silent) {
-                setLoading(false);
-            }
-            setRefreshing(false);
+    // Sync local approvals & stats from query data
+    useEffect(() => {
+        setApprovals(approvalsData || []);
+        setStats(statsData || {});
+        if (approvalsData && approvalsData.length) {
+            setLastUpdate(new Date());
         }
-    }, [filter, showError, showSuccess, refreshing, isInitialized]);
+    }, [approvalsData, statsData]);
+
+    // Show initial success message once
+    const prevApprovalsRef = useRef([]);
+    useEffect(() => {
+        if (!isInitialized) return;
+        const prev = prevApprovalsRef.current || [];
+        if (!isFetchingApprovals && approvalsData && approvalsData.length >= 0) {
+            if (!hasShownInitialAlert && approvalsData.length > 0) {
+                showSuccess(`Berhasil memuat ${approvalsData.length} data persetujuan`);
+                setHasShownInitialAlert(true);
+            }
+        }
+        prevApprovalsRef.current = approvalsData;
+    }, [approvalsData, isFetchingApprovals, isInitialized]);
 
     // Manual refresh function
     const handleManualRefresh = async () => {
-        if (refreshing) return; // Prevent multiple simultaneous refreshes
+        if (refreshing) return;
         setRefreshing(true);
-        setHasShownInitialAlert(false); // Reset flag to allow showing refresh alert
-        await fetchApprovals();
-        // fetchStats() tidak perlu dipanggil lagi karena sudah dipanggil di fetchApprovals
+        setHasShownInitialAlert(false);
+        await refetchApprovals();
+        await refetchStats();
+        setRefreshing(false);
     };
 
-    const fetchStats = async () => {
-        try {
-            console.log('Fetching stats...');
-            const response = await axios.get('/api/repair-approvals/stats');
-            console.log('Stats response:', response.data);
-            
-            if (response.data && response.data.data) {
-                setStats(response.data.data);
-            } else {
-                setStats({});
-                console.warn('No data property in stats response:', response.data);
-            }
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-            setStats({});
-        }
-    };
+    // stats handled by react-query via statsData
 
-    const handleApprove = async (approval, notes = '') => {
-        try {
-            console.log('Approving approval:', approval.id, 'with notes:', notes);
-            const response = await axios.post(`/api/repair-approvals/${approval.id}/approve`, { admin_notes: notes });
-            
-            // Update local state immediately for better UX
-            setApprovals(prevApprovals => 
-                prevApprovals.map(prev => 
-                    prev.id === approval.id 
-                        ? { ...prev, status: 'approved', admin_notes: notes }
-                        : prev
-                )
+    const approveMutation = useMutation({
+        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { admin_notes: notes }),
+        onMutate: async ({ id, notes }) => {
+            await queryClient.cancelQueries({ queryKey: ['repair-approvals', filter] });
+            const previous = queryClient.getQueryData(['repair-approvals', filter]);
+            queryClient.setQueryData(['repair-approvals', filter], (old = []) =>
+                old.map(item => item.id === id ? { ...item, status: 'approved', admin_notes: notes } : item)
             );
-            
-            // Update stats without showing additional alerts
-            fetchStats();
-            
-            // Show success message with notification info
-            showSuccess(`Persetujuan berhasil disetujui dan notifikasi telah dikirim ke teknisi ${approval.inspection?.user?.name || 'teknisi'}`);
-            
-        } catch (error) {
-            console.error('Error approving approval:', error);
-            showError(error.response?.data?.message || 'Gagal menyetujui perbaikan');
+            return { previous };
+        },
+        onError: (err, vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['repair-approvals', filter], context.previous);
+            }
+            console.error('Error approving approval:', err);
+            showError(err?.response?.data?.message || 'Gagal menyetujui perbaikan');
+        },
+        onSuccess: (_data, { id, notes, approval }) => {
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+            showSuccess(`Persetujuan berhasil disetujui dan notifikasi telah dikirim ke teknisi ${approval?.inspection?.user?.name || 'teknisi'}`);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals', filter] });
         }
+    });
+
+    const handleApprove = (approval, notes = '') => {
+        approveMutation.mutate({ id: approval.id, notes, approval });
     };
 
-    const handleReject = async (approval, notes = '') => {
+    const rejectMutation = useMutation({
+        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/reject`, { admin_notes: notes }),
+        onMutate: async ({ id, notes }) => {
+            await queryClient.cancelQueries({ queryKey: ['repair-approvals', filter] });
+            const previous = queryClient.getQueryData(['repair-approvals', filter]);
+            queryClient.setQueryData(['repair-approvals', filter], (old = []) =>
+                old.map(item => item.id === id ? { ...item, status: 'rejected', admin_notes: notes } : item)
+            );
+            return { previous };
+        },
+        onError: (err, vars, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['repair-approvals', filter], context.previous);
+            }
+            console.error('Error rejecting approval:', err);
+            showError(err?.response?.data?.message || 'Gagal menolak perbaikan');
+        },
+        onSuccess: (_data, { id, notes, approval }) => {
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+            showSuccess(`Persetujuan berhasil ditolak dan notifikasi penolakan telah dikirim ke teknisi ${approval?.inspection?.user?.name || 'teknisi'}`);
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals', filter] });
+        }
+    });
+
+    const handleReject = (approval, notes = '') => {
         if (!notes.trim()) {
             showError('Alasan penolakan wajib diisi');
             return;
         }
-
-        try {
-            console.log('Rejecting approval:', approval.id, 'with notes:', notes);
-            const response = await axios.post(`/api/repair-approvals/${approval.id}/reject`, { admin_notes: notes });
-            
-            // Update local state immediately for better UX
-            setApprovals(prevApprovals => 
-                prevApprovals.map(prev => 
-                    prev.id === approval.id 
-                        ? { ...prev, status: 'rejected', admin_notes: notes }
-                        : prev
-                )
-            );
-            
-            // Update stats without showing additional alerts
-            fetchStats();
-            
-            // Show success message with notification info
-            showSuccess(`Persetujuan berhasil ditolak dan notifikasi penolakan telah dikirim ke teknisi ${approval.inspection?.user?.name || 'teknisi'}`);
-            
-        } catch (error) {
-            console.error('Error rejecting approval:', error);
-            showError(error.response?.data?.message || 'Gagal menolak perbaikan');
-        }
+        rejectMutation.mutate({ id: approval.id, notes, approval });
     };
 
     const getStatusBadge = (status) => {

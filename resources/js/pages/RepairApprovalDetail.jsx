@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
     ArrowLeftIcon,
@@ -22,40 +23,77 @@ const RepairApprovalDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-    
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
+
     const [approval, setApproval] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [notes, setNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [showActionModal, setShowActionModal] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [notes, setNotes] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+
+    const { data: approvalData, isLoading: loading, refetch } = useQuery({
+        queryKey: ['repair-approval', id],
+        queryFn: async () => {
+            // keep using test endpoint if that is expected by backend, otherwise switch to standard
+            const response = await apiClient.get(`/api/test-repair-approval/${id}`);
+            if (response.data?.success) return response.data.data;
+            throw new Error('Gagal memuat detail persetujuan');
+        },
+        enabled: !!id,
+        throwOnError: false,
+    });
 
     useEffect(() => {
-        fetchApprovalDetail();
-    }, [id]);
+        if (approvalData) setApproval(approvalData);
+    }, [approvalData]);
 
-    const fetchApprovalDetail = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            // Use test endpoint temporarily for debugging
-            const response = await axios.get(`/api/test-repair-approval/${id}`);
-            
-            if (response.data.success) {
-                setApproval(response.data.data);
-            } else {
-                throw new Error('Gagal memuat detail persetujuan');
-            }
-        } catch (error) {
-            console.error('Error fetching approval detail:', error);
-            setError(error.response?.data?.message || 'Gagal memuat detail persetujuan');
-            showError('Gagal memuat detail persetujuan');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const approveMutation = useMutation({
+        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { admin_notes: notes }),
+        onMutate: async ({ id, notes }) => {
+            await queryClient.cancelQueries({ queryKey: ['repair-approval', id] });
+            const previous = queryClient.getQueryData(['repair-approval', id]);
+            queryClient.setQueryData(['repair-approval', id], (old) => ({ ...(old || {}), status: 'approved', admin_notes: notes }));
+            return { previous };
+        },
+        onError: (err, vars, context) => {
+            if (context?.previous) queryClient.setQueryData(['repair-approval', id], context.previous);
+            console.error('Error approving:', err);
+            showError(err?.response?.data?.message || 'Gagal memproses tindakan');
+        },
+        onSuccess: () => {
+            showSuccess('Persetujuan berhasil disetujui');
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['repair-approval', id] })
+    });
+
+    const rejectMutation = useMutation({
+        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/reject`, { admin_notes: notes }),
+        onMutate: async ({ id, notes }) => {
+            await queryClient.cancelQueries({ queryKey: ['repair-approval', id] });
+            const previous = queryClient.getQueryData(['repair-approval', id]);
+            queryClient.setQueryData(['repair-approval', id], (old) => ({ ...(old || {}), status: 'rejected', admin_notes: notes }));
+            return { previous };
+        },
+        onError: (err, vars, context) => {
+            if (context?.previous) queryClient.setQueryData(['repair-approval', id], context.previous);
+            console.error('Error rejecting:', err);
+            showError(err?.response?.data?.message || 'Gagal memproses tindakan');
+        },
+        onSuccess: () => {
+            showSuccess('Persetujuan berhasil ditolak');
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+        },
+        onSettled: () => queryClient.invalidateQueries({ queryKey: ['repair-approval', id] })
+    });
 
     const handleAction = async () => {
         if (actionType === 'reject' && !notes.trim()) {
@@ -63,28 +101,17 @@ const RepairApprovalDetail = () => {
             return;
         }
 
+        setSubmitting(true);
         try {
-            setSubmitting(true);
-            
             if (actionType === 'approve') {
-                await axios.post(`/api/repair-approvals/${id}/approve`, { 
-                    admin_notes: notes.trim() || null 
-                });
-                showSuccess('Persetujuan berhasil disetujui');
+                approveMutation.mutate({ id, notes: notes.trim() || null });
             } else if (actionType === 'reject') {
-                await axios.post(`/api/repair-approvals/${id}/reject`, { 
-                    admin_notes: notes 
-                });
-                showSuccess('Persetujuan berhasil ditolak');
+                rejectMutation.mutate({ id, notes });
             }
-            
+
             setShowActionModal(false);
             setNotes('');
             setActionType(null);
-            fetchApprovalDetail(); // Refresh data
-        } catch (error) {
-            console.error('Error processing action:', error);
-            showError(error.response?.data?.message || 'Gagal memproses tindakan');
         } finally {
             setSubmitting(false);
         }

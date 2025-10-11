@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import Toast from '../components/Toast';
 import {
     CheckCircleIcon,
@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const TeknisiDashboard = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const [loading, setLoading] = useState(true);
     
     // Teknisi dashboard state - hanya data yang relevan untuk teknisi
@@ -35,58 +35,66 @@ const TeknisiDashboard = () => {
         duration: 4000
     });
 
-    useEffect(() => {
-        if (user?.role === 'teknisi') {
-            fetchTeknisiDashboardData();
-        }
-    }, [user]);
+    const teknisiSchedulesQuery = useQuery({
+        queryKey: ['schedules', 'my-schedules'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/schedules/my-schedules');
+            // match earlier code which expected { success, data }
+            return res.data;
+        },
+        enabled: Boolean(user && user.role === 'teknisi'),
+        staleTime: 1000 * 30, // 30s
+    });
 
-    const fetchTeknisiDashboardData = async () => {
-        try {
+    useEffect(() => {
+        if (!user || user.role !== 'teknisi') return;
+
+        if (teknisiSchedulesQuery.isLoading) {
             setLoading(true);
-            
-            // Fetch teknisi schedules - hanya jadwal yang ditugaskan kepada teknisi ini
-            const schedulesResponse = await axios.get('/api/schedules/my-schedules');
-            if (schedulesResponse.data.success) {
-                const schedules = schedulesResponse.data.data || [];
-                setMySchedules(schedules);
-                
-                // Calculate stats dari jadwal teknisi saja
-                const now = new Date();
-                const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-                const thisWeekStart = new Date(now.getTime() - now.getDay() * 24 * 60 * 60 * 1000);
-                const thisWeekEnd = new Date(thisWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-                
-                const stats = {
-                    totalAssignedSchedules: schedules.length,
-                    completedInspections: schedules.filter(s => s.is_completed).length,
-                    pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
-                    thisWeekSchedules: schedules.filter(s => {
-                        const scheduleDate = new Date(s.scheduled_date);
-                        return scheduleDate >= thisWeekStart && scheduleDate <= thisWeekEnd;
-                    }).length,
-                    nextWeekSchedules: schedules.filter(s => {
-                        const scheduleDate = new Date(s.scheduled_date);
-                        return scheduleDate > thisWeekEnd && scheduleDate <= nextWeek;
-                    }).length
-                };
-                setTeknisiStats(stats);
-                
-                // Get upcoming deadlines untuk teknisi ini saja
-                const upcomingSchedules = schedules
-                    .filter(s => !s.is_completed && new Date(s.scheduled_date) >= now)
-                    .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
-                    .slice(0, 5);
-                setUpcomingDeadlines(upcomingSchedules);
-            }
-            
-        } catch (error) {
-            console.error('Error fetching teknisi data:', error);
-            showToast('error', 'Gagal memuat data dashboard');
-        } finally {
-            setLoading(false);
+            return;
         }
-    };
+
+        if (teknisiSchedulesQuery.isError) {
+            console.error('Error fetching teknisi data:', teknisiSchedulesQuery.error);
+            showToast('error', 'Gagal memuat data dashboard');
+            setLoading(false);
+            return;
+        }
+
+        if (teknisiSchedulesQuery.data) {
+            const payload = teknisiSchedulesQuery.data;
+            const schedules = payload.data || (Array.isArray(payload) ? payload : []);
+            setMySchedules(schedules);
+
+            const now = new Date();
+            const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const thisWeekStart = new Date(now.getTime() - now.getDay() * 24 * 60 * 60 * 1000);
+            const thisWeekEnd = new Date(thisWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+
+            const stats = {
+                totalAssignedSchedules: schedules.length,
+                completedInspections: schedules.filter(s => s.is_completed).length,
+                pendingInspections: schedules.filter(s => !s.is_completed && new Date(s.scheduled_date) >= now).length,
+                thisWeekSchedules: schedules.filter(s => {
+                    const scheduleDate = new Date(s.scheduled_date);
+                    return scheduleDate >= thisWeekStart && scheduleDate <= thisWeekEnd;
+                }).length,
+                nextWeekSchedules: schedules.filter(s => {
+                    const scheduleDate = new Date(s.scheduled_date);
+                    return scheduleDate > thisWeekEnd && scheduleDate <= nextWeek;
+                }).length
+            };
+            setTeknisiStats(stats);
+
+            const upcomingSchedules = schedules
+                .filter(s => !s.is_completed && new Date(s.scheduled_date) >= now)
+                .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                .slice(0, 5);
+            setUpcomingDeadlines(upcomingSchedules);
+        }
+
+        setLoading(false);
+    }, [user, teknisiSchedulesQuery.data, teknisiSchedulesQuery.isLoading, teknisiSchedulesQuery.isError]);
 
     const showToast = (type, message, duration = 4000) => {
         setToast({
@@ -149,7 +157,7 @@ const TeknisiDashboard = () => {
                                 className="bg-white/20 backdrop-blur text-white px-5 py-2.5 rounded-lg hover:bg-white/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
                             >
                                 <ArrowPathIcon className="h-4 w-4" />
-                                Refresh
+                                    Refresh
                             </button>
                             <Link
                                 to="/inspections/new"

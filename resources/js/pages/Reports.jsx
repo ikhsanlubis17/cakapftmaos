@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import {
     DocumentArrowDownIcon,
@@ -15,36 +15,37 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Reports = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const [reports, setReports] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [dateRange, setDateRange] = useState('week');
     const [generating, setGenerating] = useState(false);
     const [selectedFormat, setSelectedFormat] = useState('pdf');
+    // useQuery to fetch reports based on dateRange
+    const { data: reportsData, isLoading: reportsLoading, refetch: refetchReports } = useQuery({
+        queryKey: ['reports', dateRange],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/reports?range=${dateRange}`);
+            return res.data;
+        },
+        keepPreviousData: true,
+    });
 
-    useEffect(() => {
-        fetchReports();
-    }, [dateRange]);
+    // Keep local state in sync for older UI parts that expect `reports` and `loading` vars
+    React.useEffect(() => {
+        setLoading(reportsLoading);
+    }, [reportsLoading]);
 
-    const fetchReports = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`/api/reports?range=${dateRange}`);
-            setReports(response.data);
-        } catch (error) {
-            console.error('Error fetching reports:', error);
-            showError('Gagal memuat data laporan');
-        } finally {
-            setLoading(false);
-        }
-    };
+    React.useEffect(() => {
+        if (reportsData) setReports(reportsData);
+    }, [reportsData]);
 
     const generateReport = async (type) => {
         setGenerating(true);
         
         try {
-            const response = await axios.get(`/api/reports/generate/${type}/${selectedFormat}?range=${dateRange}`, {
+            const response = await apiClient.get(`/api/reports/generate/${type}/${selectedFormat}?range=${dateRange}`, {
                 responseType: 'blob',
             });
             

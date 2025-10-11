@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import {
     CalendarIcon,
     ClockIcon,
@@ -19,38 +19,38 @@ import {
 } from '@heroicons/react/24/outline';
 
 const MySchedules = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const [schedules, setSchedules] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [dateFilter, setDateFilter] = useState('all');
 
-    useEffect(() => {
-        fetchMySchedules();
-        
-        // Auto-refresh setiap 30 detik untuk sinkronisasi data
-        const interval = setInterval(() => {
-            fetchMySchedules();
-        }, 30000);
-        
-        return () => clearInterval(interval);
-    }, []);
+    const { data: schedulesData, isLoading: schedulesLoading, refetch } = useQuery({
+        queryKey: ['mySchedules'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/schedules/my-schedules');
+            return res.data;
+        },
+        keepPreviousData: true,
+        refetchInterval: 30000, // auto-refresh every 30s
+        throwOnError: false,
+    });
 
-    const fetchMySchedules = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/schedules/my-schedules');
-            console.log('Fetched schedules:', response.data);
-            setSchedules(response.data);
-        } catch (error) {
-            console.error('Error fetching schedules:', error);
-            setError('Gagal memuat jadwal tugas');
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        setLoading(schedulesLoading);
+    }, [schedulesLoading]);
+
+    useEffect(() => {
+        if (schedulesData) {
+            console.log('Fetched schedules:', schedulesData);
+            setSchedules(schedulesData);
+            setError(null);
         }
-    };
+    }, [schedulesData]);
+
+    // handle errors from the query via the error state if needed
 
     const getStatusColor = (schedule) => {
         const scheduledDateTime = getScheduledDateTime(schedule);

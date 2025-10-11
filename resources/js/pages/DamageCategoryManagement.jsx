@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import ConfirmDialog from '../components/ConfirmDialog';
 import {
     PlusIcon,
@@ -13,7 +15,7 @@ import {
 
 const DamageCategoryManagement = () => {
     const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [formData, setFormData] = useState({
@@ -37,45 +39,70 @@ const DamageCategoryManagement = () => {
         setConfirmDialog({ ...confirmDialog, isOpen: false });
     };
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
+    const { apiClient } = useAuth();
+    const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
-    const fetchCategories = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/damage-categories');
-            setCategories(response.data.data);
-        } catch (error) {
-            showError('Gagal memuat kategori kerusakan');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data, isLoading, isError } = useQuery({
+        queryKey: ['damage-categories'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/damage-categories');
+            return res.data.data;
+        },
+        staleTime: 1000 * 60 * 2, // 2 minutes
+    });
+
+    useEffect(() => {
+        if (isError) showError('Gagal memuat kategori kerusakan');
+        if (data) setCategories(data);
+    }, [data, isError]);
+
+    const createCategoryMutation = useMutation({
+        mutationFn: async (payload) => {
+            const res = await apiClient.post('/api/damage-categories', payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            showSuccess('Kategori berhasil dibuat');
+            queryClient.invalidateQueries({ queryKey: ['damage-categories'] });
+            setShowForm(false);
+            setEditingCategory(null);
+            setFormData({ name: '', description: '', is_active: true });
+        },
+        onError: (error) => {
+            showError(error.response?.data?.message || 'Gagal menyimpan kategori');
+        },
+    });
+
+    const updateCategoryMutation = useMutation({
+        mutationFn: async ({ id, payload }) => {
+            const res = await apiClient.put(`/api/damage-categories/${id}`, payload);
+            return res.data;
+        },
+        onSuccess: () => {
+            showSuccess('Kategori berhasil diperbarui');
+            queryClient.invalidateQueries({ queryKey: ['damage-categories'] });
+            setShowForm(false);
+            setEditingCategory(null);
+            setFormData({ name: '', description: '', is_active: true });
+        },
+        onError: (error) => {
+            showError(error.response?.data?.message || 'Gagal menyimpan kategori');
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!formData.name.trim()) {
             showError('Nama kategori wajib diisi');
             return;
         }
 
-        try {
-            if (editingCategory) {
-                await axios.put(`/api/damage-categories/${editingCategory.id}`, formData);
-                showSuccess('Kategori berhasil diperbarui');
-            } else {
-                await axios.post('/api/damage-categories', formData);
-                showSuccess('Kategori berhasil dibuat');
-            }
-            
-            setShowForm(false);
-            setEditingCategory(null);
-            setFormData({ name: '', description: '', is_active: true });
-            fetchCategories();
-        } catch (error) {
-            showError(error.response?.data?.message || 'Gagal menyimpan kategori');
+        if (editingCategory) {
+            updateCategoryMutation.mutate({ id: editingCategory.id, payload: formData });
+        } else {
+            createCategoryMutation.mutate(formData);
         }
     };
 
@@ -89,7 +116,21 @@ const DamageCategoryManagement = () => {
         setShowForm(true);
     };
 
-    const handleDelete = async (category) => {
+    const deleteMutation = useMutation({
+        mutationFn: async (id) => {
+            const res = await apiClient.delete(`/api/damage-categories/${id}`);
+            return res.data;
+        },
+        onSuccess: () => {
+            showSuccess('Kategori berhasil dihapus');
+            queryClient.invalidateQueries({ queryKey: ['damage-categories'] });
+        },
+        onError: (error) => {
+            showError(error.response?.data?.message || 'Gagal menghapus kategori');
+        },
+    });
+
+    const handleDelete = (category) => {
         setConfirmDialog({
             isOpen: true,
             title: 'Konfirmasi Hapus Kategori',
@@ -98,26 +139,24 @@ const DamageCategoryManagement = () => {
             confirmText: 'Ya, Hapus',
             cancelText: 'Batal',
             confirmButtonColor: 'red',
-            onConfirm: async () => {
-                try {
-                    await axios.delete(`/api/damage-categories/${category.id}`);
-                    showSuccess('Kategori berhasil dihapus');
-                    fetchCategories();
-                } catch (error) {
-                    showError(error.response?.data?.message || 'Gagal menghapus kategori');
-                }
-            },
+            onConfirm: async () => deleteMutation.mutate(category.id),
         });
     };
 
-    const toggleStatus = async (category) => {
-        try {
-            await axios.patch(`/api/damage-categories/${category.id}/toggle-status`);
+    const toggleStatusMutation = useMutation({
+        mutationFn: async (id) => {
+            const res = await apiClient.patch(`/api/damage-categories/${id}/toggle-status`);
+            return res.data;
+        },
+        onSuccess: () => {
             showSuccess('Status kategori berhasil diubah');
-            fetchCategories();
-        } catch (error) {
-            showError('Gagal mengubah status kategori');
-        }
+            queryClient.invalidateQueries({ queryKey: ['damage-categories'] });
+        },
+        onError: () => showError('Gagal mengubah status kategori'),
+    });
+
+    const toggleStatus = (category) => {
+        toggleStatusMutation.mutate(category.id);
     };
 
     const resetForm = () => {
@@ -126,7 +165,7 @@ const DamageCategoryManagement = () => {
         setShowForm(false);
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -135,10 +174,10 @@ const DamageCategoryManagement = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
-            <div className="max-w-6xl mx-auto p-4 space-y-6">
+        <div className="space-y-6">
+            <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Header */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
@@ -151,20 +190,20 @@ const DamageCategoryManagement = () => {
                         </div>
                         <button
                             onClick={() => setShowForm(true)}
-                            className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-200 font-medium shadow-lg flex items-center space-x-2"
+                            className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
                         >
-                            <PlusIcon className="h-5 w-5" />
-                            <span>Tambah Kategori</span>
+                            <PlusIcon className="h-4 w-4 mr-2" />
+                            Tambah Kategori
                         </button>
                     </div>
                 </div>
 
                 {/* Form Modal */}
                 {showForm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-gray-900">
+                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                            <div className="mt-3 mb-4 flex items-center justify-between">
+                                <h2 className="text-lg font-medium text-gray-900">
                                     {editingCategory ? 'Edit Kategori' : 'Tambah Kategori Baru'}
                                 </h2>
                                 <button
@@ -237,7 +276,7 @@ const DamageCategoryManagement = () => {
                 )}
 
                 {/* Categories List */}
-                <div className="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+                <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-200">
                         <h3 className="text-lg font-semibold text-gray-900">
                             Daftar Kategori Kerusakan ({categories.length})
@@ -333,10 +372,10 @@ const DamageCategoryManagement = () => {
                 </div>
 
                 {/* Info Card */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="bg-white border border-gray-100 rounded-xl p-4">
                     <div className="flex items-start space-x-3">
-                        <div className="text-blue-600 text-lg">💡</div>
-                        <div className="text-sm text-blue-800">
+                        <div className="text-gray-600 text-lg">💡</div>
+                        <div className="text-sm text-gray-800">
                             <div className="font-medium mb-1">Tips Manajemen Kategori Kerusakan:</div>
                             <ul className="space-y-1">
                                 <li>• Kategori yang nonaktif tidak akan muncul di form inspeksi</li>

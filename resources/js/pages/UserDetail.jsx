@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { Link, useParams, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { Link, useParams, useNavigate, getRouteApi } from '@tanstack/react-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -19,33 +19,29 @@ import {
 } from '@heroicons/react/24/outline';
 
 const UserDetail = () => {
-    const { id } = useParams();
+    const route = getRouteApi('/administrator/users/$id');
+    const { id } = route.useParams();
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState(null);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
+
+    const { data: user, isLoading: loading, isError } = useQuery({
+        queryKey: ['users', id],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/users/${id}`);
+            return res.data;
+        },
+        enabled: !!id,
+        throwOnError: false,
+    });
 
     useEffect(() => {
-        fetchUser();
-    }, [id]);
-
-    const fetchUser = async () => {
-        try {
-            const response = await axios.get(`/api/users/${id}`);
-            setUser(response.data);
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            if (error.response?.status === 404) {
-                showError('Pengguna tidak ditemukan');
-                navigate({ to: '/users' });
-                return;
-            }
+        if (isError) {
             showError('Gagal memuat data pengguna');
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [isError]);
 
     const handleDelete = async () => {
         const confirmed = await confirm({
@@ -59,12 +55,13 @@ const UserDetail = () => {
 
         if (confirmed) {
             try {
-                await axios.delete(`/api/users/${id}`);
+                await apiClient.delete(`/api/users/${id}`);
                 showSuccess('Pengguna berhasil dihapus');
+                queryClient.invalidateQueries({ queryKey: ['users'] });
                 navigate({ to: '/users' });
             } catch (error) {
                 console.error('Error deleting user:', error);
-                showError(error.response?.data?.message || 'Gagal menghapus pengguna');
+                showError(error?.response?.data?.message || 'Gagal menghapus pengguna');
             }
         }
     };

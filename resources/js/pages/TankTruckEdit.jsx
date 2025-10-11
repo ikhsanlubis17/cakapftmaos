@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { TruckIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useToast } from '../contexts/ToastContext';
 
@@ -8,9 +9,9 @@ const TankTruckEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-    const [loading, setLoading] = useState(true);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const [saving, setSaving] = useState(false);
-    const [tankTruck, setTankTruck] = useState(null);
     const [formData, setFormData] = useState({
         plate_number: '',
         driver_name: '',
@@ -19,30 +20,32 @@ const TankTruckEdit = () => {
         status: 'active'
     });
 
-    useEffect(() => {
-        fetchTankTruckDetail();
-    }, [id]);
-
-    const fetchTankTruckDetail = async () => {
-        try {
-            const response = await axios.get(`/api/tank-trucks/${id}`);
-            const tankTruckData = response.data;
-            setTankTruck(tankTruckData);
+    const { data: truckData, isLoading } = useQuery({
+        queryKey: ['tank-truck', id],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/tank-trucks/${id}`);
+            return res.data || res;
+        },
+        enabled: !!id,
+        staleTime: 1000 * 60 * 2,
+        onSuccess: (data) => {
+            const t = data.data || data;
             setFormData({
-                plate_number: tankTruckData.plate_number || '',
-                driver_name: tankTruckData.driver_name || '',
-                driver_phone: tankTruckData.driver_phone || '',
-                description: tankTruckData.description || '',
-                status: tankTruckData.status || 'active'
+                plate_number: t.plate_number || '',
+                driver_name: t.driver_name || '',
+                driver_phone: t.driver_phone || '',
+                description: t.description || '',
+                status: t.status || 'active'
             });
-        } catch (error) {
-            console.error('Error fetching tank truck detail:', error);
+        },
+        onError: (err) => {
+            console.error('Error fetching tank truck detail:', err);
             showError('Gagal memuat data mobil tangki. Silakan coba lagi.');
             navigate({ to: '/tank-trucks' });
-        } finally {
-            setLoading(false);
         }
-    };
+    });
+
+    const tankTruck = truckData?.data || truckData || null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -52,23 +55,33 @@ const TankTruckEdit = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSaving(true);
-
-        try {
-            await axios.put(`/api/tank-trucks/${id}`, formData);
+    const updateMutation = useMutation({
+        mutationFn: (payload) => apiClient.put(`/api/tank-trucks/${id}`, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tank-trucks'] });
+            queryClient.invalidateQueries({ queryKey: ['tank-truck', id] });
             showSuccess('Mobil tangki berhasil diperbarui');
             navigate({ to: '/tank-trucks' });
-        } catch (error) {
-            console.error('Error updating tank truck:', error);
-            
-            if (error.response?.data?.errors) {
-                const errorMessages = Object.values(error.response.data.errors).flat();
+        },
+        onError: (err) => {
+            console.error('Error updating tank truck:', err);
+            const resp = err?.response?.data;
+            if (resp?.errors) {
+                const errorMessages = Object.values(resp.errors).flat();
                 showError(errorMessages.join(', '));
+            } else if (resp?.message) {
+                showError(resp.message);
             } else {
                 showError('Gagal memperbarui mobil tangki. Silakan coba lagi.');
             }
+        }
+    });
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            await updateMutation.mutateAsync(formData);
         } finally {
             setSaving(false);
         }

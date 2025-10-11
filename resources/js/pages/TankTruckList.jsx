@@ -1,6 +1,7 @@
-import React, { useState, useEffect, Fragment } from 'react';
+import React, { useState, Fragment } from 'react';
 import { Link } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -20,8 +21,8 @@ import {
 const TankTruckList = () => {
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [tankTrucks, setTankTrucks] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [selectedTankTrucks, setSelectedTankTrucks] = useState([]);
@@ -35,40 +36,55 @@ const TankTruckList = () => {
         status: 'active'
     });
 
-    useEffect(() => {
-        fetchTankTrucks();
-    }, []);
+    // Query: fetch tank trucks with searchTerm
+    const tankTrucksQuery = useQuery({
+        queryKey: ['tank-trucks', searchTerm],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/tank-trucks?search=${encodeURIComponent(searchTerm)}`);
+            return res.data || res;
+        },
+        staleTime: 1000 * 60 * 2, // 2 minutes
+        keepPreviousData: true,
+    });
 
-    const fetchTankTrucks = async () => {
-        try {
-            const response = await axios.get(`/api/tank-trucks?search=${searchTerm}`);
-            setTankTrucks(response.data.data || response.data);
-        } catch (error) {
-            console.error('Error fetching tank trucks:', error);
-            showError('Gagal memuat data mobil tangki');
-        } finally {
-            setLoading(false);
+    const tankTrucks = tankTrucksQuery.data?.data || tankTrucksQuery.data || [];
+    const loading = tankTrucksQuery.isLoading;
+    // Mutations
+    const createMutation = useMutation({
+        mutationFn: (newData) => apiClient.post('/api/tank-trucks', newData),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tank-trucks'] });
+            showSuccess('Mobil tangki berhasil ditambahkan');
+        },
+        onError: (err) => {
+            console.error('Error creating tank truck:', err);
+            showError('Gagal menambahkan mobil tangki. Silakan coba lagi.');
         }
-    };
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => apiClient.delete(`/api/tank-trucks/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tank-trucks'] });
+            showSuccess('Mobil tangki berhasil dihapus');
+        },
+        onError: (err) => {
+            console.error('Error deleting tank truck:', err);
+            showError('Gagal menghapus mobil tangki. Silakan coba lagi.');
+        }
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        try {
-            await axios.post('/api/tank-trucks', formData);
-            setShowModal(false);
-            setFormData({
-                plate_number: '',
-                driver_name: '',
-                driver_phone: '',
-                description: '',
-                status: 'active'
-            });
-            fetchTankTrucks();
-            showSuccess('Mobil tangki berhasil ditambahkan');
-        } catch (error) {
-            console.error('Error creating tank truck:', error);
-            showError('Gagal menambahkan mobil tangki. Silakan coba lagi.');
-        }
+        await createMutation.mutateAsync(formData);
+        setShowModal(false);
+        setFormData({
+            plate_number: '',
+            driver_name: '',
+            driver_phone: '',
+            description: '',
+            status: 'active'
+        });
     };
 
     const handleDelete = async (id) => {
@@ -82,14 +98,7 @@ const TankTruckList = () => {
         });
 
         if (confirmed) {
-            try {
-                await axios.delete(`/api/tank-trucks/${id}`);
-                showSuccess('Mobil tangki berhasil dihapus');
-                fetchTankTrucks();
-            } catch (error) {
-                console.error('Error deleting tank truck:', error);
-                showError('Gagal menghapus mobil tangki. Silakan coba lagi.');
-            }
+            await deleteMutation.mutateAsync(id);
         }
     };
 
@@ -114,7 +123,7 @@ const TankTruckList = () => {
         try {
             const deletePromises = selectedTankTrucks.map(async (id) => {
                 try {
-                    await axios.delete(`/api/tank-trucks/${id}`);
+                    await deleteMutation.mutateAsync(id);
                     return { success: true, id };
                 } catch (error) {
                     return { success: false, id, error };
@@ -133,7 +142,7 @@ const TankTruckList = () => {
 
             setSelectedTankTrucks([]);
             setBulkDeleteMode(false);
-            fetchTankTrucks();
+            // queries already invalidated by successful deleteMutation onSuccess
         } catch (error) {
             console.error('Gagal dalam bulk delete:', error);
             showError('Gagal menghapus mobil tangki yang dipilih. Silakan coba lagi.');

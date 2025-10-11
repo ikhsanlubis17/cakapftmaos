@@ -8,14 +8,13 @@ import FilterSection from '../components/FilterSection';
 import UsersTable from '../components/UsersTable';
 import UserModal from '../components/UserModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const UsersManagement = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
@@ -31,35 +30,33 @@ const UsersManagement = () => {
         is_active: true
     });
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const { data: users = [], isLoading: loading, isError } = useQuery({
+        queryKey: ['users'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users');
+            return res.data;
+        },
+        throwOnError: false,
+    });
 
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/users');
-            setUsers(response.data);
-        } catch (error) {
-            console.error('Error fetching users:', error);
+    useEffect(() => {
+        if (isError) {
             setError('Gagal memuat data pengguna');
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [isError]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             if (editingUser) {
-                await axios.put(`/api/users/${editingUser.id}`, formData);
+                await apiClient.put(`/api/users/${editingUser.id}`, formData);
                 showSuccess('Pengguna berhasil diperbarui');
             } else {
-                await axios.post('/api/users', formData);
+                await apiClient.post('/api/users', formData);
                 showSuccess('Pengguna berhasil ditambahkan');
             }
             setShowModal(false);
-            fetchUsers();
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         } catch (error) {
             console.error('Error saving user:', error);
             showError('Gagal menyimpan data pengguna');
@@ -91,9 +88,9 @@ const UsersManagement = () => {
 
         if (confirmed) {
             try {
-                await axios.delete(`/api/users/${userId}`);
+                await apiClient.delete(`/api/users/${userId}`);
                 showSuccess('Pengguna berhasil dihapus');
-                fetchUsers();
+                queryClient.invalidateQueries({ queryKey: ['users'] });
             } catch (error) {
                 console.error('Error deleting user:', error);
                 showError('Gagal menghapus pengguna');

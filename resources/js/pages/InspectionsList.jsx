@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
 import {
     ClipboardDocumentListIcon,
     CheckCircleIcon,
@@ -18,9 +18,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 const InspectionsList = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const [inspections, setInspections] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -29,29 +29,20 @@ const InspectionsList = () => {
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [showPhotoModal, setShowPhotoModal] = useState(false);
 
-    useEffect(() => {
-        fetchInspections();
-        
-        // Auto-refresh setiap 30 detik untuk sinkronisasi data
-        const interval = setInterval(() => {
-            fetchInspections();
-        }, 30000);
-        
-        return () => clearInterval(interval);
-    }, []);
+    const inspectionsQuery = useQuery({
+        queryKey: ['inspections'],
+        queryFn: async () => {
+            const resp = await apiClient.get('/api/inspections');
+            return resp.data;
+        },
+        refetchInterval: 30000,
+        staleTime: 1000 * 30,
+    });
 
-    const fetchInspections = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/inspections');
-            setInspections(response.data);
-        } catch (error) {
-            console.error('Error fetching inspections:', error);
-            setError('Gagal memuat data inspeksi');
-        } finally {
-            setLoading(false);
-        }
-    };
+    useEffect(() => {
+        if (inspectionsQuery.data) setInspections(inspectionsQuery.data);
+        if (inspectionsQuery.isError) setError('Gagal memuat data inspeksi');
+    }, [inspectionsQuery.data, inspectionsQuery.isError]);
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -140,7 +131,7 @@ const InspectionsList = () => {
         return { id, name: inspection?.user?.name };
     });
 
-    if (loading) {
+    if (inspectionsQuery.isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
@@ -158,7 +149,7 @@ const InspectionsList = () => {
                     <XCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
                     <p className="text-red-600">{error}</p>
                     <button
-                        onClick={fetchInspections}
+                        onClick={() => inspectionsQuery.refetch()}
                         className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                     >
                         Coba Lagi

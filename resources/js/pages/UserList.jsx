@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Link } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
@@ -19,37 +19,33 @@ import {
 } from '@heroicons/react/24/outline';
 
 const UserList = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const { data: users = [], isLoading: loading, isError } = useQuery({
+        queryKey: ['users'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users');
+            return res.data;
+        },
+        // Don't throw to console
+        throwOnError: false,
+    });
 
-    const fetchUsers = async () => {
-        try {
-            const response = await axios.get('/api/users');
-            setUsers(response.data);
-        } catch (error) {
-            console.error('Error fetching users:', error);
-            if (error.response?.status === 401) {
-                showError('Sesi Anda telah berakhir. Silakan login kembali.');
-                window.location.href = '/login';
-                return;
-            }
+    // handle auth errors from query
+    useEffect(() => {
+        if (isError) {
+            // Let the global interceptors handle 401/403 - optionally show a message
             showError('Gagal memuat data pengguna. Silakan coba lagi.');
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [isError]);
 
     const handleDelete = async (userId, userName) => {
         const confirmed = await confirm({
@@ -63,9 +59,9 @@ const UserList = () => {
 
         if (confirmed) {
             try {
-                await axios.delete(`/api/users/${userId}`);
+                await apiClient.delete(`/api/users/${userId}`);
                 showSuccess('Pengguna berhasil dihapus');
-                fetchUsers();
+                queryClient.invalidateQueries({ queryKey: ['users'] });
             } catch (error) {
                 console.error('Error deleting user:', error);
                 showError('Gagal menghapus pengguna. Silakan coba lagi.');
@@ -96,14 +92,13 @@ const UserList = () => {
         if (confirmed) {
             setDeleting(true);
             try {
-                // Delete users one by one to handle errors properly
                 const deletePromises = selectedUsers.map(async (userId) => {
                     try {
-                        await axios.delete(`/api/users/${userId}`);
+                        await apiClient.delete(`/api/users/${userId}`);
                         return { success: true, id: userId };
                     } catch (error) {
                         console.error(`Error deleting user ${userId}:`, error);
-                        return { success: false, id: userId, error: error.response?.data?.message || 'Unknown error' };
+                        return { success: false, id: userId, error: error?.response?.data?.message || 'Unknown error' };
                     }
                 });
 
@@ -119,7 +114,7 @@ const UserList = () => {
 
                 setSelectedUsers([]);
                 setBulkDeleteMode(false);
-                fetchUsers();
+                queryClient.invalidateQueries({ queryKey: ['users'] });
             } catch (error) {
                 console.error('Error in bulk delete:', error);
                 showError('Terjadi kesalahan saat menghapus pengguna');

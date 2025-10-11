@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -33,6 +34,7 @@ import {
 
 const ReportsAndAudit = () => {
     const { showSuccess, showError } = useToast();
+    const { apiClient } = useAuth();
     const { isOpen, config, confirm, close } = useConfirmDialog();
     const [activeTab, setActiveTab] = useState('reports');
     const [dateRange, setDateRange] = useState('quarter');
@@ -60,76 +62,63 @@ const ReportsAndAudit = () => {
         show_anomalies_only: false,
     });
 
-    useEffect(() => {
-        fetchReports();
-    }, [dateRange]);
+    // Queries
+    const { data: auditStatsData } = useQuery({
+        queryKey: ['auditStats'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/audit-logs/stats');
+            return res.data;
+        },
+    });
 
-    useEffect(() => {
-        fetchAuditLogs();
-        fetchAuditStats();
-        fetchAnomalies();
-        fetchCleanupStats();
-    }, [filters]);
+    const { data: anomaliesData } = useQuery({
+        queryKey: ['anomalies'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/audit-logs/anomalies');
+            return res.data;
+        },
+    });
 
-    const fetchReports = async () => {
-        // Placeholder for reports data
-        console.log('Fetching reports for period:', dateRange);
-    };
+    const { data: cleanupStatsData, refetch: refetchCleanupStats } = useQuery({
+        queryKey: ['cleanupStats'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/audit-logs/cleanup-stats');
+            return res.data;
+        },
+    });
 
-    const fetchAuditLogs = async () => {
-        try {
-            setLoading(true);
+    const { data: auditLogsData, isLoading: auditLogsLoading, refetch: refetchAuditLogs } = useQuery({
+        queryKey: ['auditLogs', filters],
+        queryFn: async () => {
             const params = new URLSearchParams();
-            Object.keys(filters).forEach(key => {
-                if (filters[key]) {
-                    params.append(key, filters[key]);
-                }
+            Object.keys(filters).forEach((key) => {
+                if (filters[key]) params.append(key, filters[key]);
             });
-            
-            const response = await axios.get(`/api/audit-logs?${params.toString()}`);
-            setAuditLogs(response.data.data || []);
-        } catch (error) {
-            console.error('Error fetching audit logs:', error);
-            setAuditLogs([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+            const res = await apiClient.get(`/api/audit-logs?${params.toString()}`);
+            return res.data.data || [];
+        },
+        keepPreviousData: true,
+    });
 
-    const fetchAuditStats = async () => {
-        try {
-            const response = await axios.get('/api/audit-logs/stats');
-            setAuditStats(response.data);
-        } catch (error) {
-            console.error('Error fetching audit stats:', error);
-            setAuditStats({
-                total_logs: 0,
-                successful_logs: 0,
-                failed_logs: 0,
-                unique_users: 0,
-            });
-        }
-    };
+    useEffect(() => {
+        if (auditStatsData) setAuditStats(auditStatsData);
+    }, [auditStatsData]);
 
-    const fetchAnomalies = async () => {
-        try {
-            const response = await axios.get('/api/audit-logs/anomalies');
-            setAnomalies(response.data);
-        } catch (error) {
-            console.error('Error fetching anomalies:', error);
-            setAnomalies([]);
-        }
-    };
+    useEffect(() => {
+        if (anomaliesData) setAnomalies(anomaliesData);
+    }, [anomaliesData]);
 
-    const fetchCleanupStats = async () => {
-        try {
-            const response = await axios.get('/api/audit-logs/cleanup-stats');
-            setCleanupStats(response.data);
-        } catch (error) {
-            console.error('Error fetching cleanup stats:', error);
-            setCleanupStats({});
-        }
-    };
+    useEffect(() => {
+        if (cleanupStatsData) setCleanupStats(cleanupStatsData);
+    }, [cleanupStatsData]);
+
+    useEffect(() => {
+        setLoading(auditLogsLoading);
+    }, [auditLogsLoading]);
+
+    useEffect(() => {
+        if (auditLogsData) setAuditLogs(auditLogsData);
+    }, [auditLogsData]);
 
     const handleCleanup = async () => {
         const confirmed = await confirm({
@@ -145,14 +134,17 @@ const ReportsAndAudit = () => {
 
         try {
             setLoading(true);
-            const response = await axios.post('/api/audit-logs/cleanup', {
-                days: cleanupDays
+            const response = await apiClient.post('/api/audit-logs/cleanup', {
+                days: cleanupDays,
             });
-            
+
             showSuccess(response.data.message);
-            fetchCleanupStats();
-            fetchAuditStats();
-            fetchAuditLogs();
+            // refetch queries
+            refetchCleanupStats();
+            // small delay to ensure backend updates before refetching logs/stats
+            setTimeout(() => {
+                refetchAuditLogs();
+            }, 300);
             setShowCleanupModal(false);
         } catch (error) {
             console.error('Error cleaning up audit logs:', error);
@@ -170,8 +162,7 @@ const ReportsAndAudit = () => {
                 period: dateRange,
                 format: reportFormat,
             });
-            
-            const response = await axios.get(`/api/reports/generate?${params.toString()}`, {
+            const response = await apiClient.get(`/api/reports/generate?${params.toString()}`, {
                 responseType: 'blob',
             });
             
@@ -234,8 +225,7 @@ const ReportsAndAudit = () => {
                     params.append(key, filters[key]);
                 }
             });
-            
-            const response = await axios.get(`/api/audit-logs/export?${params.toString()}`);
+            const response = await apiClient.get(`/api/audit-logs/export?${params.toString()}`);
             
             // Create formatted JSON with proper indentation
             const formattedData = JSON.stringify(response.data, null, 2);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
     UserIcon,
@@ -12,6 +13,8 @@ import {
 const UserCreate = () => {
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -80,7 +83,7 @@ const UserCreate = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post('/api/users', {
+            await apiClient.post('/api/users', {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
@@ -90,17 +93,18 @@ const UserCreate = () => {
             });
 
             showSuccess('Pengguna berhasil dibuat!');
+            queryClient.invalidateQueries({ queryKey: ['users'] });
             navigate({ to: '/users' });
         } catch (error) {
             console.error('Error creating user:', error);
-            if (error.response?.data?.errors) {
+            if (error?.response?.data?.errors) {
                 const serverErrors = {};
                 Object.keys(error.response.data.errors).forEach(key => {
                     serverErrors[key] = error.response.data.errors[key][0];
                 });
                 setErrors(serverErrors);
             } else {
-                showError(error.response?.data?.message || 'Gagal membuat pengguna. Silakan coba lagi.');
+                showError(error?.response?.data?.message || 'Gagal membuat pengguna. Silakan coba lagi.');
             }
         } finally {
             setLoading(false);

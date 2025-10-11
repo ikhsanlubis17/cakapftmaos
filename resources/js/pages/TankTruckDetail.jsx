@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from '@tanstack/react-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import {
     TruckIcon,
     ArrowLeftIcon,
@@ -26,47 +27,59 @@ const TankTruckDetail = () => {
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
-    const [loading, setLoading] = useState(true);
-    const [tankTruck, setTankTruck] = useState(null);
-    const [apars, setApars] = useState([]);
-    const [availableApars, setAvailableApars] = useState([]);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [selectedAparId, setSelectedAparId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [assigning, setAssigning] = useState(false);
 
-    useEffect(() => {
-        fetchTankTruckDetail();
-        fetchAvailableApars();
-    }, [id]);
-
-    const fetchTankTruckDetail = async () => {
-        try {
-            const response = await axios.get(`/api/tank-trucks/${id}`);
-            setTankTruck(response.data);
-            setApars(response.data.apars || []);
-        } catch (error) {
-            console.error('Error fetching tank truck detail:', error);
+    const { data: truckData, isLoading, isError, refetch } = useQuery({
+        queryKey: ['tank-truck', id],
+        queryFn: async () => {
+            const res = await apiClient.get(`/api/tank-trucks/${id}`);
+            return res.data || res;
+        },
+        enabled: !!id,
+        staleTime: 1000 * 60 * 2,
+        onError: (err) => {
+            console.error('Error fetching tank truck detail:', err);
             showError('Gagal memuat data mobil tangki. Silakan coba lagi.');
             navigate({ to: '/tank-trucks' });
-        } finally {
-            setLoading(false);
         }
-    };
+    });
 
-    const fetchAvailableApars = async () => {
-        try {
-            const response = await axios.get('/api/apar');
-            const allApars = response.data.data || response.data;
-            // Filter APARs that are not assigned to any tank truck or are assigned to this tank truck
-            const available = allApars.filter(apar => 
-                !apar.tank_truck_id || apar.tank_truck_id == id
-            );
-            setAvailableApars(available);
-        } catch (error) {
-            console.error('Error fetching available APARs:', error);
+    const { data: aparsData } = useQuery({
+        queryKey: ['apars'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar');
+            return res.data || res;
+        },
+        staleTime: 1000 * 60 * 2,
+    });
+
+    const tankTruck = truckData?.data || truckData || null;
+    const apars = tankTruck?.apars || [];
+    const allApars = aparsData?.data || aparsData || [];
+    const availableApars = allApars.filter(apar => !apar.tank_truck_id || apar.tank_truck_id == id);
+
+    const assignMutation = useMutation({
+        mutationFn: (payload) => apiClient.post(`/api/tank-trucks/${id}/assign-apar`, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tank-truck', id] });
+            queryClient.invalidateQueries({ queryKey: ['apars'] });
+            showSuccess('APAR berhasil ditugaskan ke mobil tangki');
+            setShowAssignModal(false);
+            setSelectedAparId('');
+            setSearchTerm('');
+        },
+        onError: (err) => {
+            console.error('Error assigning APAR:', err);
+            const msg = err?.response?.data?.message;
+            if (msg) showError(msg);
+            else showError('Gagal menugaskan APAR. Silakan coba lagi.');
         }
-    };
+    });
 
     const handleAssignApar = async () => {
         if (!selectedAparId) {
@@ -76,22 +89,7 @@ const TankTruckDetail = () => {
 
         setAssigning(true);
         try {
-            await axios.post(`/api/tank-trucks/${id}/assign-apar`, {
-                apar_id: selectedAparId
-            });
-            showSuccess('APAR berhasil ditugaskan ke mobil tangki');
-            setShowAssignModal(false);
-            setSelectedAparId('');
-            setSearchTerm('');
-            fetchTankTruckDetail();
-            fetchAvailableApars();
-        } catch (error) {
-            console.error('Error assigning APAR:', error);
-            if (error.response?.data?.message) {
-                showError(error.response.data.message);
-            } else {
-                showError('Gagal menugaskan APAR. Silakan coba lagi.');
-            }
+            await assignMutation.mutateAsync({ apar_id: selectedAparId });
         } finally {
             setAssigning(false);
         }
@@ -105,6 +103,19 @@ const TankTruckDetail = () => {
         return matchesSearch && isAvailable;
     });
 
+    const removeMutation = useMutation({
+        mutationFn: (payload) => apiClient.post(`/api/tank-trucks/${id}/remove-apar`, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tank-truck', id] });
+            queryClient.invalidateQueries({ queryKey: ['apars'] });
+            showSuccess('APAR berhasil dihapus dari mobil tangki');
+        },
+        onError: (err) => {
+            console.error('Error removing APAR:', err);
+            showError('Gagal menghapus APAR. Silakan coba lagi.');
+        }
+    });
+
     const handleRemoveApar = async (aparId, serialNumber) => {
         const confirmed = await confirm({
             title: 'Konfirmasi Hapus',
@@ -116,17 +127,7 @@ const TankTruckDetail = () => {
         });
 
         if (confirmed) {
-            try {
-                await axios.post(`/api/tank-trucks/${id}/remove-apar`, {
-                    apar_id: aparId
-                });
-                showSuccess('APAR berhasil dihapus dari mobil tangki');
-                fetchTankTruckDetail();
-                fetchAvailableApars();
-            } catch (error) {
-                console.error('Error removing APAR:', error);
-                showError('Gagal menghapus APAR. Silakan coba lagi.');
-            }
+            await removeMutation.mutateAsync({ apar_id: aparId });
         }
     };
 

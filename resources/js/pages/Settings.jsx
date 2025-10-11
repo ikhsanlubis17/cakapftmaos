@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import axios from 'axios';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
     CogIcon,
     MapPinIcon,
@@ -12,9 +12,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Settings = () => {
-    const { user } = useAuth();
+    const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState({
         // GPS & Location Settings
@@ -54,33 +54,43 @@ const Settings = () => {
         backup_frequency: 7, // days
     });
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
+    const { data: settingsData, isLoading: settingsLoading, refetch: refetchSettings } = useQuery({
+        queryKey: ['settings'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/settings');
+            return res.data;
+        },
+        throwOnError: false,
+    });
 
-    const fetchSettings = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/settings');
-            setSettings(response.data);
-        } catch (error) {
-            console.error('Error fetching settings:', error);
-            showError('Gagal memuat pengaturan sistem');
-        } finally {
-            setLoading(false);
+    useEffect(() => {
+        setLoading(settingsLoading);
+    }, [settingsLoading]);
+
+    useEffect(() => {
+        if (settingsData) setSettings(settingsData);
+    }, [settingsData]);
+
+    const saveMutation = useMutation({
+        mutationFn: async (newSettings) => {
+            const res = await apiClient.put('/api/settings', newSettings);
+            return res.data;
+        },
+        onSuccess: (data) => {
+            showSuccess('Pengaturan berhasil disimpan');
+            refetchSettings();
+        },
+        onError: (error) => {
+            console.error('Error saving settings:', error);
+            showError('Gagal menyimpan pengaturan');
         }
-    };
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSaving(true);
         try {
-            setSaving(true);
-            
-            await axios.put('/api/settings', settings);
-            showSuccess('Pengaturan berhasil disimpan');
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            showError('Gagal menyimpan pengaturan');
+            await saveMutation.mutateAsync(settings);
         } finally {
             setSaving(false);
         }

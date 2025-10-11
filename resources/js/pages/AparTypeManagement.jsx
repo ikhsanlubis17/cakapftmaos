@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
     PlusIcon, 
     PencilIcon, 
@@ -8,14 +8,14 @@ import {
     XMarkIcon,
     FireIcon
 } from '@heroicons/react/24/outline';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmDialog } from '../hooks/useConfirmDialog';
 import ConfirmDialog from '../components/ConfirmDialog';
 
 const AparTypeManagement = () => {
-    const [aparTypes, setAparTypes] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // derive apar types directly from query result instead of local state
     const [showModal, setShowModal] = useState(false);
     const [editingType, setEditingType] = useState(null);
     const [formData, setFormData] = useState({
@@ -27,58 +27,74 @@ const AparTypeManagement = () => {
     
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
 
-    useEffect(() => {
-        fetchAparTypes();
-    }, []);
-
-    const fetchAparTypes = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get('/api/apar-types');
-            if (response.data.success) {
-                setAparTypes(response.data.data);
-            }
-        } catch (error) {
-            console.error('Error fetching APAR types:', error);
+    const { data: aparTypesData, isLoading } = useQuery({
+        queryKey: ['apar-types'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar-types');
+            return res.data || res;
+        },
+        staleTime: 1000 * 60 * 2,
+        // no local state update needed; components will read from aparTypesData
+        onError: (err) => {
+            console.error('Error fetching APAR types:', err);
             showError('Gagal memuat data jenis APAR');
-        } finally {
-            setLoading(false);
         }
-    };
+    });
+
+    const createMutation = useMutation({
+        mutationFn: (payload) => apiClient.post('/api/apar-types', payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['apar-types'] });
+            showSuccess('Jenis APAR berhasil ditambahkan');
+            closeModal();
+        },
+        onError: (err) => {
+            const resp = err?.response?.data;
+            if (resp?.errors) setErrors(resp.errors);
+            else showError('Gagal menyimpan jenis APAR');
+        }
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: ({ id, payload }) => apiClient.put(`/api/apar-types/${id}`, payload),
+        onSuccess: (res) => {
+            queryClient.invalidateQueries({ queryKey: ['apar-types'] });
+            showSuccess('Jenis APAR berhasil diperbarui');
+            closeModal();
+        },
+        onError: (err) => {
+            const resp = err?.response?.data;
+            if (resp?.errors) setErrors(resp.errors);
+            else showError('Gagal menyimpan jenis APAR');
+        }
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors({});
 
-        try {
-            if (editingType) {
-                // Update existing type
-                const response = await axios.put(`/api/apar-types/${editingType.id}`, formData);
-                if (response.data.success) {
-                    setAparTypes(aparTypes.map(type => 
-                        type.id === editingType.id ? response.data.data : type
-                    ));
-                    showSuccess('Jenis APAR berhasil diperbarui');
-                    closeModal();
-                }
-            } else {
-                // Create new type
-                const response = await axios.post('/api/apar-types', formData);
-                if (response.data.success) {
-                    setAparTypes([...aparTypes, response.data.data]);
-                    showSuccess('Jenis APAR berhasil ditambahkan');
-                    closeModal();
-                }
-            }
-        } catch (error) {
-            if (error.response?.data?.errors) {
-                setErrors(error.response.data.errors);
-            } else {
-                showError('Gagal menyimpan jenis APAR');
-            }
+        if (editingType) {
+            await updateMutation.mutateAsync({ id: editingType.id, payload: formData });
+        } else {
+            await createMutation.mutateAsync(formData);
         }
     };
+
+    const deleteMutation = useMutation({
+        mutationFn: (id) => apiClient.delete(`/api/apar-types/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['apar-types'] });
+            showSuccess('Jenis APAR berhasil dihapus');
+        },
+        onError: (err) => {
+            console.error('Error deleting APAR type:', err);
+            const msg = err?.response?.data?.message;
+            showError(msg || 'Gagal menghapus jenis APAR');
+        }
+    });
 
     const handleDelete = async (id, name) => {
         const confirmed = await confirm({
@@ -92,16 +108,7 @@ const AparTypeManagement = () => {
 
         if (!confirmed) return;
 
-        try {
-            const response = await axios.delete(`/api/apar-types/${id}`);
-            if (response.data.success) {
-                setAparTypes(aparTypes.filter(type => type.id !== id));
-                showSuccess('Jenis APAR berhasil dihapus');
-            }
-        } catch (error) {
-            console.error('Error deleting APAR type:', error);
-            showError(error.response?.data?.message || 'Gagal menghapus jenis APAR');
-        }
+        await deleteMutation.mutateAsync(id);
     };
 
     const openModal = (type = null) => {
@@ -142,7 +149,7 @@ const AparTypeManagement = () => {
         }));
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -187,7 +194,7 @@ const AparTypeManagement = () => {
                         <div className="flex items-center gap-2">
                             <FireIcon className="h-5 w-5 text-red-600" />
                             <h3 className="text-lg font-semibold text-gray-900">
-                                Daftar Jenis APAR ({aparTypes.length})
+                                Daftar Jenis APAR ({(aparTypesData?.data || aparTypesData || []).length})
                             </h3>
                         </div>
                     </div>
@@ -213,7 +220,7 @@ const AparTypeManagement = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {aparTypes.length === 0 ? (
+                            {(aparTypesData?.data || aparTypesData || []).length === 0 ? (
                                 <tr>
                                     <td colSpan="4" className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center gap-3">
@@ -237,7 +244,7 @@ const AparTypeManagement = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                aparTypes.map((type) => (
+                                (aparTypesData?.data || aparTypesData || []).map((type) => (
                                     <tr key={type.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">

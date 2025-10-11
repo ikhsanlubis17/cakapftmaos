@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
-import axios from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import {
     CameraIcon,
     MapPinIcon,
@@ -25,9 +26,11 @@ const InspectionFormEnhanced = () => {
     const damageCanvasRef = useRef(null);
 
     const [apar, setApar] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [damageCategories, setDamageCategories] = useState([]);
+    const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
 
     // Form state
@@ -62,10 +65,7 @@ const InspectionFormEnhanced = () => {
     });
 
     useEffect(() => {
-        fetchAparData();
-        fetchDamageCategories();
-        getCurrentLocation();
-
+        // Only handle media cleanup on unmount
         return () => {
             if (videoRef.current && videoRef.current.srcObject) {
                 videoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -77,33 +77,44 @@ const InspectionFormEnhanced = () => {
                 damageVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
             }
         };
-    }, [qrCode]);
+    }, []);
 
-    const fetchAparData = async () => {
-        try {
-            // Use test endpoint temporarily for debugging
-            const response = await axios.get(`/api/apar/qr/${qrCode}`);
-            if (response.data && response.status == 200) {
-                setApar(response.data);
-            } else {
-                showError('APAR tidak ditemukan atau QR Code tidak valid');
-            }
-        } catch (error) {
-            console.error('Error fetching APAR:', error);
+    const aparQuery = useQuery({
+        queryKey: ['apar', qrCode],
+        queryFn: async () => {
+            const resp = await apiClient.get(`/api/apar/qr/${qrCode}`);
+            return resp.data; // server returns the apar object in data
+        },
+        staleTime: 1000 * 60 * 2,
+        enabled: Boolean(qrCode),
+    });
+
+    const damageCategoriesQuery = useQuery({
+        queryKey: ['damage-categories', 'active'],
+        queryFn: async () => {
+            const resp = await apiClient.get('/api/damage-categories/active');
+            return resp.data.data;
+        },
+        staleTime: 1000 * 60 * 2,
+    });
+
+    useEffect(() => {
+        if (aparQuery.data) {
+            setApar(aparQuery.data);
+        }
+        if (aparQuery.isError) {
             showError('APAR tidak ditemukan atau QR Code tidak valid');
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [aparQuery.data, aparQuery.isError]);
 
-    const fetchDamageCategories = async () => {
-        try {
-            const response = await axios.get('/api/damage-categories/active');
-            setDamageCategories(response.data.data);
-        } catch (error) {
-            console.error('Error fetching damage categories:', error);
+    useEffect(() => {
+        if (damageCategoriesQuery.data) {
+            setDamageCategories(damageCategoriesQuery.data);
         }
-    };
+        if (damageCategoriesQuery.isError) {
+            console.error('Error fetching damage categories');
+        }
+    }, [damageCategoriesQuery.data, damageCategoriesQuery.isError]);
 
     // Damage category management
     const addDamage = () => {
@@ -476,68 +487,21 @@ const InspectionFormEnhanced = () => {
         return R * c; // Distance in meters
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        // Validate required fields
-        if (!photo) {
-            showError('Foto APAR wajib diambil');
-            return;
-        }
-
-        if (!selfie) {
-            showError('Foto selfie teknisi wajib diambil');
-            return;
-        }
-
-        // Validate location for static APARs
-        // if (apar?.location_type === 'statis') {
-        //     if (!currentLocation) {
-        //         showError('Lokasi belum didapatkan. Pastikan GPS aktif dan izin lokasi diizinkan.');
-        //         return;
-        //     }
-        //     if (!locationValid) {
-        //         showError('Lokasi tidak valid. Pastikan Anda berada di lokasi APAR.');
-        //         return;
-        //     }
-        // }
-
-        setSubmitting(true);
-
-        try {
-            const formData = new FormData();
-            formData.append('apar_id', apar.id);
-            formData.append('condition', condition);
-            formData.append('notes', notes);
-            formData.append('photo', photo);
-            formData.append('selfie', selfie);
-
-            if (currentLocation) {
-                formData.append('lat', currentLocation.lat);
-                formData.append('lng', currentLocation.lng);
-            }
-
-            // Add damage categories if any
-            if (selectedDamages.length > 0) {
-                selectedDamages.forEach((damage, index) => {
-                    formData.append(`damage_categories[${index}][category_id]`, damage.category_id);
-                    formData.append(`damage_categories[${index}][notes]`, damage.notes);
-                    formData.append(`damage_categories[${index}][severity]`, damage.severity);
-                    formData.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo);
-                });
-            }
-
-            const response = await axios.post('/api/inspections', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+    const submitInspectionMutation = useMutation({
+        mutationFn: async (payload) => {
+            // payload is a FormData instance
+            const res = await apiClient.post('/api/inspections', payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
-
+            return res.data;
+        },
+        onSuccess: () => {
             showSuccess('Inspeksi berhasil disimpan!');
-            setTimeout(() => {
-                navigate({ to: '/apar' });
-            }, 2000);
-        } catch (error) {
+            queryClient.invalidateQueries({ queryKey: ['inspections'] });
+            queryClient.invalidateQueries({ queryKey: ['apar'] });
+            setTimeout(() => navigate({ to: '/apar' }), 2000);
+        },
+        onError: (error) => {
             console.error('Error submitting inspection:', error);
 
             if (error.response?.status === 422 && error.response?.data?.error) {
@@ -554,12 +518,48 @@ const InspectionFormEnhanced = () => {
             } else {
                 showError(error.response?.data?.message || "Gagal menyimpan inspeksi");
             }
-        } finally {
-            setSubmitting(false);
+        },
+    });
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        // Validate required fields
+        if (!photo) {
+            showError('Foto APAR wajib diambil');
+            return;
         }
+
+        if (!selfie) {
+            showError('Foto selfie teknisi wajib diambil');
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('apar_id', apar.id);
+        fd.append('condition', condition);
+        fd.append('notes', notes);
+        fd.append('photo', photo);
+        fd.append('selfie', selfie);
+
+        if (currentLocation) {
+            fd.append('lat', currentLocation.lat);
+            fd.append('lng', currentLocation.lng);
+        }
+
+        if (selectedDamages.length > 0) {
+            selectedDamages.forEach((damage, index) => {
+                fd.append(`damage_categories[${index}][category_id]`, damage.category_id);
+                fd.append(`damage_categories[${index}][notes]`, damage.notes);
+                fd.append(`damage_categories[${index}][severity]`, damage.severity);
+                fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo);
+            });
+        }
+
+        submitInspectionMutation.mutate(fd);
     };
 
-    if (loading) {
+    if (aparQuery.isLoading || damageCategoriesQuery.isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
