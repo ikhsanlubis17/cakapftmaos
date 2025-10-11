@@ -135,11 +135,21 @@ class InspectionController extends Controller
         ]);
 
         // Anti-manipulation validation (commented out for now to allow testing)
-        // $this->validateInspectionTime($request);
         // $this->validatePhotoIntegrity($request);
 
+        // Find APAR and authenticated user early so we can apply role-based rules
         $apar = Apar::findOrFail($request->apar_id);
         $user = Auth::guard('api')->user();
+
+        // Only enforce scheduled-time validation for regular teknisi users.
+        // Supervisors and admins are allowed to create inspections regardless of schedule/time.
+        if (!($user->isAdmin() || $user->isSupervisor())) {
+            $validationResponse = $this->validateInspectionTime($request);
+            // validateInspectionTime returns a JsonResponse on failure; if so, return it
+            if ($validationResponse instanceof \Illuminate\Http\JsonResponse && $validationResponse->getStatusCode() !== 200) {
+                return $validationResponse;
+            }
+        }
 
         // Log inspection start
         InspectionLog::create([
@@ -159,19 +169,18 @@ class InspectionController extends Controller
         $locationValid = true;
         $locationError = null;
 
-        // TODO: Uncomment this!!!
-        // if ($apar->location_type === 'statis') {
-        //     if (!$request->has('lat') || !$request->has('lng')) {
-        //         $locationValid = false;
-        //         $locationError = 'Koordinat lokasi tidak ditemukan. Pastikan GPS aktif.';
-        //     } else {
-        //         $locationValid = $apar->isWithinValidRadius($request->lat, $request->lng);
-        //         if (!$locationValid) {
-        //             $distance = $apar->distanceFrom($request->lat, $request->lng);
-        //             $locationError = "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.";
-        //         }
-        //     }
-        // }
+        if ($apar->location_type === 'statis') {
+            if (!$request->has('lat') || !$request->has('lng')) {
+                $locationValid = false;
+                $locationError = 'Koordinat lokasi tidak ditemukan. Pastikan GPS aktif.';
+            } else {
+                $locationValid = $apar->isWithinValidRadius($request->lat, $request->lng);
+                if (!$locationValid) {
+                    $distance = $apar->distanceFrom($request->lat, $request->lng);
+                    $locationError = "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.";
+                }
+            }
+        }
 
         // Log validation failure if location is invalid
         if (!$locationValid) {
@@ -413,15 +422,26 @@ class InspectionController extends Controller
                 ], 422);
             }
 
-            $scheduledTime = \Carbon\Carbon::parse($schedule->scheduled_time);
-            $startTime = $scheduledTime->copy()->subHours(2);
-            $endTime = $scheduledTime->copy()->addHours(4);
-            
+            // Prefer authoritative start_time/end_time window if present. Otherwise fall back
+            // to a derived window around scheduled_time (backwards compatible).
+            $scheduledDate = \Carbon\Carbon::parse($schedule->scheduled_date)->format('Y-m-d');
+
+            if (!empty($schedule->start_time) && !empty($schedule->end_time)) {
+                $startTime = \Carbon\Carbon::parse($scheduledDate . ' ' . $schedule->start_time);
+                $endTime = \Carbon\Carbon::parse($scheduledDate . ' ' . $schedule->end_time);
+                // keep a copy of scheduledTime for response convenience if available
+                $scheduledTime = !empty($schedule->scheduled_time) ? \Carbon\Carbon::parse($schedule->scheduled_time) : null;
+            } else {
+                $scheduledTime = \Carbon\Carbon::parse($schedule->scheduled_time);
+                $startTime = $scheduledTime->copy()->subHours(2);
+                $endTime = $scheduledTime->copy()->addHours(4);
+            }
+
             if ($now->lt($startTime) || $now->gt($endTime)) {
                 return response()->json([
                     'valid' => false,
                     'message' => 'Inspeksi hanya dapat dilakukan pada waktu yang telah dijadwalkan',
-                    'scheduled_time' => $scheduledTime->format('H:i'),
+                    'scheduled_time' => $scheduledTime ? $scheduledTime->format('H:i') : null,
                     'valid_window' => $startTime->format('H:i') . ' - ' . $endTime->format('H:i')
                 ], 422);
             }
