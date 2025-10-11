@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./resources/js/**/*.{js,jsx}",
+    "./resources/js/**/*.{js,jsx,ts,tsx}",
     "./resources/views/**/*.blade.php",
     "./app/**/*.php",
     "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",

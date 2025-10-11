@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useToast } from '../contexts/ToastContext';
 import { QrCodeIcon, ArrowLongUpIcon, ArrowPathIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { IDetectedBarcode, Scanner } from '@yudiel/react-qr-scanner';
-import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { useMutation } from '@tanstack/react-query';
 
 interface QRScannerState {
     state: 'initial' | 'scanning' | 'barcodeDetected' | 'cameraError';
@@ -29,6 +30,15 @@ const QRScanner = () => {
     const { showSuccess, showError } = useToast();
 
     const [scannerState, dispatch] = useReducer(scannerReducer, { state: 'initial' });
+    const { apiClient } = useAuth();
+
+    const validateMutation = useMutation({
+        mutationFn: async (qrCode: string) => {
+            const resp = await apiClient.post('/api/inspections/validate', { apar_qrCode: qrCode });
+            return resp.data;
+        },
+        throwOnError: true,
+    });
 
     const onScanSuccess = async (barcode: IDetectedBarcode[]) => {
         try {
@@ -43,24 +53,23 @@ const QRScanner = () => {
             // Validate QR code format (assuming it contains APAR ID or serial number)
             if (qrCode && qrCode.length > 0) {
                 try {
-                    const response = await axios.post('/api/inspections/validate', { 
-                        apar_qrCode: qrCode 
-                    });
+                    const data = await validateMutation.mutateAsync(qrCode);
 
-                    if (response.data.valid) {
-                        showSuccess(`QR Code berhasil di-scan! Mengarahkan ke form inspeksi...`);
-                        
+                    if (data?.valid) {
+                        showSuccess('QR Code berhasil di-scan! Mengarahkan ke form inspeksi...');
+
                         // Navigate to inspection form with QR code and schedule info
                         setTimeout(() => {
-                            const scheduleId = response.data.schedule?.id;
-                            const navigationPath = scheduleId 
+                            const scheduleId = data.schedule?.id;
+                            const navigationPath = scheduleId
                                 ? `/inspections/enhanced/${qrCode}?schedule_id=${scheduleId}`
                                 : `/inspections/enhanced/${qrCode}`;
-                            // Use window.location for now since this route may not be in router yet
-                            window.location.href = navigationPath;
+                            // Use router navigate instead of window.location
+                            // Cast to any to avoid strict typed `search` requirements here
+                            navigate({ to: navigationPath } as any);
                         }, 1500);
                     } else {
-                        showError(response.data.message || 'QR Code tidak valid');
+                        showError(data?.message || 'QR Code tidak valid');
                         // Reset scanner after error
                         setTimeout(() => {
                             dispatch({ type: 'reset' });
@@ -68,12 +77,11 @@ const QRScanner = () => {
                     }
                 } catch (error: any) {
                     console.error('Error validating QR code:', error);
-                    
-                    const errorMessage = error.response?.data?.message 
-                        || 'Terjadi kesalahan saat memvalidasi QR Code';
-                    
+
+                    const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan saat memvalidasi QR Code';
+
                     showError(errorMessage);
-                    
+
                     // Reset scanner after error
                     setTimeout(() => {
                         dispatch({ type: 'reset' });
@@ -169,7 +177,7 @@ const QRScanner = () => {
                             onScan={(result) => onScanSuccess(result)}
                             onError={onScanFailure}
                             scanDelay={500}
-                            paused={scannerState.state === 'barcodeDetected'}
+                            paused={scannerState.state === 'barcodeDetected' || validateMutation.status === 'pending'}
                         />
 
                         {/* Scanner Status */}
@@ -184,6 +192,9 @@ const QRScanner = () => {
                                     ✓ QR Code terdeteksi! Memvalidasi...
                                 </p>
                             )}
+                           {validateMutation.status === 'pending' && (
+                               <p className="text-sm text-gray-600 font-medium">Memvalidasi QR Code...</p>
+                           )}
                         </div>
 
                         {/* Restart Scanner Button */}
