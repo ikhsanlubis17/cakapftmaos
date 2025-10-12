@@ -130,7 +130,7 @@ class InspectionScheduleSeeder extends Seeder
 
     private function getRandomFrequency(): string
     {
-        $frequencies = ['daily', 'weekly', 'monthly'];
+        $frequencies = ['weekly', 'monthly', 'quarterly', 'semiannual'];
         return $frequencies[array_rand($frequencies)];
     }
 
