@@ -105,7 +105,7 @@ const SchedulesManagement = () => {
     });
 
     // derive loading state from react-query hooks instead of local flag
-    const combinedLoading = aparLoading || usersLoading || schedulesLoading;
+    const combinedLoading = aparLoading && usersLoading && schedulesLoading;
 
     // Modal styles
     useEffect(() => {
@@ -129,7 +129,7 @@ const SchedulesManagement = () => {
                 setPagination(prev => ({ ...prev, current_page: 1 }));
                 schedulesRefetch().finally(() => setSearchLoading(false));
             }
-        }, 300); // Reduced debounce time for better responsiveness
+        }, 2000); // Reduced debounce time for better responsiveness
 
         return () => clearTimeout(timeoutId);
     }, [searchTerm, statusFilter, activeFilter]);
@@ -283,12 +283,49 @@ const SchedulesManagement = () => {
         onSettled: () => setSendingNotifications(false)
     });
 
+    // Convert local date/time inputs to their UTC string parts before submitting.
+    const convertToUtcParts = (dateStr, timeStr) => {
+        if (!dateStr || !timeStr) {
+            return null;
+        }
+
+        const candidate = new Date(`${dateStr}T${timeStr}`);
+
+        if (Number.isNaN(candidate.getTime())) {
+            return null;
+        }
+
+        const isoString = candidate.toISOString();
+        const includeSeconds = timeStr.length > 5;
+
+        return {
+            date: isoString.slice(0, 10),
+            time: includeSeconds ? isoString.slice(11, 19) : isoString.slice(11, 16),
+        };
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
         if (!validateForm()) return;
 
         const payload = { ...formData };
+        const startUtc = convertToUtcParts(formData.scheduled_date, formData.start_time);
+        const endUtc = convertToUtcParts(formData.scheduled_date, formData.end_time);
+
+        if (startUtc) {
+            payload.scheduled_date = startUtc.date;
+            payload.start_time = startUtc.time;
+        }
+
+        if (endUtc) {
+            payload.end_time = endUtc.time;
+
+            if (!startUtc) {
+                payload.scheduled_date = endUtc.date;
+            }
+        }
+
         scheduleMutation.mutate({ id: editingSchedule?.id, payload });
     };
 

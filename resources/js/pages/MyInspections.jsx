@@ -158,7 +158,7 @@ const MyInspections = () => {
                         <div className="ml-2 sm:ml-4">
                             <p className="text-xs sm:text-sm font-medium text-gray-500">Selesai</p>
                             <p className="text-lg sm:text-2xl font-bold text-gray-900">
-                                {inspections.filter(i => i.status === 'completed').length}
+                                {inspections.filter(i => i.status === 'completed' && i.is_schedule == null).length}
                             </p>
                         </div>
                     </div>
@@ -209,7 +209,7 @@ const MyInspections = () => {
                     </div>
                 ) : (
                     <div className="divide-y divide-gray-200">
-                        {inspections.map((inspection) => (
+                        {inspections.filter((i) => i.is_schedule == null).map((inspection) => (
                             <div key={inspection.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
                                     <div className="flex-1">

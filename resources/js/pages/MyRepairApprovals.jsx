@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const MyRepairApprovals = () => {
+    const { user } = useAuth();
     const [approvals, setApprovals] = useState([]);
     const [filter, setFilter] = useState('all');
     const [refreshing, setRefreshing] = useState(false);
@@ -58,8 +59,7 @@ const MyRepairApprovals = () => {
             const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
             const res = await apiClient.get(url);
             const all = res.data?.data || [];
-            const currentUser = JSON.parse(localStorage.getItem('user'));
-            return all.filter(approval => approval.inspection?.user?.id === currentUser?.id);
+            return all.filter(approval => approval.inspection?.user?.id === user?.id);
         },
         staleTime: 10000,
         refetchOnWindowFocus: false,

@@ -228,11 +228,10 @@ const MySchedules = () => {
 
         const now = new Date();
 
-        const matchesStatus = statusFilter === 'all' ||
+        const matchesStatus = (statusFilter === 'all' && !schedule.is_completed) ||
             (statusFilter === 'today' && start.toDateString() === now.toDateString() && schedule.is_active && !schedule.is_completed) ||
             (statusFilter === 'upcoming' && start > now && schedule.is_active && !schedule.is_completed) ||
-            (statusFilter === 'overdue' && start < now && !schedule.is_completed && schedule.is_active) ||
-            (statusFilter === 'completed' && schedule.is_completed);
+            (statusFilter === 'overdue' && start < now && !schedule.is_completed && schedule.is_active);
 
         let matchesDate = true;
         if (dateFilter === 'this_week') {
@@ -390,7 +389,6 @@ const MySchedules = () => {
                             <option value="today">Hari Ini</option>
                             <option value="upcoming">Akan Datang</option>
                             <option value="overdue">Terlambat</option>
-                            <option value="completed">Selesai</option>
                         </select>
                     </div>
 
@@ -502,15 +500,18 @@ const MySchedules = () => {
                                         </div>
                                     </div>
 
-                                    <div className="ml-4 flex flex-col items-end space-y-2">
-                                        <button
-                                            onClick={() => window.location.href = `/scan`}
-                                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                        >
-                                            <FireIcon className="h-4 w-4 mr-1" />
-                                            Mulai Inspeksi
-                                        </button>
-                                    </div>
+                                    {schedule.is_active && !schedule.is_completed && (
+                                        <div className="ml-4 flex flex-col items-end space-y-2">
+                                            <button
+                                                onClick={() => window.location.href = `/scan`}
+                                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            >
+                                                <FireIcon className="h-4 w-4 mr-1" />
+                                                Mulai Inspeksi
+                                            </button>
+                                        </div>
+                                    )}
+
                                 </div>
                             </div>
                         ))}

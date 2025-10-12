@@ -21,11 +21,11 @@ class ScheduleController extends Controller
     public function index(Request $request)
     {
         // Only use cache for read-only operations, not for filtered searches
-        $useCache = $request->get('page', 1) == 1 && 
-                   empty($request->get('search')) && 
-                   $request->get('status') === 'all' &&
-                   $request->get('active') === 'all';
-        
+        $useCache = $request->get('page', 1) == 1 &&
+            empty($request->get('search')) &&
+            $request->get('status') === 'all' &&
+            $request->get('active') === 'all';
+
         if ($useCache) {
             $cacheKey = 'schedules_' . md5($request->fullUrl());
             $cached = cache()->get($cacheKey);
@@ -39,16 +39,16 @@ class ScheduleController extends Controller
         // Apply search filter with improved logic
         if ($request->has('search') && !empty(trim($request->search))) {
             $search = trim($request->search);
-            $query->where(function($q) use ($search) {
-                $q->whereHas('apar', function($aparQuery) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('apar', function ($aparQuery) use ($search) {
                     $aparQuery->where('serial_number', 'like', "%{$search}%")
-                              ->orWhere('location_name', 'like', "%{$search}%");
+                        ->orWhere('location_name', 'like', "%{$search}%");
                 })
-                ->orWhereHas('assignedUser', function($userQuery) use ($search) {
-                    $userQuery->where('name', 'like', "%{$search}%")
-                              ->orWhere('email', 'like', "%{$search}%");
-                })
-                ->orWhere('notes', 'like', "%{$search}%");
+                    ->orWhereHas('assignedUser', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    })
+                    ->orWhere('notes', 'like', "%{$search}%");
             });
         }
 
@@ -111,8 +111,8 @@ class ScheduleController extends Controller
 
         // Apply pagination
         $perPage = $request->get('per_page', 15);
-    $schedules = $query->orderBy('start_at')
-                          ->paginate($perPage);
+        $schedules = $query->orderBy('start_at')
+            ->paginate($perPage);
 
         // Debug: Log pagination results
         Log::info('Pagination results', [
@@ -126,7 +126,7 @@ class ScheduleController extends Controller
 
         // Additional validation to ensure filter consistency - PERBAIKAN: Hapus validasi yang tidak perlu untuk 'today'
         if ($request->has('status') && $request->status !== 'all' && $request->status !== 'today') {
-            $filteredData = $schedules->getCollection()->filter(function($schedule) use ($request, $nowUtc) {
+            $filteredData = $schedules->getCollection()->filter(function ($schedule) use ($request, $nowUtc) {
                 $startAt = $schedule->startAtUtc();
 
                 if (!$startAt) {
@@ -174,7 +174,7 @@ class ScheduleController extends Controller
 
         // Prepare response data
         $responseData = $schedules->toArray();
-        
+
         // Add helpful message when no results found
         if ($schedules->total() === 0) {
             $message = 'Tidak ada jadwal yang sesuai dengan filter yang dipilih.';
@@ -187,7 +187,7 @@ class ScheduleController extends Controller
             } elseif ($request->has('status') && $request->status === 'upcoming') {
                 $message = 'Tidak ada jadwal yang akan datang.';
             }
-            
+
             // Add message to response data
             $responseData['message'] = $message;
         }
@@ -196,7 +196,7 @@ class ScheduleController extends Controller
         if ($useCache) {
             $cacheKey = 'schedules_' . md5($request->fullUrl());
             cache()->put($cacheKey, $responseData, 300); // 5 minutes
-            
+
             // Store cache key for later clearing
             $cacheKeys = cache()->get('schedules_cache_keys', []);
             $cacheKeys[] = $cacheKey;
@@ -213,7 +213,7 @@ class ScheduleController extends Controller
     {
         // Clear any existing cache for this user
         cache()->forget('my_schedules_' . Auth::id());
-        
+
         $schedules = InspectionSchedule::where('assigned_user_id', Auth::id())
             ->with(['apar.aparType', 'apar.tankTruck', 'assignedUser'])
             ->orderBy('start_at')
@@ -341,9 +341,9 @@ class ScheduleController extends Controller
 
         $appTimezone = config('app.timezone', 'UTC');
 
-    $oldAssignedUserId = $schedule->assigned_user_id;
-    $oldStartAt = $schedule->start_at ? $schedule->start_at->copy() : null;
-    $oldEndAt = $schedule->end_at ? $schedule->end_at->copy() : null;
+        $oldAssignedUserId = $schedule->assigned_user_id;
+        $oldStartAt = $schedule->start_at ? $schedule->start_at->copy() : null;
+        $oldEndAt = $schedule->end_at ? $schedule->end_at->copy() : null;
         $oldAparId = $schedule->apar_id;
         $oldFrequency = $schedule->frequency;
         $oldNotes = $schedule->notes;
@@ -371,18 +371,18 @@ class ScheduleController extends Controller
         $this->clearSchedulesCache();
 
         // Kirim notifikasi jika ada perubahan (sync untuk memastikan terkirim)
-    $oldStartAtIso = $oldStartAt ? $oldStartAt->toIso8601String() : null;
-    $oldEndAtIso = $oldEndAt ? $oldEndAt->toIso8601String() : null;
-    $newStartAtIso = $schedule->start_at ? $schedule->start_at->toIso8601String() : null;
-    $newEndAtIso = $schedule->end_at ? $schedule->end_at->toIso8601String() : null;
+        $oldStartAtIso = $oldStartAt ? $oldStartAt->toIso8601String() : null;
+        $oldEndAtIso = $oldEndAt ? $oldEndAt->toIso8601String() : null;
+        $newStartAtIso = $schedule->start_at ? $schedule->start_at->toIso8601String() : null;
+        $newEndAtIso = $schedule->end_at ? $schedule->end_at->toIso8601String() : null;
 
-    $hasChanges = $oldAssignedUserId != $request->assigned_user_id ||
-             $oldStartAtIso !== $newStartAtIso ||
-             $oldEndAtIso !== $newEndAtIso ||
-             $oldAparId != $request->apar_id ||
-             $oldFrequency != $request->frequency ||
-             $oldNotes != $request->notes;
-        
+        $hasChanges = $oldAssignedUserId != $request->assigned_user_id ||
+            $oldStartAtIso !== $newStartAtIso ||
+            $oldEndAtIso !== $newEndAtIso ||
+            $oldAparId != $request->apar_id ||
+            $oldFrequency != $request->frequency ||
+            $oldNotes != $request->notes;
+
         if ($hasChanges) {
             Log::info('Schedule updated, sending notification', [
                 'schedule_id' => $schedule->id,
@@ -397,7 +397,7 @@ class ScheduleController extends Controller
                 'old_frequency' => $oldFrequency,
                 'new_frequency' => $request->frequency
             ]);
-            
+
             try {
                 $notificationService = new NotificationService();
                 $notificationService->sendScheduleNotification($schedule, 'updated');
@@ -424,13 +424,13 @@ class ScheduleController extends Controller
     {
         // Clear cache
         $this->clearSchedulesCache();
-        
+
         // Kirim notifikasi sebelum menghapus (async)
-        dispatch(function() use ($schedule) {
+        dispatch(function () use ($schedule) {
             $notificationService = new NotificationService();
             $notificationService->sendScheduleNotification($schedule, 'deleted');
         })->afterResponse();
-        
+
         $schedule->delete();
         return response()->json(['message' => 'Jadwal berhasil dihapus']);
     }
@@ -446,11 +446,11 @@ class ScheduleController extends Controller
             cache()->forget($key);
         }
         cache()->forget('schedules_cache_keys');
-        
+
         // Clear specific cache keys
         cache()->forget('my_schedules_' . Auth::id());
         cache()->forget('all_schedules');
-        
+
         // Log cache clearing for debugging
         Log::info('Schedules cache cleared for user: ' . Auth::id());
     }
@@ -555,4 +555,4 @@ class ScheduleController extends Controller
             ], 500);
         }
     }
-} 
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useParams, useNavigate, getRouteApi } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,8 +15,284 @@ import {
     TrashIcon,
 } from '@heroicons/react/24/outline';
 
+// Small subcomponents kept in this file for clarity
+const Header = ({ apar }) => (
+    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+        <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
+                    <FireIcon className="h-7 w-7 text-white" />
+                </div>
+            </div>
+            <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">Inspeksi APAR</h1>
+                <div className="flex items-center space-x-3">
+                    <p className="text-lg font-semibold text-gray-700">{apar.serial_number}</p>
+                    <span className="text-gray-400">•</span>
+                    <p className="text-gray-600">{apar.location_name}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+);
+
+const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, capturePhoto, stopCamera, videoRef, canvasRef, captureCountdown, showFlash, setPhoto }) => (
+    <div>
+        <label className="block text-lg font-semibold text-gray-900 mb-4">📸 Foto APAR <span className="text-red-500">*</span></label>
+
+        {!photo && !cameraActive && (
+            <button
+                type="button"
+                onClick={startCamera}
+                disabled={cameraLoading}
+                className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <div className="text-center">
+                    <div className="mx-auto h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
+                        <CameraIcon className="h-8 w-8 text-red-600" />
+                    </div>
+                    <p className="mt-3 text-lg font-medium text-gray-700">{cameraLoading ? 'Memulai Kamera...' : 'Ambil Foto APAR'}</p>
+                    <p className="mt-1 text-sm text-gray-500">Foto wajib diambil dari kamera</p>
+                </div>
+            </button>
+        )}
+
+        {cameraActive && !photo && (
+            <div className="relative bg-black rounded-xl overflow-hidden">
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-40 object-cover" style={{ backgroundColor: 'transparent' }} />
+                <canvas ref={canvasRef} className="hidden" />
+
+                <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">Debug: {videoRef.current?.readyState || 'N/A'}</div>
+
+                <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
+
+                {captureCountdown > 0 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="text-white text-6xl font-bold animate-pulse">{captureCountdown}</div>
+                    </div>
+                )}
+
+                {showFlash && <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>}
+
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
+                    <button type="button" onClick={capturePhoto} disabled={captureCountdown > 0} className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span className="text-lg">📸</span>
+                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Foto'}</span>
+                    </button>
+                    <button type="button" onClick={stopCamera} disabled={captureCountdown > 0} className="bg-gray-600 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>❌</span>
+                        <span>Batal</span>
+                    </button>
+                </div>
+
+                <div className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">📹 Kamera Aktif</div>
+                <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">Arahkan ke APAR</div>
+            </div>
+        )}
+
+        {photo && (
+            <div className="relative group">
+                <img src={URL.createObjectURL(photo)} alt="APAR Photo" className="w-full rounded-xl shadow-lg" />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-xl"></div>
+                <button type="button" onClick={() => setPhoto(null)} className="absolute top-3 right-3 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-all duration-200 shadow-lg">
+                    <XMarkIcon className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-3 left-3 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">✅ Foto APAR</div>
+            </div>
+        )}
+    </div>
+);
+
+const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieCamera, captureSelfie, stopSelfieCamera, selfieVideoRef, selfieCanvasRef, captureCountdown, showFlash, setSelfie }) => (
+    <div>
+        <label className="block text-lg font-semibold text-gray-900 mb-4">🤳 Selfie Teknisi <span className="text-red-500">*</span></label>
+
+        {!selfie && !selfieCameraActive && (
+            <button type="button" onClick={startSelfieCamera} disabled={selfieLoading} className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed">
+                <div className="text-center">
+                    <div className="mx-auto h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
+                        <CameraIcon className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <p className="mt-3 text-lg font-medium text-gray-700">{selfieLoading ? 'Memulai Kamera...' : 'Ambil Selfie'}</p>
+                    <p className="mt-1 text-sm text-gray-500">Selfie wajib diambil dari kamera</p>
+                </div>
+            </button>
+        )}
+
+        {selfieCameraActive && !selfie && (
+            <div className="relative bg-black rounded-xl overflow-hidden">
+                <video ref={selfieVideoRef} autoPlay playsInline muted className="w-full h-40 object-cover" style={{ backgroundColor: 'transparent' }} />
+                <canvas ref={selfieCanvasRef} className="hidden" />
+
+                <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">Debug: {selfieVideoRef.current?.readyState || 'N/A'}</div>
+
+                <div className="absolute inset-0 border-4 border-blue-500 border-dashed opacity-50 pointer-events-none"></div>
+
+                {captureCountdown > 0 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="text-white text-6xl font-bold animate-pulse">{captureCountdown}</div>
+                    </div>
+                )}
+
+                {showFlash && <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>}
+
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
+                    <button type="button" onClick={captureSelfie} disabled={captureCountdown > 0} className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span className="text-lg">📸</span>
+                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Selfie'}</span>
+                    </button>
+                    <button type="button" onClick={stopSelfieCamera} disabled={captureCountdown > 0} className="bg-gray-600 text-white px-2 py-2 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>❌</span>
+                        <span>Batal</span>
+                    </button>
+                </div>
+
+                <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">📹 Selfie Mode</div>
+                <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">Lihat ke kamera</div>
+            </div>
+        )}
+
+        {selfie && (
+            <div className="relative group">
+                <img src={URL.createObjectURL(selfie)} alt="Selfie" className="w-full rounded-xl shadow-lg" />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-xl"></div>
+                <button type="button" onClick={() => setSelfie(null)} className="absolute top-3 right-3 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-all duration-200 shadow-lg">
+                    <XMarkIcon className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">✅ Selfie Teknisi</div>
+            </div>
+        )}
+    </div>
+);
+
+const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowDamageForm, newDamage, setNewDamage, damageCategories, startDamageCamera, damageCameraActive, damageCameraLoading, damageVideoRef, damageCanvasRef, captureCountdown, showFlash, captureDamagePhoto, stopDamageCamera, addDamage }) => (
+    <div>
+        <label className="block text-lg font-semibold text-gray-900 mb-4">🚨 Kategori Kerusakan</label>
+
+        {selectedDamages.length > 0 && (
+            <div className="space-y-3 mb-4">
+                {selectedDamages.map((damage) => (
+                    <div key={damage.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">{damage.category_name}</span>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${damage.severity === 'low' ? 'bg-green-100 text-green-800' : damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' : damage.severity === 'high' ? 'bg-orange-100 text-orange-800' : 'bg-red-100 text-red-800'}`}>{damage.severity === 'low' ? 'Rendah' : damage.severity === 'medium' ? 'Sedang' : damage.severity === 'high' ? 'Tinggi' : 'Kritis'}</span>
+                            </div>
+                            <button type="button" onClick={() => removeDamage(damage.id)} className="text-red-600 hover:text-red-800"><TrashIcon className="h-5 w-5" /></button>
+                        </div>
+
+                        {damage.notes && <p className="text-sm text-gray-700 mb-3">{damage.notes}</p>}
+
+                        {damage.damage_photo && (
+                            <div className="relative">
+                                <img src={URL.createObjectURL(damage.damage_photo)} alt="Damage Photo" className="w-full h-32 object-cover rounded-lg" />
+                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">Foto Kerusakan</div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        )}
+
+        {!showDamageForm ? (
+            <button type="button" onClick={() => setShowDamageForm(true)} className="w-full border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-red-400 hover:bg-red-50 transition-all duration-200 group">
+                <div className="text-center">
+                    <PlusIcon className="mx-auto h-8 w-8 text-gray-400 group-hover:text-red-500 transition-colors duration-200" />
+                    <p className="mt-2 text-sm font-medium text-gray-700 group-hover:text-red-700">Tambah Kategori Kerusakan</p>
+                    <p className="text-xs text-gray-500">Klik untuk menambah detail kerusakan</p>
+                </div>
+            </button>
+        ) : (
+            <div className="border-2 border-red-200 rounded-xl p-4 bg-red-50">
+                <h4 className="font-medium text-gray-900 mb-4">Tambah Kategori Kerusakan</h4>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan <span className="text-red-500">*</span></label>
+                        <select value={newDamage.category_id} onChange={(e) => setNewDamage({ ...newDamage, category_id: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500" required>
+                            <option value="">Pilih kategori kerusakan</option>
+                            {damageCategories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Keparahan</label>
+                        <select value={newDamage.severity} onChange={(e) => setNewDamage({ ...newDamage, severity: e.target.value })} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <option value="low">Rendah</option>
+                            <option value="medium">Sedang</option>
+                            <option value="high">Tinggi</option>
+                            <option value="critical">Kritis</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Catatan Tambahan</label>
+                        <textarea value={newDamage.notes} onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })} rows={2} className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none" placeholder="Jelaskan detail kerusakan..." />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Foto Kerusakan <span className="text-red-500">*</span></label>
+
+                        {!newDamage.damage_photo && !damageCameraActive && (
+                            <button type="button" onClick={startDamageCamera} disabled={damageCameraLoading} className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed">
+                                <div className="text-center">
+                                    <div className="mx-auto h-10 w-10 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
+                                        <CameraIcon className="h-6 w-6 text-red-600" />
+                                    </div>
+                                    <p className="mt-2 text-sm font-medium text-gray-700">{damageCameraLoading ? 'Memulai Kamera...' : 'Ambil Foto Kerusakan'}</p>
+                                    <p className="text-xs text-gray-500">Foto wajib diambil dari kamera</p>
+                                </div>
+                            </button>
+                        )}
+
+                        {damageCameraActive && !newDamage.damage_photo && (
+                            <div className="relative bg-black rounded-lg overflow-hidden">
+                                <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-32 object-cover" style={{ backgroundColor: 'transparent' }} />
+                                <canvas ref={damageCanvasRef} className="hidden" />
+
+                                <div className="absolute top-2 right-2 bg-yellow-600 text-white px-2 py-1 rounded text-xs">Debug: {damageVideoRef.current?.readyState || 'N/A'}</div>
+
+                                <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
+
+                                {captureCountdown > 0 && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"><div className="text-white text-4xl font-bold animate-pulse">{captureCountdown}</div></div>
+                                )}
+
+                                {showFlash && <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>}
+
+                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                                    <button type="button" onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="bg-red-600 text-white px-4 py-1.5 rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"><span>📸</span><span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Foto'}</span></button>
+                                    <button type="button" onClick={stopDamageCamera} disabled={captureCountdown > 0} className="bg-gray-600 text-white px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"><span>❌</span><span>Batal</span></button>
+                                </div>
+
+                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">📹 Kamera Kerusakan</div>
+                                <div className="absolute top-2 right-2 translate-y-8 bg-black bg-opacity-70 text-white px-2 py-1 rounded-lg text-[10px]">Fokuskan pada area rusak</div>
+                            </div>
+                        )}
+
+                        {newDamage.damage_photo && (
+                            <div className="relative group">
+                                <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-32 object-cover rounded-lg" />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
+                                <button type="button" onClick={() => setNewDamage({ ...newDamage, damage_photo: null })} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"><XMarkIcon className="h-4 w-4" /></button>
+                                <div className="absolute bottom-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">✅ Foto Kerusakan</div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex space-x-3">
+                        <button type="button" onClick={addDamage} className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">Tambah Kerusakan</button>
+                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null }); }} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium">Batal</button>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
+);
+
 const InspectionFormEnhanced = () => {
-    const { qrCode } = useParams();
+    const router = getRouteApi('/authenticated/inspections/enhanced/$qrCode');
+    const { qrCode } = router.useParams();
     const navigate = useNavigate();
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
@@ -97,6 +373,10 @@ const InspectionFormEnhanced = () => {
         },
         staleTime: 1000 * 60 * 2,
     });
+
+    useEffect(() => {
+        getCurrentLocation();
+    }, []);
 
     useEffect(() => {
         if (aparQuery.data) {
@@ -191,7 +471,7 @@ const InspectionFormEnhanced = () => {
 
     const captureDamagePhoto = () => {
         if (damageVideoRef.current && damageCanvasRef.current) {
-            setCaptureCountdown(3);
+            setCaptureCountdown(1);
 
             const countdownInterval = setInterval(() => {
                 setCaptureCountdown(prev => {
@@ -324,7 +604,7 @@ const InspectionFormEnhanced = () => {
     const capturePhoto = () => {
         if (videoRef.current && canvasRef.current) {
             // Start countdown
-            setCaptureCountdown(3);
+            setCaptureCountdown(1);
 
             const countdownInterval = setInterval(() => {
                 setCaptureCountdown(prev => {
@@ -425,7 +705,7 @@ const InspectionFormEnhanced = () => {
     const captureSelfie = () => {
         if (selfieVideoRef.current && selfieCanvasRef.current) {
             // Start countdown
-            setCaptureCountdown(3);
+            setCaptureCountdown(1);
 
             const countdownInterval = setInterval(() => {
                 setCaptureCountdown(prev => {
@@ -499,8 +779,9 @@ const InspectionFormEnhanced = () => {
             showSuccess('Inspeksi berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['inspections'] });
             queryClient.invalidateQueries({ queryKey: ['apar'] });
-            setTimeout(() => navigate({ to: '/apar' }), 2000);
+            setTimeout(() => navigate({ to: '/' }), 2000);
         },
+
         onError: (error) => {
             console.error('Error submitting inspection:', error);
 
@@ -537,10 +818,11 @@ const InspectionFormEnhanced = () => {
 
         const fd = new FormData();
         fd.append('apar_id', apar.id);
+        fd.append('apar_qrCode', qrCode);
         fd.append('condition', condition);
         fd.append('notes', notes);
-        fd.append('photo', photo);
-        fd.append('selfie', selfie);
+        fd.append('photo', photo, 'apar_photo.jpg');
+        fd.append('selfie', selfie, 'selfie_photo.jpg');
 
         if (currentLocation) {
             fd.append('lat', currentLocation.lat);
@@ -552,7 +834,7 @@ const InspectionFormEnhanced = () => {
                 fd.append(`damage_categories[${index}][category_id]`, damage.category_id);
                 fd.append(`damage_categories[${index}][notes]`, damage.notes);
                 fd.append(`damage_categories[${index}][severity]`, damage.severity);
-                fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo);
+                fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo,  `damage_${index}.jpg`);
             });
         }
 
@@ -578,260 +860,15 @@ const InspectionFormEnhanced = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
+        <div className="min-h-screen">
             <div className="max-w-4xl mx-auto p-4 space-y-6">
-                {/* Header */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-                    <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                                <FireIcon className="h-7 w-7 text-white" />
-                            </div>
-                        </div>
-                        <div className="flex-1">
-                            <h1 className="text-2xl font-bold text-gray-900 mb-1">Inspeksi APAR</h1>
-                            <div className="flex items-center space-x-3">
-                                <p className="text-lg font-semibold text-gray-700">
-                                    {apar.serial_number}
-                                </p>
-                                <span className="text-gray-400">•</span>
-                                <p className="text-gray-600">{apar.location_name}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <Header apar={apar} />
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-6 space-y-8 border border-gray-100">
-                    {/* Photo Capture - APAR */}
-                    <div>
-                        <label className="block text-lg font-semibold text-gray-900 mb-4">
-                            📸 Foto APAR <span className="text-red-500">*</span>
-                        </label>
+                    <APARPhotoCapture photo={photo} cameraActive={cameraActive} cameraLoading={cameraLoading} startCamera={startCamera} capturePhoto={capturePhoto} stopCamera={stopCamera} videoRef={videoRef} canvasRef={canvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setPhoto={setPhoto} />
 
-                        {!photo && !cameraActive && (
-                            <button
-                                type="button"
-                                onClick={startCamera}
-                                disabled={cameraLoading}
-                                className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="text-center">
-                                    <div className="mx-auto h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
-                                        <CameraIcon className="h-8 w-8 text-red-600" />
-                                    </div>
-                                    <p className="mt-3 text-lg font-medium text-gray-700">
-                                        {cameraLoading ? 'Memulai Kamera...' : 'Ambil Foto APAR'}
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-500">Foto wajib diambil dari kamera</p>
-                                </div>
-                            </button>
-                        )}
-
-                        {cameraActive && !photo && (
-                            <div className="relative bg-black rounded-xl overflow-hidden">
-                                <video
-                                    ref={videoRef}
-                                    autoPlay
-                                    playsInline
-                                    muted
-                                    className="w-full h-40 object-cover"
-                                    style={{ backgroundColor: 'transparent' }}
-                                />
-                                <canvas ref={canvasRef} className="hidden" />
-
-                                {/* Debug Info - Remove in production */}
-                                <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
-                                    Debug: {videoRef.current?.readyState || 'N/A'}
-                                </div>
-
-                                {/* Camera Overlay */}
-                                <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
-
-                                {/* Countdown Display */}
-                                {captureCountdown > 0 && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                        <div className="text-white text-6xl font-bold animate-pulse">
-                                            {captureCountdown}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Flash Effect */}
-                                {showFlash && (
-                                    <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
-                                )}
-
-                                {/* Camera Controls */}
-                                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
-                                    <button
-                                        type="button"
-                                        onClick={capturePhoto}
-                                        disabled={captureCountdown > 0}
-                                        className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="text-lg">📸</span>
-                                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Foto'}</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={stopCamera}
-                                        disabled={captureCountdown > 0}
-                                        className="bg-gray-600 text-white px-4 py-2 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <span>❌</span>
-                                        <span>Batal</span>
-                                    </button>
-                                </div>
-
-                                {/* Camera Status */}
-                                <div className="absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    📹 Kamera Aktif
-                                </div>
-
-                                {/* Instructions */}
-                                <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">
-                                    Arahkan ke APAR
-                                </div>
-                            </div>
-                        )}
-
-                        {photo && (
-                            <div className="relative group">
-                                <img
-                                    src={URL.createObjectURL(photo)}
-                                    alt="APAR Photo"
-                                    className="w-full rounded-xl shadow-lg"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-xl"></div>
-                                <button
-                                    type="button"
-                                    onClick={() => setPhoto(null)}
-                                    className="absolute top-3 right-3 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-all duration-200 shadow-lg"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                                <div className="absolute bottom-3 left-3 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    ✅ Foto APAR
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Photo Capture - Selfie */}
-                    <div>
-                        <label className="block text-lg font-semibold text-gray-900 mb-4">
-                            🤳 Selfie Teknisi <span className="text-red-500">*</span>
-                        </label>
-
-                        {!selfie && !selfieCameraActive && (
-                            <button
-                                type="button"
-                                onClick={startSelfieCamera}
-                                disabled={selfieLoading}
-                                className="w-full h-40 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <div className="text-center">
-                                    <div className="mx-auto h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition-colors duration-200">
-                                        <CameraIcon className="h-8 w-8 text-blue-600" />
-                                    </div>
-                                    <p className="mt-3 text-lg font-medium text-gray-700">
-                                        {selfieLoading ? 'Memulai Kamera...' : 'Ambil Selfie'}
-                                    </p>
-                                    <p className="mt-1 text-sm text-gray-500">Selfie wajib diambil dari kamera</p>
-                                </div>
-                            </button>
-                        )}
-
-                        {selfieCameraActive && !selfie && (
-                            <div className="relative bg-black rounded-xl overflow-hidden">
-                                <video
-                                    ref={selfieVideoRef}
-                                    autoPlay
-                                    playsInline
-                                    muted
-                                    className="w-full h-40 object-cover"
-                                    style={{ backgroundColor: 'transparent' }}
-                                />
-                                <canvas ref={selfieCanvasRef} className="hidden" />
-
-                                {/* Debug Info - Remove in production */}
-                                <div className="absolute top-3 right-3 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
-                                    Debug: {selfieVideoRef.current?.readyState || 'N/A'}
-                                </div>
-
-                                {/* Camera Overlay */}
-                                <div className="absolute inset-0 border-4 border-blue-500 border-dashed opacity-50 pointer-events-none"></div>
-
-                                {/* Countdown Display */}
-                                {captureCountdown > 0 && (
-                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                        <div className="text-white text-6xl font-bold animate-pulse">
-                                            {captureCountdown}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Flash Effect */}
-                                {showFlash && (
-                                    <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
-                                )}
-
-                                {/* Camera Controls */}
-                                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-3">
-                                    <button
-                                        type="button"
-                                        onClick={captureSelfie}
-                                        disabled={captureCountdown > 0}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <span className="text-lg">📸</span>
-                                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Selfie'}</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={stopSelfieCamera}
-                                        disabled={captureCountdown > 0}
-                                        className="bg-gray-600 text-white px-2 py-2 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <span>❌</span>
-                                        <span>Batal</span>
-                                    </button>
-                                </div>
-
-                                {/* Camera Status */}
-                                <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    📹 Selfie Mode
-                                </div>
-
-                                {/* Instructions */}
-                                <div className="absolute top-3 right-3 bg-black bg-opacity-70 text-white px-3 py-1 rounded-lg text-xs">
-                                    Lihat ke kamera
-                                </div>
-                            </div>
-                        )}
-
-                        {selfie && (
-                            <div className="relative group">
-                                <img
-                                    src={URL.createObjectURL(selfie)}
-                                    alt="Selfie"
-                                    className="w-full rounded-xl shadow-lg"
-                                />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-xl"></div>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelfie(null)}
-                                    className="absolute top-3 right-3 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-all duration-200 shadow-lg"
-                                >
-                                    <XMarkIcon className="h-5 w-5" />
-                                </button>
-                                <div className="absolute bottom-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    ✅ Selfie Teknisi
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <SelfieCapture selfie={selfie} selfieCameraActive={selfieCameraActive} selfieLoading={selfieLoading} startSelfieCamera={startSelfieCamera} captureSelfie={captureSelfie} stopSelfieCamera={stopSelfieCamera} selfieVideoRef={selfieVideoRef} selfieCanvasRef={selfieCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setSelfie={setSelfie} />
 
                     {/* Condition */}
                     <div>
@@ -851,264 +888,7 @@ const InspectionFormEnhanced = () => {
                         </select>
                     </div>
 
-                    {/* Damage Categories */}
-                    <div>
-                        <label className="block text-lg font-semibold text-gray-900 mb-4">
-                            🚨 Kategori Kerusakan
-                        </label>
-
-                        {selectedDamages.length > 0 && (
-                            <div className="space-y-3 mb-4">
-                                {selectedDamages.map((damage) => (
-                                    <div key={damage.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center space-x-3">
-                                                <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-medium">
-                                                    {damage.category_name}
-                                                </span>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${damage.severity === 'low' ? 'bg-green-100 text-green-800' :
-                                                    damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                        damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                            'bg-red-100 text-red-800'
-                                                    }`}>
-                                                    {damage.severity === 'low' ? 'Rendah' :
-                                                        damage.severity === 'medium' ? 'Sedang' :
-                                                            damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
-                                                </span>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => removeDamage(damage.id)}
-                                                className="text-red-600 hover:text-red-800"
-                                            >
-                                                <TrashIcon className="h-5 w-5" />
-                                            </button>
-                                        </div>
-
-                                        {damage.notes && (
-                                            <p className="text-sm text-gray-700 mb-3">{damage.notes}</p>
-                                        )}
-
-                                        {damage.damage_photo && (
-                                            <div className="relative">
-                                                <img
-                                                    src={URL.createObjectURL(damage.damage_photo)}
-                                                    alt="Damage Photo"
-                                                    className="w-full h-32 object-cover rounded-lg"
-                                                />
-                                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">
-                                                    Foto Kerusakan
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {!showDamageForm ? (
-                            <button
-                                type="button"
-                                onClick={() => setShowDamageForm(true)}
-                                className="w-full border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-red-400 hover:bg-red-50 transition-all duration-200 group"
-                            >
-                                <div className="text-center">
-                                    <PlusIcon className="mx-auto h-8 w-8 text-gray-400 group-hover:text-red-500 transition-colors duration-200" />
-                                    <p className="mt-2 text-sm font-medium text-gray-700 group-hover:text-red-700">
-                                        Tambah Kategori Kerusakan
-                                    </p>
-                                    <p className="text-xs text-gray-500">Klik untuk menambah detail kerusakan</p>
-                                </div>
-                            </button>
-                        ) : (
-                            <div className="border-2 border-red-200 rounded-xl p-4 bg-red-50">
-                                <h4 className="font-medium text-gray-900 mb-4">Tambah Kategori Kerusakan</h4>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Kategori Kerusakan <span className="text-red-500">*</span>
-                                        </label>
-                                        <select
-                                            value={newDamage.category_id}
-                                            onChange={(e) => setNewDamage({ ...newDamage, category_id: e.target.value })}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                            required
-                                        >
-                                            <option value="">Pilih kategori kerusakan</option>
-                                            {damageCategories.map((category) => (
-                                                <option key={category.id} value={category.id}>
-                                                    {category.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Tingkat Keparahan
-                                        </label>
-                                        <select
-                                            value={newDamage.severity}
-                                            onChange={(e) => setNewDamage({ ...newDamage, severity: e.target.value })}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                        >
-                                            <option value="low">Rendah</option>
-                                            <option value="medium">Sedang</option>
-                                            <option value="high">Tinggi</option>
-                                            <option value="critical">Kritis</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Catatan Tambahan
-                                        </label>
-                                        <textarea
-                                            value={newDamage.notes}
-                                            onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })}
-                                            rows={2}
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
-                                            placeholder="Jelaskan detail kerusakan..."
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Foto Kerusakan <span className="text-red-500">*</span>
-                                        </label>
-
-                                        {!newDamage.damage_photo && !damageCameraActive && (
-                                            <button
-                                                type="button"
-                                                onClick={startDamageCamera}
-                                                disabled={damageCameraLoading}
-                                                className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-red-400 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <div className="text-center">
-                                                    <div className="mx-auto h-10 w-10 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition-colors duration-200">
-                                                        <CameraIcon className="h-6 w-6 text-red-600" />
-                                                    </div>
-                                                    <p className="mt-2 text-sm font-medium text-gray-700">
-                                                        {damageCameraLoading ? 'Memulai Kamera...' : 'Ambil Foto Kerusakan'}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500">Foto wajib diambil dari kamera</p>
-                                                </div>
-                                            </button>
-                                        )}
-
-                                        {damageCameraActive && !newDamage.damage_photo && (
-                                            <div className="relative bg-black rounded-lg overflow-hidden">
-                                                <video
-                                                    ref={damageVideoRef}
-                                                    autoPlay
-                                                    playsInline
-                                                    muted
-                                                    className="w-full h-32 object-cover"
-                                                    style={{ backgroundColor: 'transparent' }}
-                                                />
-                                                <canvas ref={damageCanvasRef} className="hidden" />
-
-                                                <div className="absolute top-2 right-2 bg-yellow-600 text-white px-2 py-1 rounded text-xs">
-                                                    Debug: {damageVideoRef.current?.readyState || 'N/A'}
-                                                </div>
-
-                                                <div className="absolute inset-0 border-4 border-red-500 border-dashed opacity-50 pointer-events-none"></div>
-
-                                                {captureCountdown > 0 && (
-                                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                                        <div className="text-white text-4xl font-bold animate-pulse">
-                                                            {captureCountdown}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {showFlash && (
-                                                    <div className="absolute inset-0 bg-white opacity-80 animate-pulse"></div>
-                                                )}
-
-                                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={captureDamagePhoto}
-                                                        disabled={captureCountdown > 0}
-                                                        className="bg-red-600 text-white px-4 py-1.5 rounded-full hover:bg-red-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        <span>📸</span>
-                                                        <span>{captureCountdown > 0 ? 'Menunggu...' : 'Ambil Foto'}</span>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={stopDamageCamera}
-                                                        disabled={captureCountdown > 0}
-                                                        className="bg-gray-600 text-white px-3 py-1.5 rounded-full hover:bg-gray-700 transition-colors duration-200 shadow-lg flex items-center space-x-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        <span>❌</span>
-                                                        <span>Batal</span>
-                                                    </button>
-                                                </div>
-
-                                                <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                                    📹 Kamera Kerusakan
-                                                </div>
-
-                                                <div className="absolute top-2 right-2 translate-y-8 bg-black bg-opacity-70 text-white px-2 py-1 rounded-lg text-[10px]">
-                                                    Fokuskan pada area rusak
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {newDamage.damage_photo && (
-                                            <div className="relative group">
-                                                <img
-                                                    src={URL.createObjectURL(newDamage.damage_photo)}
-                                                    alt="Damage Photo"
-                                                    className="w-full h-32 object-cover rounded-lg"
-                                                />
-                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 rounded-lg"></div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNewDamage({ ...newDamage, damage_photo: null })}
-                                                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                                                >
-                                                    <XMarkIcon className="h-4 w-4" />
-                                                </button>
-                                                <div className="absolute bottom-2 left-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                                    ✅ Foto Kerusakan
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="flex space-x-3">
-                                        <button
-                                            type="button"
-                                            onClick={addDamage}
-                                            className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
-                                        >
-                                            Tambah Kerusakan
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                stopDamageCamera();
-                                                setShowDamageForm(false);
-                                                setNewDamage({
-                                                    category_id: '',
-                                                    notes: '',
-                                                    severity: 'medium',
-                                                    damage_photo: null
-                                                });
-                                            }}
-                                            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                                        >
-                                            Batal
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    <DamageSection selectedDamages={selectedDamages} removeDamage={removeDamage} showDamageForm={showDamageForm} setShowDamageForm={setShowDamageForm} newDamage={newDamage} setNewDamage={setNewDamage} damageCategories={damageCategories} startDamageCamera={startDamageCamera} damageCameraActive={damageCameraActive} damageCameraLoading={damageCameraLoading} damageVideoRef={damageVideoRef} damageCanvasRef={damageCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} captureDamagePhoto={captureDamagePhoto} stopDamageCamera={stopDamageCamera} addDamage={addDamage} />
 
                     {/* Notes */}
                     <div>
@@ -1142,7 +922,7 @@ const InspectionFormEnhanced = () => {
                         </button>
                         <button
                             type="button"
-                            onClick={() => navigate({ to: '/apar' })}
+                            onClick={() => navigate({ to: '/' })}
                             className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                         >
                             Batal
