@@ -1,8 +1,5 @@
 [phases.setup]
-nixPkgs = ["...", "python311Packages.supervisor"]
-
-[environment]
-NODE_VERSION = "22"
+nixPkgs = ["...", "nodejs_24", "python311Packages.supervisor"]
 
 [phases.build]
 cmds = [
