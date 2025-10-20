@@ -292,16 +292,16 @@ class ScheduleController extends Controller
         $this->clearSchedulesCache();
 
         // Kirim notifikasi ke teknisi yang ditugaskan (sync untuk memastikan terkirim)
-        try {
-            $notificationService = new NotificationService();
-            $notificationService->sendScheduleNotification($schedule, 'created');
-            Log::info("Schedule notification sent successfully for schedule ID: {$schedule->id}");
-        } catch (\Exception $e) {
-            Log::error("Failed to send schedule notification for schedule ID: {$schedule->id}", [
-                'error' => $e->getMessage()
-            ]);
-            // Jangan gagalkan pembuatan schedule jika notifikasi gagal
-        }
+        // try {
+        //     $notificationService = new NotificationService();
+        //     $notificationService->sendScheduleNotification($schedule, 'created');
+        //     Log::info("Schedule notification sent successfully for schedule ID: {$schedule->id}");
+        // } catch (\Exception $e) {
+        //     Log::error("Failed to send schedule notification for schedule ID: {$schedule->id}", [
+        //         'error' => $e->getMessage()
+        //     ]);
+        //     // Jangan gagalkan pembuatan schedule jika notifikasi gagal
+        // }
 
         return response()->json($schedule, 201);
     }
@@ -398,16 +398,16 @@ class ScheduleController extends Controller
                 'new_frequency' => $request->frequency
             ]);
 
-            try {
-                $notificationService = new NotificationService();
-                $notificationService->sendScheduleNotification($schedule, 'updated');
-                Log::info("Schedule update notification sent successfully for schedule ID: {$schedule->id}");
-            } catch (\Exception $e) {
-                Log::error("Failed to send schedule update notification for schedule ID: {$schedule->id}", [
-                    'error' => $e->getMessage()
-                ]);
-                // Jangan gagalkan update schedule jika notifikasi gagal
-            }
+            // try {
+            //     $notificationService = new NotificationService();
+            //     $notificationService->sendScheduleNotification($schedule, 'updated');
+            //     Log::info("Schedule update notification sent successfully for schedule ID: {$schedule->id}");
+            // } catch (\Exception $e) {
+            //     Log::error("Failed to send schedule update notification for schedule ID: {$schedule->id}", [
+            //         'error' => $e->getMessage()
+            //     ]);
+            //     // Jangan gagalkan update schedule jika notifikasi gagal
+            // }
         } else {
             Log::info('Schedule updated but no changes detected', [
                 'schedule_id' => $schedule->id
@@ -425,11 +425,11 @@ class ScheduleController extends Controller
         // Clear cache
         $this->clearSchedulesCache();
 
-        // Kirim notifikasi sebelum menghapus (async)
-        dispatch(function () use ($schedule) {
-            $notificationService = new NotificationService();
-            $notificationService->sendScheduleNotification($schedule, 'deleted');
-        })->afterResponse();
+        // // Kirim notifikasi sebelum menghapus (async)
+        // dispatch(function () use ($schedule) {
+        //     $notificationService = new NotificationService();
+        //     $notificationService->sendScheduleNotification($schedule, 'deleted');
+        // })->afterResponse();
 
         $schedule->delete();
         return response()->json(['message' => 'Jadwal berhasil dihapus']);
@@ -529,8 +529,8 @@ class ScheduleController extends Controller
             }
 
             // Kirim reminder email
-            $notificationService = new NotificationService();
-            $notificationService->sendScheduleReminder($schedule);
+            // $notificationService = new NotificationService();
+            // $notificationService->sendScheduleReminder($schedule);
 
             // Log pengiriman reminder
             Log::info("Reminder email sent successfully for schedule ID: {$schedule->id} to user: {$schedule->assignedUser->email}");

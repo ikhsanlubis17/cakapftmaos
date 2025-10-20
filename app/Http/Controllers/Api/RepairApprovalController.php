@@ -25,7 +25,7 @@ class RepairApprovalController extends Controller
 
         // Filter by APAR
         if ($request->has('apar_id')) {
-            $query->whereHas('inspection', function($q) use ($request) {
+            $query->whereHas('inspection', function ($q) use ($request) {
                 $q->where('apar_id', $request->apar_id);
             });
         }
@@ -107,16 +107,16 @@ class RepairApprovalController extends Controller
         ]);
 
         // Send notification to technician
-        try {
-            $notificationService = new \App\Services\NotificationService();
-            $notificationService->sendRepairApprovalNotification($repairApproval, 'approved');
-            
-            // Broadcast WebSocket notification for real-time updates
-            $webSocketService = new \App\Services\WebSocketService();
-            $webSocketService->broadcastRepairApprovalStatusChange($repairApproval, 'approved');
-        } catch (\Exception $e) {
-            Log::error('Failed to send approval notification: ' . $e->getMessage());
-        }
+        // try {
+        //     $notificationService = new \App\Services\NotificationService();
+        //     $notificationService->sendRepairApprovalNotification($repairApproval, 'approved');
+        //
+        //     // Broadcast WebSocket notification for real-time updates
+        //     $webSocketService = new \App\Services\WebSocketService();
+        //     $webSocketService->broadcastRepairApprovalStatusChange($repairApproval, 'approved');
+        // } catch (\Exception $e) {
+        //     Log::error('Failed to send approval notification: ' . $e->getMessage());
+        // }
 
         return response()->json([
             'success' => true,
@@ -159,16 +159,16 @@ class RepairApprovalController extends Controller
         ]);
 
         // Send notification to technician
-        try {
-            $notificationService = new \App\Services\NotificationService();
-            $notificationService->sendRepairApprovalNotification($repairApproval, 'rejected');
-            
-            // Broadcast WebSocket notification for real-time updates
-            $webSocketService = new \App\Services\WebSocketService();
-            $webSocketService->broadcastRepairApprovalStatusChange($repairApproval, 'rejected');
-        } catch (\Exception $e) {
-            Log::error('Failed to send rejection notification: ' . $e->getMessage());
-        }
+        // try {
+        //     $notificationService = new \App\Services\NotificationService();
+        //     $notificationService->sendRepairApprovalNotification($repairApproval, 'rejected');
+        //
+        //     // Broadcast WebSocket notification for real-time updates
+        //     $webSocketService = new \App\Services\WebSocketService();
+        //     $webSocketService->broadcastRepairApprovalStatusChange($repairApproval, 'rejected');
+        // } catch (\Exception $e) {
+        //     Log::error('Failed to send rejection notification: ' . $e->getMessage());
+        // }
 
         return response()->json([
             'success' => true,
