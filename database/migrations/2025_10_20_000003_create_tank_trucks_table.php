@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('tank_trucks', function (Blueprint $table) {
@@ -19,12 +16,13 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->enum('status', ['active', 'inactive', 'maintenance'])->default('active');
             $table->timestamps();
+
+            // performance indexes
+            $table->index(['status']);
+            $table->index(['plate_number']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('tank_trucks');

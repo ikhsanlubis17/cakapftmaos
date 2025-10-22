@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('inspection_logs', function (Blueprint $table) {
@@ -25,12 +22,15 @@ return new class extends Migration
             $table->text('details')->nullable(); // Additional details about the action
             $table->boolean('is_successful')->default(true);
             $table->timestamps();
+
+            // indexes
+            $table->index(['apar_id', 'created_at']);
+            $table->index(['user_id', 'created_at']);
+            $table->index(['action']);
+            $table->index(['is_successful']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('inspection_logs');

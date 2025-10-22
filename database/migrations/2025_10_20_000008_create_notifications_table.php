@@ -6,15 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->enum('type', ['email', 'whatsapp', 'system'])->default('system');
+            $table->enum('type', [
+                'email',
+                'whatsapp',
+                'system',
+                'schedule_reminder',
+                'schedule_created',
+                'schedule_updated',
+                'repair_approved',
+                'repair_rejected',
+                'repair_completed_admin',
+                'inspection_reminder'
+            ])->default('system');
             $table->string('title');
             $table->text('content');
             $table->json('data')->nullable(); // Additional data for the notification
@@ -26,9 +34,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');

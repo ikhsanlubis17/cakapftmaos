@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('inspections', function (Blueprint $table) {
@@ -23,13 +20,28 @@ return new class extends Migration
             $table->decimal('inspection_lng', 11, 8)->nullable();
             $table->boolean('location_valid')->default(true); // Whether GPS validation passed
             $table->boolean('is_valid')->default(true); // Overall validation
+
+            // status and schedule linkage
+            $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
+            $table->foreignId('schedule_id')->nullable()->constrained('inspection_schedules')->onDelete('set null');
+
+            // repair workflow fields
+            $table->enum('repair_status', ['none', 'pending_approval', 'approved', 'rejected', 'completed'])->default('none');
+            $table->text('repair_notes')->nullable();
+            $table->boolean('requires_repair')->default(false);
+            $table->boolean('photo_required')->default(true);
+            $table->boolean('selfie_required')->default(true);
+
             $table->timestamps();
+
+            // indexes for performance
+            $table->index(['apar_id', 'created_at']);
+            $table->index(['user_id', 'created_at']);
+            $table->index(['condition']);
+            $table->index(['created_at']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('inspections');

@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('inspection_schedules', function (Blueprint $table) {
@@ -19,14 +16,17 @@ return new class extends Migration
             $table->dateTimeTz('end_at');
             $table->enum('frequency', ['weekly', 'monthly', 'quarterly', 'semiannual'])->default('weekly');
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_completed')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();
+
+            // indexes
+            $table->index(['apar_id', 'start_at']);
+            $table->index(['start_at', 'is_active']);
+            $table->index(['is_completed']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('inspection_schedules');

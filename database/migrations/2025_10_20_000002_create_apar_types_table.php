@@ -8,6 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Master table for APAR types
         Schema::create('apar_types', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
