@@ -20,13 +20,14 @@ export const userQueryKey = ['user'];
 export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { updateToken }: { updateToken: (token: string | null) => void }) => {
     const queryClient = useQueryClient();
 
-    const { mutateAsync: login, isPending: isLoggingIn} = useMutation({
-        mutationFn: ({ email, password }: { email: string; password: string }) =>
-            apiClient.post('/api/login', { email, password }),
-        onSuccess: (response: { data: LoginResponse }) => {
-            const { token: newToken, user: userData } = response.data;
+    const { mutateAsync: login, isPending: isLoggingIn } = useMutation({
+        mutationFn: async ({ email, password }: { email: string; password: string }) => {
+            const response = await apiClient.post<LoginResponse>('/api/login', { email, password });
+            return response.data; // Directly return the LoginResponse
+        },
+        onSuccess: (data) => { // data is now LoginResponse
+            const { token: newToken, user: userData } = data;
             updateToken(newToken);
-            // Manually set the user data in the cache after login
             queryClient.setQueryData(userQueryKey, userData);
         },
     });
@@ -35,7 +36,6 @@ export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { upda
         mutationFn: () => apiClient.post('/api/logout'),
         onSuccess: () => {
             updateToken(null);
-            // Clear the user data from the cache
             queryClient.setQueryData(userQueryKey, null);
         },
         onError: () => {

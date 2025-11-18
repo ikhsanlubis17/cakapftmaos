@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import Toast from '../components/Toast';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import Toast from "../components/ui/Toast";
 
 const ToastContext = createContext();
 
 export const useToast = () => {
     const context = useContext(ToastContext);
     if (!context) {
-        throw new Error('useToast must be used within a ToastProvider');
+        throw new Error("useToast must be used within a ToastProvider");
     }
     return context;
 };
@@ -15,40 +15,55 @@ export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
 
     const removeToast = useCallback((id) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
+        setToasts((prev) => prev.filter((toast) => toast.id !== id));
     }, []);
 
-    const addToast = useCallback(({ type, title, message, duration = 5000 }) => {
-        const id = Date.now() + Math.random();
-        const newToast = { id, type, title, message, duration, show: true };
-        
-        setToasts(prev => [...prev, newToast]);
+    const addToast = useCallback(
+        ({ type, title, message, duration = 5000 }) => {
+            const id = Date.now() + Math.random();
+            const newToast = { id, type, title, message, duration, show: true };
 
-        // Auto remove toast after duration
-        if (duration > 0) {
-            setTimeout(() => {
-                removeToast(id);
-            }, duration);
-        }
+            setToasts((prev) => [...prev, newToast]);
 
-        return id;
-    }, [removeToast]);
+            // Auto remove toast after duration
+            if (duration > 0) {
+                setTimeout(() => {
+                    removeToast(id);
+                }, duration);
+            }
 
-    const showSuccess = useCallback((message, title = 'Berhasil', duration = 5000) => {
-        return addToast({ type: 'success', title, message, duration });
-    }, [addToast]);
+            return id;
+        },
+        [removeToast]
+    );
 
-    const showError = useCallback((message, title = 'Error', duration = 7000) => {
-        return addToast({ type: 'error', title, message, duration });
-    }, [addToast]);
+    const showSuccess = useCallback(
+        (message, title = "Berhasil", duration = 5000) => {
+            return addToast({ type: "success", title, message, duration });
+        },
+        [addToast]
+    );
 
-    const showWarning = useCallback((message, title = 'Peringatan', duration = 6000) => {
-        return addToast({ type: 'warning', title, message, duration });
-    }, [addToast]);
+    const showError = useCallback(
+        (message, title = "Error", duration = 7000) => {
+            return addToast({ type: "error", title, message, duration });
+        },
+        [addToast]
+    );
 
-    const showInfo = useCallback((message, title = 'Informasi', duration = 5000) => {
-        return addToast({ type: 'info', title, message, duration });
-    }, [addToast]);
+    const showWarning = useCallback(
+        (message, title = "Peringatan", duration = 6000) => {
+            return addToast({ type: "warning", title, message, duration });
+        },
+        [addToast]
+    );
+
+    const showInfo = useCallback(
+        (message, title = "Informasi", duration = 5000) => {
+            return addToast({ type: "info", title, message, duration });
+        },
+        [addToast]
+    );
 
     const clearAllToasts = useCallback(() => {
         setToasts([]);
@@ -62,13 +77,13 @@ export const ToastProvider = ({ children }) => {
         showWarning,
         showInfo,
         clearAllToasts,
-        toasts
+        toasts,
     };
 
     return (
         <ToastContext.Provider value={value}>
             {children}
-            
+
             {/* Toast Container */}
             <div className="fixed top-4 right-4 z-50 space-y-4">
                 {toasts.map((toast) => (
@@ -85,4 +100,4 @@ export const ToastProvider = ({ children }) => {
             </div>
         </ToastContext.Provider>
     );
-}; 
+};
