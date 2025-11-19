@@ -24,6 +24,11 @@ const AparTypeManagement = () => {
         is_active: true,
     });
     const [errors, setErrors] = useState({});
+    
+    // Bulk delete state
+    const [selectedTypes, setSelectedTypes] = useState([]);
+    const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
@@ -115,6 +120,81 @@ const AparTypeManagement = () => {
         await deleteMutation.mutateAsync(id);
     };
 
+    // Bulk delete handlers
+    const handleBulkDelete = async () => {
+        if (selectedTypes.length === 0) {
+            showError("Pilih jenis APAR yang akan dihapus terlebih dahulu");
+            return;
+        }
+
+        const confirmed = await confirm({
+            title: "Konfirmasi Hapus Massal",
+            message: `Apakah Anda yakin ingin menghapus ${selectedTypes.length} jenis APAR? Tindakan ini tidak dapat dibatalkan.`,
+            type: "warning",
+            confirmText: "Ya, Hapus Semua",
+            cancelText: "Batal",
+            confirmButtonColor: "red",
+        });
+
+        if (!confirmed) return;
+
+        setDeleting(true);
+        try {
+            const deletePromises = selectedTypes.map(async (id) => {
+                try {
+                    await deleteMutation.mutateAsync(id);
+                    return { success: true, id };
+                } catch (error) {
+                    return { success: false, id, error };
+                }
+            });
+
+            const results = await Promise.all(deletePromises);
+            const successful = results.filter((r) => r.success);
+            const failed = results.filter((r) => !r.success);
+
+            if (successful.length > 0) {
+                showSuccess(
+                    `${successful.length} jenis APAR berhasil dihapus${
+                        failed.length > 0 ? `, ${failed.length} gagal` : ""
+                    }`
+                );
+            } else {
+                showError("Gagal menghapus semua jenis APAR yang dipilih");
+            }
+
+            setSelectedTypes([]);
+            setBulkDeleteMode(false);
+        } catch (error) {
+            console.error("Gagal dalam bulk delete:", error);
+            showError("Gagal menghapus jenis APAR yang dipilih. Silakan coba lagi.");
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const toggleBulkDeleteMode = () => {
+        setBulkDeleteMode(!bulkDeleteMode);
+        setSelectedTypes([]);
+    };
+
+    const handleSelectType = (id) => {
+        setSelectedTypes((prev) =>
+            prev.includes(id)
+                ? prev.filter((typeId) => typeId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        const aparTypes = aparTypesData?.data || aparTypesData || [];
+        if (selectedTypes.length === aparTypes.length) {
+            setSelectedTypes([]);
+        } else {
+            setSelectedTypes(aparTypes.map((type) => type.id));
+        }
+    };
+
     const openModal = (type = null) => {
         if (type) {
             setEditingType(type);
@@ -181,13 +261,60 @@ const AparTypeManagement = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                            onClick={() => openModal()}
-                            className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
-                        >
-                            <PlusIcon className="h-4 w-4 mr-2" />
-                            Tambah Jenis APAR
-                        </button>
+                        {bulkDeleteMode ? (
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <div className="flex items-center justify-center sm:justify-start px-3 py-2 bg-gray-50 rounded-md">
+                                    <span className="text-sm text-gray-600">
+                                        {selectedTypes.length} dipilih
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={selectedTypes.length === 0 || deleting}
+                                    className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white ${
+                                        selectedTypes.length > 0 && !deleting
+                                            ? "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            : "bg-gray-300 cursor-not-allowed"
+                                    } transition-all duration-200`}
+                                >
+                                    {deleting ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            Menghapus...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <TrashIcon className="h-4 w-4 mr-2" />
+                                            Hapus ({selectedTypes.length})
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={toggleBulkDeleteMode}
+                                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                >
+                                    <XMarkIcon className="h-4 w-4 mr-2" />
+                                    Batal
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={toggleBulkDeleteMode}
+                                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                >
+                                    <TrashIcon className="h-4 w-4 mr-2" />
+                                    Hapus Massal
+                                </button>
+                                <button
+                                    onClick={() => openModal()}
+                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                                >
+                                    <PlusIcon className="h-4 w-4 mr-2" />
+                                    Tambah Jenis APAR
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -211,11 +338,42 @@ const AparTypeManagement = () => {
                     </div>
                 </div>
 
+                {/* Bulk Delete Header */}
+                {bulkDeleteMode && (
+                    <div className="px-6 py-3 border-b border-gray-200 bg-red-50">
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    checked={
+                                        selectedTypes.length ===
+                                            (aparTypesData?.data || aparTypesData || []).length &&
+                                        (aparTypesData?.data || aparTypesData || []).length > 0
+                                    }
+                                    onChange={handleSelectAll}
+                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                />
+                                <span className="text-sm font-medium text-gray-900">
+                                    Pilih Semua ({(aparTypesData?.data || aparTypesData || []).length})
+                                </span>
+                            </label>
+                            <span className="text-sm text-gray-500">
+                                {selectedTypes.length} dari {(aparTypesData?.data || aparTypesData || []).length} dipilih
+                            </span>
+                        </div>
+                    </div>
+                )}
+
                 {/* APAR Types Table */}
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
+                                {bulkDeleteMode && (
+                                    <th scope="col" className="px-6 py-3 text-left">
+                                        <span className="sr-only">Pilih</span>
+                                    </th>
+                                )}
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Nama Jenis
                                 </th>
@@ -235,7 +393,7 @@ const AparTypeManagement = () => {
                                 .length === 0 ? (
                                 <tr>
                                     <td
-                                        colSpan="4"
+                                        colSpan={bulkDeleteMode ? 5 : 4}
                                         className="px-6 py-12 text-center"
                                     >
                                         <div className="flex flex-col items-center gap-3">
@@ -269,6 +427,16 @@ const AparTypeManagement = () => {
                                         key={type.id}
                                         className="hover:bg-gray-50 transition-colors"
                                     >
+                                        {bulkDeleteMode && (
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTypes.includes(type.id)}
+                                                    onChange={() => handleSelectType(type.id)}
+                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                />
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-lg">

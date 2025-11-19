@@ -11,6 +11,7 @@ import {
     EyeIcon,
     EyeSlashIcon,
     FireIcon,
+    XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 const DamageCategoryManagement = () => {
@@ -34,6 +35,11 @@ const DamageCategoryManagement = () => {
         confirmButtonColor: "red",
         onConfirm: () => {},
     });
+    
+    // Bulk delete state
+    const [selectedCategories, setSelectedCategories] = useState([]);
+    const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     const closeConfirmDialog = () => {
         setConfirmDialog({ ...confirmDialog, isOpen: false });
@@ -179,6 +185,80 @@ const DamageCategoryManagement = () => {
         setShowForm(false);
     };
 
+    // Bulk delete handlers
+    const handleBulkDelete = async () => {
+        if (selectedCategories.length === 0) {
+            showError("Pilih kategori yang akan dihapus terlebih dahulu");
+            return;
+        }
+
+        setConfirmDialog({
+            isOpen: true,
+            title: "Konfirmasi Hapus Massal",
+            message: `Apakah Anda yakin ingin menghapus ${selectedCategories.length} kategori kerusakan? Tindakan ini tidak dapat dibatalkan.`,
+            type: "warning",
+            confirmText: "Ya, Hapus Semua",
+            cancelText: "Batal",
+            confirmButtonColor: "red",
+            onConfirm: async () => {
+                setDeleting(true);
+                try {
+                    const deletePromises = selectedCategories.map(async (id) => {
+                        try {
+                            await deleteMutation.mutateAsync(id);
+                            return { success: true, id };
+                        } catch (error) {
+                            return { success: false, id, error };
+                        }
+                    });
+
+                    const results = await Promise.all(deletePromises);
+                    const successful = results.filter((r) => r.success);
+                    const failed = results.filter((r) => !r.success);
+
+                    if (successful.length > 0) {
+                        showSuccess(
+                            `${successful.length} kategori berhasil dihapus${
+                                failed.length > 0 ? `, ${failed.length} gagal` : ""
+                            }`
+                        );
+                    } else {
+                        showError("Gagal menghapus semua kategori yang dipilih");
+                    }
+
+                    setSelectedCategories([]);
+                    setBulkDeleteMode(false);
+                } catch (error) {
+                    console.error("Gagal dalam bulk delete:", error);
+                    showError("Gagal menghapus kategori yang dipilih. Silakan coba lagi.");
+                } finally {
+                    setDeleting(false);
+                }
+            },
+        });
+    };
+
+    const toggleBulkDeleteMode = () => {
+        setBulkDeleteMode(!bulkDeleteMode);
+        setSelectedCategories([]);
+    };
+
+    const handleSelectCategory = (id) => {
+        setSelectedCategories((prev) =>
+            prev.includes(id)
+                ? prev.filter((catId) => catId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedCategories.length === categories.length) {
+            setSelectedCategories([]);
+        } else {
+            setSelectedCategories(categories.map((cat) => cat.id));
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
@@ -207,13 +287,62 @@ const DamageCategoryManagement = () => {
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setShowForm(true)}
-                            className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
-                        >
-                            <PlusIcon className="h-4 w-4 mr-2" />
-                            Tambah Kategori
-                        </button>
+                        <div className="flex items-center space-x-3">
+                            {bulkDeleteMode ? (
+                                <>
+                                    <div className="flex items-center px-3 py-2 bg-gray-50 rounded-md">
+                                        <span className="text-sm text-gray-600">
+                                            {selectedCategories.length} dipilih
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={handleBulkDelete}
+                                        disabled={selectedCategories.length === 0 || deleting}
+                                        className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white ${
+                                            selectedCategories.length > 0 && !deleting
+                                                ? "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                : "bg-gray-300 cursor-not-allowed"
+                                        } transition-all duration-200`}
+                                    >
+                                        {deleting ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Menghapus...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <TrashIcon className="h-4 w-4 mr-2" />
+                                                Hapus ({selectedCategories.length})
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={toggleBulkDeleteMode}
+                                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                    >
+                                        <XMarkIcon className="h-4 w-4 mr-2" />
+                                        Batal
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={toggleBulkDeleteMode}
+                                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                    >
+                                        <TrashIcon className="h-4 w-4 mr-2" />
+                                        Hapus Massal
+                                    </button>
+                                    <button
+                                        onClick={() => setShowForm(true)}
+                                        className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                                    >
+                                        <PlusIcon className="h-4 w-4 mr-2" />
+                                        Tambah Kategori
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -323,10 +452,40 @@ const DamageCategoryManagement = () => {
                         </h3>
                     </div>
 
+                    {/* Bulk Delete Header */}
+                    {bulkDeleteMode && (
+                        <div className="px-6 py-3 border-b border-gray-200 bg-red-50">
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            selectedCategories.length === categories.length &&
+                                            categories.length > 0
+                                        }
+                                        onChange={handleSelectAll}
+                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                    />
+                                    <span className="text-sm font-medium text-gray-900">
+                                        Pilih Semua ({categories.length})
+                                    </span>
+                                </label>
+                                <span className="text-sm text-gray-500">
+                                    {selectedCategories.length} dari {categories.length} dipilih
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
+                                    {bulkDeleteMode && (
+                                        <th className="px-6 py-3 text-left">
+                                            <span className="sr-only">Pilih</span>
+                                        </th>
+                                    )}
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Kategori
                                     </th>
@@ -347,6 +506,16 @@ const DamageCategoryManagement = () => {
                                         key={category.id}
                                         className="hover:bg-gray-50"
                                     >
+                                        {bulkDeleteMode && (
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCategories.includes(category.id)}
+                                                    onChange={() => handleSelectCategory(category.id)}
+                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                />
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm font-medium text-gray-900">
                                                 {category.name}

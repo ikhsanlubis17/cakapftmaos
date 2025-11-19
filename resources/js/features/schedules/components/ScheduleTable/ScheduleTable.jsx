@@ -33,6 +33,10 @@ const ScheduleTable = ({
     statusFilter,
     activeFilter,
     onResetFilters,
+    bulkDeleteMode = false,
+    selectedSchedules = [],
+    onSelectSchedule,
+    onSelectAll,
 }) => {
     // Icon mapping for getStatusIcon utility
     const icons = {
@@ -112,6 +116,30 @@ const ScheduleTable = ({
 
     return (
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Bulk Delete Header */}
+            {bulkDeleteMode && (
+                <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-red-50">
+                    <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked={
+                                    selectedSchedules.length === schedules.length &&
+                                    schedules.length > 0
+                                }
+                                onChange={onSelectAll}
+                                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                            />
+                            <span className="text-sm font-medium text-gray-900">
+                                Pilih Semua ({schedules.length})
+                            </span>
+                        </label>
+                        <span className="text-sm text-gray-500">
+                            {selectedSchedules.length} dari {schedules.length} dipilih
+                        </span>
+                    </div>
+                </div>
+            )}
             <div className="divide-y divide-gray-100">
                 {schedules
                     .filter((schedule) => schedule && schedule.id)
@@ -124,6 +152,16 @@ const ScheduleTable = ({
                             >
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                                     <div className="flex gap-3 sm:gap-4 flex-1">
+                                        {bulkDeleteMode && (
+                                            <div className="flex-shrink-0 flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedSchedules.includes(schedule.id)}
+                                                    onChange={() => onSelectSchedule(schedule.id)}
+                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                />
+                                            </div>
+                                        )}
                                         <div className="flex-shrink-0">
                                             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-red-100 to-red-200 rounded-lg sm:rounded-xl flex items-center justify-center">
                                                 <FireIcon className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />

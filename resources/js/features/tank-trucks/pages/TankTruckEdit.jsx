@@ -28,24 +28,22 @@ const TankTruckEdit = () => {
         },
         enabled: !!id,
         staleTime: 1000 * 60 * 2,
-        onSuccess: (data) => {
-            const t = data.data || data;
-            setFormData({
-                plate_number: t.plate_number || '',
-                driver_name: t.driver_name || '',
-                driver_phone: t.driver_phone || '',
-                description: t.description || '',
-                status: t.status || 'active'
-            });
-        },
-        onError: (err) => {
-            console.error('Error fetching tank truck detail:', err);
-            showError('Gagal memuat data mobil tangki. Silakan coba lagi.');
-            navigate({ to: '/tank-trucks' });
-        }
     });
 
     const tankTruck = truckData?.data || truckData || null;
+
+    // Populate form data when truck data is loaded
+    React.useEffect(() => {
+        if (tankTruck) {
+            setFormData({
+                plate_number: tankTruck.plate_number || '',
+                driver_name: tankTruck.driver_name || '',
+                driver_phone: tankTruck.driver_phone || '',
+                description: tankTruck.description || '',
+                status: tankTruck.status || 'active'
+            });
+        }
+    }, [tankTruck]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

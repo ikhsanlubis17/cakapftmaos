@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
-import { BellIcon, PlusIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { BellIcon, PlusIcon, CalendarIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 // Custom hook and utilities
 import { useSchedulesData } from "../hooks/useSchedulesData";
@@ -61,6 +61,11 @@ const SchedulesManagement = () => {
         notes: "",
     });
     const [errors, setErrors] = useState({});
+    
+    // Bulk delete state
+    const [selectedSchedules, setSelectedSchedules] = useState([]);
+    const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+    const [deleting, setDeleting] = useState(false);
 
     // Modal overflow control
     useEffect(() => {
@@ -198,11 +203,12 @@ const SchedulesManagement = () => {
 
     const handleDelete = async (scheduleId) => {
         if (!scheduleId) {
+            console.error("Schedule ID is required for deletion");
             return;
         }
 
         const confirmed = await confirm({
-            title: "Konfirmasi Hapus",
+            title: "Konfirmasi Hapus Jadwal",
             message:
                 "Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.",
             type: "warning",
@@ -212,7 +218,70 @@ const SchedulesManagement = () => {
         });
 
         if (confirmed) {
-            deleteMutation.mutate(scheduleId);
+            await deleteMutation.mutateAsync(scheduleId);
+        }
+    };
+
+    // Bulk delete handlers
+    const handleBulkDelete = async () => {
+        if (selectedSchedules.length === 0) {
+            return;
+        }
+
+        const confirmed = await confirm({
+            title: "Konfirmasi Hapus Massal",
+            message: `Apakah Anda yakin ingin menghapus ${selectedSchedules.length} jadwal? Tindakan ini tidak dapat dibatalkan.`,
+            type: "warning",
+            confirmText: "Ya, Hapus Semua",
+            cancelText: "Batal",
+            confirmButtonColor: "red",
+        });
+
+        if (!confirmed) return;
+
+        setDeleting(true);
+        try {
+            const deletePromises = selectedSchedules.map(async (id) => {
+                try {
+                    await deleteMutation.mutateAsync(id);
+                    return { success: true, id };
+                } catch (error) {
+                    return { success: false, id, error };
+                }
+            });
+
+            const results = await Promise.all(deletePromises);
+            const successful = results.filter((r) => r.success);
+            const failed = results.filter((r) => !r.success);
+
+            // Success/error messages are already handled by deleteMutation
+            setSelectedSchedules([]);
+            setBulkDeleteMode(false);
+        } catch (error) {
+            console.error("Gagal dalam bulk delete:", error);
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    const toggleBulkDeleteMode = () => {
+        setBulkDeleteMode(!bulkDeleteMode);
+        setSelectedSchedules([]);
+    };
+
+    const handleSelectSchedule = (id) => {
+        setSelectedSchedules((prev) =>
+            prev.includes(id)
+                ? prev.filter((scheduleId) => scheduleId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        if (selectedSchedules.length === schedules.length) {
+            setSelectedSchedules([]);
+        } else {
+            setSelectedSchedules(schedules.map((schedule) => schedule.id));
         }
     };
 
@@ -303,38 +372,86 @@ const SchedulesManagement = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                            <button
-                                onClick={handleSendNotifications}
-                                disabled={sendingNotifications}
-                                className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200 disabled:opacity-50"
-                            >
-                                {sendingNotifications ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-gray-600 border-t-transparent mr-2"></div>
-                                        <span className="hidden sm:inline">
-                                            Mengirim...
+                            {bulkDeleteMode ? (
+                                <>
+                                    <div className="flex items-center px-3 py-2 bg-gray-50 rounded-md">
+                                        <span className="text-sm text-gray-600">
+                                            {selectedSchedules.length} dipilih
                                         </span>
-                                        <span className="sm:hidden">Mengirim</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <BellIcon className="w-4 h-4 mr-2" />
-                                        <span className="hidden sm:inline">
-                                            Kirim Notifikasi
-                                        </span>
-                                        <span className="sm:hidden">Notifikasi</span>
-                                    </>
-                                )}
-                            </button>
+                                    </div>
+                                    <button
+                                        onClick={handleBulkDelete}
+                                        disabled={selectedSchedules.length === 0 || deleting}
+                                        className={`inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 border border-transparent text-sm sm:text-base font-medium rounded-lg sm:rounded-xl text-white ${
+                                            selectedSchedules.length > 0 && !deleting
+                                                ? "bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-500/20"
+                                                : "bg-gray-300 cursor-not-allowed"
+                                        } transition-all duration-200`}
+                                    >
+                                        {deleting ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent mr-2"></div>
+                                                Menghapus...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <TrashIcon className="w-4 h-4 mr-2" />
+                                                Hapus ({selectedSchedules.length})
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={toggleBulkDeleteMode}
+                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200"
+                                    >
+                                        <XMarkIcon className="w-4 h-4 mr-2" />
+                                        Batal
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={toggleBulkDeleteMode}
+                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200"
+                                    >
+                                        <TrashIcon className="w-4 h-4 mr-2" />
+                                        <span className="hidden sm:inline">Hapus Massal</span>
+                                        <span className="sm:hidden">Hapus</span>
+                                    </button>
+                                    <button
+                                        onClick={handleSendNotifications}
+                                        disabled={sendingNotifications}
+                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200 disabled:opacity-50"
+                                    >
+                                        {sendingNotifications ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-gray-600 border-t-transparent mr-2"></div>
+                                                <span className="hidden sm:inline">
+                                                    Mengirim...
+                                                </span>
+                                                <span className="sm:hidden">Mengirim</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <BellIcon className="w-4 h-4 mr-2" />
+                                                <span className="hidden sm:inline">
+                                                    Kirim Notifikasi
+                                                </span>
+                                                <span className="sm:hidden">Notifikasi</span>
+                                            </>
+                                        )}
+                                    </button>
 
-                            <button
-                                onClick={openCreateModal}
-                                className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500/20 transition-all duration-200"
-                            >
-                                <PlusIcon className="w-4 h-4 mr-2" />
-                                <span className="hidden sm:inline">Buat Jadwal</span>
-                                <span className="sm:hidden">Buat</span>
-                            </button>
+                                    <button
+                                        onClick={openCreateModal}
+                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500/20 transition-all duration-200"
+                                    >
+                                        <PlusIcon className="w-4 h-4 mr-2" />
+                                        <span className="hidden sm:inline">Buat Jadwal</span>
+                                        <span className="sm:hidden">Buat</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -367,6 +484,10 @@ const SchedulesManagement = () => {
                 statusFilter={statusFilter}
                 activeFilter={activeFilter}
                 onResetFilters={resetFilters}
+                bulkDeleteMode={bulkDeleteMode}
+                selectedSchedules={selectedSchedules}
+                onSelectSchedule={handleSelectSchedule}
+                onSelectAll={handleSelectAll}
             />
 
             {/* Create/Edit Modal */}
