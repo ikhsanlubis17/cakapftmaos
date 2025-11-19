@@ -6,7 +6,7 @@ import { TruckIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useToast } from '@/contexts/ToastContext';
 
 const TankTruckEdit = () => {
-    const { id } = useParams();
+    const { id } = useParams({ from: "/authenticated/tank-trucks/$id/edit" });
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { apiClient } = useAuth();
@@ -87,7 +87,7 @@ const TankTruckEdit = () => {
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="text-center">

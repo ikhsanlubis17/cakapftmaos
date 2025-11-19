@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate, Link } from "@tanstack/react-router";
+import { useNavigate, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/contexts/ToastContext";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
@@ -23,7 +23,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const TankTruckDetail = () => {
-    const { id } = useParams();
+    const { id } = useParams({ from: "/authenticated/tank-trucks/$id" });
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
@@ -171,7 +171,7 @@ const TankTruckDetail = () => {
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="text-center">
