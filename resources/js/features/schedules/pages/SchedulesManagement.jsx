@@ -334,56 +334,22 @@ const SchedulesManagement = () => {
         onSettled: () => setSendingNotifications(false),
     });
 
-    // Convert local date/time inputs to their UTC string parts before submitting.
-    const convertToUtcParts = (dateStr, timeStr) => {
-        if (!dateStr || !timeStr) {
-            return null;
-        }
-
-        const candidate = new Date(`${dateStr}T${timeStr}`);
-
-        if (Number.isNaN(candidate.getTime())) {
-            return null;
-        }
-
-        const isoString = candidate.toISOString();
-        const includeSeconds = timeStr.length > 5;
-
-        return {
-            date: isoString.slice(0, 10),
-            time: includeSeconds
-                ? isoString.slice(11, 19)
-                : isoString.slice(11, 16),
-        };
-    };
-
     const handleSubmit = (e) => {
         e.preventDefault();
 
         if (!validateForm()) return;
 
-        const payload = { ...formData };
-        const startUtc = convertToUtcParts(
-            formData.scheduled_date,
-            formData.start_time
-        );
-        const endUtc = convertToUtcParts(
-            formData.scheduled_date,
-            formData.end_time
-        );
-
-        if (startUtc) {
-            payload.scheduled_date = startUtc.date;
-            payload.start_time = startUtc.time;
-        }
-
-        if (endUtc) {
-            payload.end_time = endUtc.time;
-
-            if (!startUtc) {
-                payload.scheduled_date = endUtc.date;
-            }
-        }
+        // Send the form data directly - backend handles timezone conversion
+        const payload = {
+            apar_id: formData.apar_id,
+            assigned_user_id: formData.assigned_user_id,
+            scheduled_date: formData.scheduled_date,
+            start_time: formData.start_time,
+            end_time: formData.end_time,
+            frequency: formData.frequency,
+            is_active: formData.is_active,
+            notes: formData.notes,
+        };
 
         scheduleMutation.mutate({ id: editingSchedule?.id, payload });
     };

@@ -281,17 +281,17 @@ const MySchedules = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Jadwal Tugas Saya</h1>
-                        <p className="text-gray-600 mt-1">
+                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Jadwal Tugas Saya</h1>
+                        <p className="text-sm sm:text-base text-gray-600 mt-1">
                             Daftar jadwal inspeksi APAR yang telah ditugaskan kepada Anda
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <CalendarDaysIcon className="h-8 w-8 text-red-600" />
-                        <span className="text-lg font-semibold text-gray-900">
+                        <CalendarDaysIcon className="h-6 w-6 sm:h-8 sm:w-8 text-red-600" />
+                        <span className="text-base sm:text-lg font-semibold text-gray-900">
                             {schedules.length} Jadwal
                         </span>
                     </div>
@@ -299,8 +299,8 @@ const MySchedules = () => {
             </div>
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
                             <BellIcon className="h-8 w-8 text-yellow-600" />
@@ -352,8 +352,8 @@ const MySchedules = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4 sm:p-6">
+                <div className="grid grid-cols-1 gap-4">
                     {/* Search */}
                     <div>
                         <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
@@ -427,21 +427,23 @@ const MySchedules = () => {
                 ) : (
                     <div className="divide-y divide-gray-200">
                         {filteredSchedules.map((schedule) => (
-                            <div key={schedule.id} className="p-6 hover:bg-gray-50 transition-colors">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-3 mb-2">
-                                            <FireIcon className="h-5 w-5 text-red-600" />
-                                            <h3 className="text-lg font-medium text-gray-900">
-                                                {schedule.apar?.serial_number || 'APAR Tidak Diketahui'}
-                                            </h3>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(schedule)}`}>
+                            <div key={schedule.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                                <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+                                    <div className="flex-1 w-full">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                                            <div className="flex items-center space-x-2">
+                                                <FireIcon className="h-5 w-5 text-red-600" />
+                                                <h3 className="text-base sm:text-lg font-medium text-gray-900">
+                                                    {schedule.apar?.serial_number || 'APAR Tidak Diketahui'}
+                                                </h3>
+                                            </div>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(schedule)} w-fit`}>
                                                 {getStatusIcon(schedule)}
                                                 <span className="ml-1">{getStatusText(schedule)}</span>
                                             </span>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                        <div className="grid grid-cols-1 gap-3 sm:gap-4 mt-3 sm:mt-4">
                                             <div className="space-y-3">
                                                 <div className="flex items-center space-x-2">
                                                     <MapPinIcon className="h-4 w-4 text-gray-400" />
@@ -501,10 +503,10 @@ const MySchedules = () => {
                                     </div>
 
                                     {schedule.is_active && !schedule.is_completed && (
-                                        <div className="ml-4 flex flex-col items-end space-y-2">
+                                        <div className="lg:ml-4 flex flex-col items-stretch lg:items-end space-y-2 mt-4 lg:mt-0">
                                             <button
                                                 onClick={() => window.location.href = `/scan`}
-                                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                className="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full lg:w-auto"
                                             >
                                                 <FireIcon className="h-4 w-4 mr-1" />
                                                 Mulai Inspeksi
