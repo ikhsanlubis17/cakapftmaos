@@ -35,6 +35,9 @@ class Inspection extends Model
         'requires_repair',
         'photo_required',
         'selfie_required',
+        'reinspection_count',
+        'parent_inspection_id',
+        'reinspection_reason',
     ];
 
     /**
@@ -197,5 +200,49 @@ class Inspection extends Model
     public function isSelfieRequired(): bool
     {
         return $this->selfie_required;
+    }
+
+    /**
+     * Check if inspection needs re-inspection.
+     */
+    public function needsReinspection(): bool
+    {
+        return $this->status === 'needs_reinspection';
+    }
+
+    /**
+     * Check if this is a re-inspection (has parent).
+     */
+    public function isReinspection(): bool
+    {
+        return !is_null($this->parent_inspection_id);
+    }
+
+    /**
+     * Get the parent inspection if this is a re-inspection.
+     */
+    public function parentInspection(): BelongsTo
+    {
+        return $this->belongsTo(Inspection::class, 'parent_inspection_id');
+    }
+
+    /**
+     * Get all re-inspections of this inspection.
+     */
+    public function reinspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class, 'parent_inspection_id');
+    }
+
+    /**
+     * Get re-inspection display text.
+     */
+    public function getReinspectionLabel(): string
+    {
+        if (!$this->isReinspection()) {
+            return 'Inspeksi Awal';
+        }
+        
+        return 'Inspeksi Ulang ke-' . $this->reinspection_count;
     }
 }

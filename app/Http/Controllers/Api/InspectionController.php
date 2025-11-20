@@ -21,7 +21,12 @@ class InspectionController extends Controller
     public function index(Request $request)
     {
         // Get actual inspections performed by all users
-        $query = Inspection::with(['apar.aparType', 'user', 'schedule']);
+        $query = Inspection::with([
+            'apar.aparType', 
+            'user', 
+            'schedule',
+            'repairApproval.approver' // Eager load repair approval with supervisor info
+        ]);
 
         if ($request->has('apar_id')) {
             $query->where('apar_id', $request->apar_id);
@@ -76,7 +81,11 @@ class InspectionController extends Controller
         $user = Auth::guard('api')->user();
         
         // Get actual inspections performed by the user
-        $inspections = Inspection::with(['apar.aparType', 'schedule'])
+        $inspections = Inspection::with([
+            'apar.aparType', 
+            'schedule',
+            'repairApproval.approver' // Eager load repair approval with supervisor info for technician visibility
+        ])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
             ->get();

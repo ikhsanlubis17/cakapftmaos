@@ -10,6 +10,9 @@ import {
     CalendarIcon,
     FireIcon,
     TruckIcon,
+    UserCircleIcon,
+    ExclamationTriangleIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 
 const MyInspections = () => {
@@ -307,6 +310,102 @@ const MyInspections = () => {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Supervisor Decision Display */}
+                                        {!inspection.is_schedule && inspection.repairApproval && (
+                                            <div className="mt-4 border-t pt-4">
+                                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                                                    {/* Supervisor Info Header */}
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="flex-shrink-0">
+                                                                {inspection.repairApproval.approver?.photo ? (
+                                                                    <img 
+                                                                        src={inspection.repairApproval.approver.photo} 
+                                                                        alt={inspection.repairApproval.approver.name}
+                                                                        className="w-10 h-10 rounded-full border-2 border-white shadow-sm"
+                                                                    />
+                                                                ) : (
+                                                                    <UserCircleIcon className="w-10 h-10 text-blue-600" />
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-semibold text-gray-900 text-sm">
+                                                                    {inspection.repairApproval.approver?.name || 'Supervisor'}
+                                                                </p>
+                                                                <p className="text-xs text-gray-600">Supervisor</p>
+                                                            </div>
+                                                        </div>
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                            inspection.repairApproval.status === 'approved' 
+                                                                ? 'bg-green-100 text-green-800 border border-green-300'
+                                                                : inspection.repairApproval.status === 'rejected'
+                                                                    ? 'bg-red-100 text-red-800 border border-red-300'
+                                                                    : 'bg-yellow-100 text-yellow-800 border border-yellow-300'
+                                                        }`}>
+                                                            {inspection.repairApproval.status === 'approved' ? '✓ Disetujui' : 
+                                                             inspection.repairApproval.status === 'rejected' ? '✗ Ditolak' : 
+                                                             '⏳ Pending'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Supervisor Notes */}
+                                                    {inspection.repairApproval.supervisor_notes && (
+                                                        <div className="bg-white rounded-lg p-3 mb-3 border border-gray-200">
+                                                            <div className="flex items-start space-x-2">
+                                                                <ChatBubbleLeftRightIcon className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-semibold text-xs text-gray-700 mb-1">
+                                                                        Catatan Supervisor:
+                                                                    </h4>
+                                                                    <p className="text-sm text-gray-900 leading-relaxed">
+                                                                        {inspection.repairApproval.supervisor_notes}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Rejection Details with Re-inspection Info */}
+                                                    {inspection.repairApproval.status === 'rejected' && (
+                                                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                                            <div className="flex items-start space-x-2 mb-2">
+                                                                <ExclamationTriangleIcon className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-semibold text-sm text-red-800 mb-1">
+                                                                        Inspeksi Ulang Diperlukan
+                                                                    </h4>
+                                                                    {inspection.repairApproval.rejection_reason && (
+                                                                        <p className="text-xs text-red-700 mb-2">
+                                                                            <strong>Alasan:</strong> {inspection.repairApproval.rejection_reason}
+                                                                        </p>
+                                                                    )}
+                                                                    <div className="text-xs text-red-700 space-y-1">
+                                                                        <p className="font-medium">📅 Jadwal inspeksi ulang telah dibuat</p>
+                                                                        <p className="text-xs text-red-600">
+                                                                            Silakan cek jadwal inspeksi Anda untuk detail waktu dan instruksi lengkap.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Decision Timestamp */}
+                                                    {inspection.repairApproval.decision_made_at && (
+                                                        <p className="text-xs text-gray-500 mt-2 text-right">
+                                                            Keputusan dibuat {new Date(inspection.repairApproval.decision_made_at).toLocaleString('id-ID', {
+                                                                day: 'numeric',
+                                                                month: 'short',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="ml-0 sm:ml-4 flex-shrink-0">

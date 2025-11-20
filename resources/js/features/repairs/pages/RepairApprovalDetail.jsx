@@ -29,9 +29,11 @@ const RepairApprovalDetail = () => {
     const [approval, setApproval] = useState(null);
     const [error, setError] = useState(null);
     const [notes, setNotes] = useState('');
+    const [rejectionReason, setRejectionReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState(null);
+    const [validationErrors, setValidationErrors] = useState({});
 
     const { data: approvalData, isLoading: loading, refetch } = useQuery({
         queryKey: ['repair-approval', id],
@@ -50,7 +52,7 @@ const RepairApprovalDetail = () => {
     }, [approvalData]);
 
     const approveMutation = useMutation({
-        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { admin_notes: notes }),
+        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { supervisor_notes: notes }),
         onMutate: async ({ id, notes }) => {
             await queryClient.cancelQueries({ queryKey: ['repair-approval', id] });
             const previous = queryClient.getQueryData(['repair-approval', id]);
@@ -71,7 +73,10 @@ const RepairApprovalDetail = () => {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/reject`, { admin_notes: notes }),
+        mutationFn: ({ id, notes, rejectionReason }) => apiClient.post(`/api/repair-approvals/${id}/reject`, { 
+            supervisor_notes: notes,
+            rejection_reason: rejectionReason 
+        }),
         onMutate: async ({ id, notes }) => {
             await queryClient.cancelQueries({ queryKey: ['repair-approval', id] });
             const previous = queryClient.getQueryData(['repair-approval', id]);
@@ -81,6 +86,12 @@ const RepairApprovalDetail = () => {
         onError: (err, vars, context) => {
             if (context?.previous) queryClient.setQueryData(['repair-approval', id], context.previous);
             console.error('Error rejecting:', err);
+            
+            // Handle validation errors
+            if (err?.response?.status === 422 && err?.response?.data?.errors) {
+                setValidationErrors(err.response.data.errors);
+            }
+            
             showError(err?.response?.data?.message || 'Gagal memproses tindakan');
         },
         onSuccess: () => {
@@ -92,21 +103,36 @@ const RepairApprovalDetail = () => {
     });
 
     const handleAction = async () => {
-        if (actionType === 'reject' && !notes.trim()) {
-            showError('Alasan penolakan wajib diisi');
+        // Clear previous validation errors
+        setValidationErrors({});
+        
+        // Validate supervisor notes (required for both approve and reject)
+        if (!notes.trim() || notes.trim().length < 10) {
+            setValidationErrors({
+                supervisor_notes: ['Catatan supervisor wajib diisi minimal 10 karakter. Jelaskan alasan keputusan Anda.']
+            });
+            return;
+        }
+        
+        // Validate rejection reason (required only for reject)
+        if (actionType === 'reject' && !rejectionReason.trim()) {
+            setValidationErrors({
+                rejection_reason: ['Alasan penolakan wajib dipilih']
+            });
             return;
         }
 
         setSubmitting(true);
         try {
             if (actionType === 'approve') {
-                approveMutation.mutate({ id, notes: notes.trim() || null });
+                approveMutation.mutate({ id, notes: notes.trim() });
             } else if (actionType === 'reject') {
-                rejectMutation.mutate({ id, notes });
+                rejectMutation.mutate({ id, notes: notes.trim(), rejectionReason });
             }
 
             setShowActionModal(false);
             setNotes('');
+            setRejectionReason('');
             setActionType(null);
         } finally {
             setSubmitting(false);
@@ -520,33 +546,115 @@ const RepairApprovalDetail = () => {
             {/* Action Modal */}
             {showActionModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+                    <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {actionType === 'approve' ? 'Setujui Perbaikan' : 'Tolak Perbaikan'}
+                            {actionType === 'approve' ? '✅ Setujui Perbaikan' : '❌ Tolak Perbaikan'}
                         </h3>
                         
+                        {/* Warning for Rejection */}
+                        {actionType === 'reject' && (
+                            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div className="flex items-start space-x-3">
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-yellow-800">Perhatian</p>
+                                        <p className="text-sm text-yellow-700 mt-1">
+                                            Penolakan akan otomatis membuat jadwal inspeksi ulang untuk teknisi dalam 2 hari ke depan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Rejection Reason Dropdown (only for reject) */}
+                        {actionType === 'reject' && (
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Alasan Penolakan *
+                                </label>
+                                <select
+                                    value={rejectionReason}
+                                    onChange={(e) => {
+                                        setRejectionReason(e.target.value);
+                                        setValidationErrors(prev => ({ ...prev, rejection_reason: null }));
+                                    }}
+                                    className={`w-full border-2 ${
+                                        validationErrors.rejection_reason 
+                                            ? 'border-red-500' 
+                                            : 'border-gray-300'
+                                    } rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                                >
+                                    <option value="">Pilih alasan penolakan...</option>
+                                    <option value="Data inspeksi tidak lengkap">Data inspeksi tidak lengkap</option>
+                                    <option value="Foto tidak jelas">Foto tidak jelas</option>
+                                    <option value="Kerusakan tidak sesuai kategori">Kerusakan tidak sesuai kategori</option>
+                                    <option value="Perlu inspeksi ulang dengan detail lebih lengkap">Perlu inspeksi ulang dengan detail lebih lengkap</option>
+                                    <option value="Lainnya">Lainnya (jelaskan di catatan)</option>
+                                </select>
+                                {validationErrors.rejection_reason && (
+                                    <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
+                                        <XCircleIcon className="h-4 w-4" />
+                                        <span>{validationErrors.rejection_reason[0]}</span>
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        
+                        {/* Supervisor Notes */}
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                {actionType === 'approve' ? 'Catatan (Opsional)' : 'Alasan Penolakan *'}
-                            </label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Catatan Supervisor *
+                                </label>
+                                <span className={`text-sm font-medium ${
+                                    notes.length >= 10 ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                    {notes.length}/10 minimum
+                                </span>
+                            </div>
                             <textarea
                                 value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                rows={4}
-                                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                                onChange={(e) => {
+                                    setNotes(e.target.value);
+                                    setValidationErrors(prev => ({ ...prev, supervisor_notes: null }));
+                                }}
+                                rows={5}
+                                className={`w-full border-2 ${
+                                    validationErrors.supervisor_notes 
+                                        ? 'border-red-500' 
+                                        : notes.length >= 10 
+                                            ? 'border-green-500' 
+                                            : 'border-gray-300'
+                                } rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none`}
                                 placeholder={actionType === 'approve' 
-                                    ? 'Tambahkan catatan jika diperlukan...' 
-                                    : 'Masukkan alasan penolakan...'
+                                    ? 'Jelaskan alasan persetujuan, prioritas perbaikan, atau instruksi khusus untuk teknisi...' 
+                                    : 'Jelaskan secara detail alasan penolakan dan instruksi untuk inspeksi ulang...'
                                 }
                             />
+                            {validationErrors.supervisor_notes && (
+                                <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
+                                    <XCircleIcon className="h-4 w-4" />
+                                    <span>{validationErrors.supervisor_notes[0]}</span>
+                                </p>
+                            )}
+                            {!validationErrors.supervisor_notes && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {actionType === 'approve' 
+                                        ? 'Catatan ini akan dilihat oleh teknisi. Jelaskan prioritas atau instruksi khusus.' 
+                                        : 'Catatan ini akan menjadi instruksi untuk inspeksi ulang. Jelaskan apa yang perlu diperbaiki.'}
+                                </p>
+                            )}
                         </div>
                         
+                        {/* Action Buttons */}
                         <div className="flex space-x-3">
                             <button
                                 onClick={() => {
                                     setShowActionModal(false);
                                     setNotes('');
+                                    setRejectionReason('');
                                     setActionType(null);
+                                    setValidationErrors({});
                                 }}
                                 className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
                             >
@@ -554,11 +662,11 @@ const RepairApprovalDetail = () => {
                             </button>
                             <button
                                 onClick={handleAction}
-                                disabled={submitting || (actionType === 'reject' && !notes.trim())}
+                                disabled={submitting}
                                 className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
                                     actionType === 'approve'
-                                        ? 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50'
-                                        : 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50'
+                                        ? 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                        : 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
                                 }`}
                             >
                                 {submitting ? (
@@ -567,7 +675,7 @@ const RepairApprovalDetail = () => {
                                         <span>Memproses...</span>
                                     </div>
                                 ) : (
-                                    actionType === 'approve' ? 'Setujui' : 'Tolak'
+                                    actionType === 'approve' ? '✓ Setujui' : '✗ Tolak'
                                 )}
                             </button>
                         </div>

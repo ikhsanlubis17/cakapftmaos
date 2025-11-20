@@ -16,14 +16,18 @@ class RepairApproval extends Model
         'inspection_id',
         'approved_by',
         'status',
-        'admin_notes',
+        'admin_notes', // Deprecated - use supervisor_notes
+        'supervisor_notes',
+        'rejection_reason',
         'repair_notes',
         'approved_at',
+        'decision_made_at',
         'completed_at',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
+        'decision_made_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 
@@ -86,27 +90,33 @@ class RepairApproval extends Model
     /**
      * Approve the repair.
      */
-    public function approve(int $adminId, ?string $notes = null): void
+    public function approve(int $adminId, string $supervisorNotes): void
     {
         $this->update([
             'status' => 'approved',
             'approved_by' => $adminId,
-            'admin_notes' => $notes,
+            'supervisor_notes' => $supervisorNotes,
+            'admin_notes' => $supervisorNotes, // Keep for backward compatibility
             'approved_at' => now(),
+            'decision_made_at' => now(),
         ]);
     }
 
     /**
      * Reject the repair.
      */
-    public function reject(int $adminId, ?string $notes = null): void
+    public function reject(int $adminId, string $supervisorNotes, string $rejectionReason): void
     {
         $this->update([
             'status' => 'rejected',
             'approved_by' => $adminId,
-            'admin_notes' => $notes,
+            'supervisor_notes' => $supervisorNotes,
+            'rejection_reason' => $rejectionReason,
+            'admin_notes' => $supervisorNotes, // Keep for backward compatibility
+            'decision_made_at' => now(),
         ]);
     }
+
 
     /**
      * Mark repair as completed.
@@ -118,5 +128,29 @@ class RepairApproval extends Model
             'repair_notes' => $notes,
             'completed_at' => now(),
         ]);
+    }
+
+    /**
+     * Check if supervisor notes exist.
+     */
+    public function hasSupervisorNotes(): bool
+    {
+        return !empty($this->supervisor_notes);
+    }
+
+    /**
+     * Get the supervisor who made the decision.
+     */
+    public function getDecisionMaker()
+    {
+        return $this->approver;
+    }
+
+    /**
+     * Get formatted decision time.
+     */
+    public function getDecisionTime(): ?string
+    {
+        return $this->decision_made_at ? $this->decision_made_at->diffForHumans() : null;
     }
 }
