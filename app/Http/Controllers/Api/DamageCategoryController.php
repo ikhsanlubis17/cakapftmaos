@@ -6,15 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Models\DamageCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class DamageCategoryController extends Controller
 {
     /**
      * Display a listing of damage categories.
+     * Supports filtering by type via query parameter.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = DamageCategory::orderBy('name')->get();
+        $query = DamageCategory::query();
+        
+        // Filter by type if provided
+        if ($request->has('type') && $request->type) {
+            $query->type($request->type);
+        }
+        
+        $categories = $query->orderBy('name')->get();
         
         return response()->json([
             'success' => true,
@@ -24,10 +33,18 @@ class DamageCategoryController extends Controller
 
     /**
      * Display active damage categories.
+     * Supports filtering by type via query parameter.
      */
-    public function active()
+    public function active(Request $request)
     {
-        $categories = DamageCategory::active()->orderBy('name')->get();
+        $query = DamageCategory::active();
+        
+        // Filter by type if provided
+        if ($request->has('type') && $request->type) {
+            $query->type($request->type);
+        }
+        
+        $categories = $query->orderBy('name')->get();
         
         return response()->json([
             'success' => true,
@@ -42,6 +59,7 @@ class DamageCategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:damage_categories',
+            'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
             'description' => 'nullable|string',
         ]);
 
@@ -53,7 +71,7 @@ class DamageCategoryController extends Controller
             ], 422);
         }
 
-        $category = DamageCategory::create($request->only(['name', 'description']));
+        $category = DamageCategory::create($request->only(['name', 'type', 'description']));
 
         return response()->json([
             'success' => true,
@@ -80,6 +98,7 @@ class DamageCategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255|unique:damage_categories,name,' . $damageCategory->id,
+            'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -92,7 +111,7 @@ class DamageCategoryController extends Controller
             ], 422);
         }
 
-        $damageCategory->update($request->only(['name', 'description', 'is_active']));
+        $damageCategory->update($request->only(['name', 'type', 'description', 'is_active']));
 
         return response()->json([
             'success' => true,
@@ -133,6 +152,17 @@ class DamageCategoryController extends Controller
             'success' => true,
             'message' => 'Status kategori berhasil diubah',
             'data' => $damageCategory
+        ]);
+    }
+
+    /**
+     * Get available damage category types.
+     */
+    public function getTypes()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => DamageCategory::getTypes()
         ]);
     }
 }

@@ -14,11 +14,22 @@ class DamageCategory extends Model
         'name',
         'description',
         'is_active',
+        'type',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Get available damage category types from apar_types table.
+     */
+    public static function getTypes(): array
+    {
+        return \App\Models\AparType::active()
+            ->pluck('name')
+            ->toArray();
+    }
 
     /**
      * Get the inspection damages for this category.
@@ -34,5 +45,13 @@ class DamageCategory extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope to filter by type.
+     */
+    public function scopeType($query, $type)
+    {
+        return $query->where('type', $type);
     }
 }

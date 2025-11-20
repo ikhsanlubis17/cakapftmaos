@@ -71,6 +71,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Damage Category routes (Admin only)
     Route::get('/damage-categories', [DamageCategoryController::class, 'index']);
+    Route::get('/damage-categories/types', [DamageCategoryController::class, 'getTypes']);
     Route::get('/damage-categories/active', [DamageCategoryController::class, 'active']);
     Route::get('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'show']);
     Route::post('/damage-categories', [DamageCategoryController::class, 'store']);
