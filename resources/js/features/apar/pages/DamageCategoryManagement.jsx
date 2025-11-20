@@ -477,127 +477,121 @@ const DamageCategoryManagement = () => {
                         </div>
                     )}
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    {bulkDeleteMode && (
-                                        <th className="px-6 py-3 text-left">
-                                            <span className="sr-only">Pilih</span>
-                                        </th>
-                                    )}
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Kategori
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Deskripsi
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                    {/* Card Grid Layout */}
+                    {categories.length > 0 ? (
+                        <div className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {categories.map((category) => (
-                                    <tr
+                                    <div
                                         key={category.id}
-                                        className="hover:bg-gray-50"
+                                        className={`relative bg-white border-2 rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group ${
+                                            selectedCategories.includes(category.id)
+                                                ? "border-red-500 ring-2 ring-red-200"
+                                                : "border-gray-200 hover:border-red-300"
+                                        }`}
                                     >
-                                        {bulkDeleteMode && (
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedCategories.includes(category.id)}
-                                                    onChange={() => handleSelectCategory(category.id)}
-                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                                />
-                                            </td>
-                                        )}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {category.name}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-500 max-w-xs truncate">
-                                                {category.description || "-"}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    category.is_active
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-red-100 text-red-800"
-                                                }`}
-                                            >
-                                                {category.is_active
-                                                    ? "Aktif"
-                                                    : "Nonaktif"}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div className="flex items-center space-x-2">
-                                                <button
-                                                    onClick={() =>
-                                                        handleEdit(category)
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                                                    title="Edit"
+                                        {/* Card Header */}
+                                        <div className="bg-gradient-to-r from-red-500 to-red-600 px-5 py-4">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center space-x-3 flex-1">
+                                                    {bulkDeleteMode && (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedCategories.includes(category.id)}
+                                                            onChange={() => handleSelectCategory(category.id)}
+                                                            className="h-5 w-5 text-red-600 focus:ring-red-500 border-white rounded bg-white"
+                                                        />
+                                                    )}
+                                                    <div className="flex-1">
+                                                        <h4 className="text-white font-semibold text-base line-clamp-2">
+                                                            {category.name}
+                                                        </h4>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className={`ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                        category.is_active
+                                                            ? "bg-green-100 text-green-800"
+                                                            : "bg-gray-100 text-gray-800"
+                                                    }`}
                                                 >
-                                                    <PencilIcon className="h-4 w-4" />
+                                                    {category.is_active ? "Aktif" : "Nonaktif"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Card Body */}
+                                        <div className="px-5 py-4">
+                                            <div className="min-h-[60px]">
+                                                <p className="text-sm text-gray-600 line-clamp-3">
+                                                    {category.description || "Tidak ada deskripsi"}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Card Footer */}
+                                        <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+                                            <div className="flex items-center justify-end space-x-2">
+                                                <button
+                                                    onClick={() => handleEdit(category)}
+                                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150"
+                                                    title="Edit kategori"
+                                                >
+                                                    <PencilIcon className="h-4 w-4 mr-1" />
+                                                    Edit
                                                 </button>
                                                 <button
-                                                    onClick={() =>
-                                                        toggleStatus(category)
-                                                    }
-                                                    className={`p-1 rounded hover:bg-gray-50 ${
+                                                    onClick={() => toggleStatus(category)}
+                                                    className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 ${
                                                         category.is_active
-                                                            ? "text-yellow-600 hover:text-yellow-900"
-                                                            : "text-green-600 hover:text-green-900"
+                                                            ? "text-yellow-700 bg-yellow-50 hover:bg-yellow-100"
+                                                            : "text-green-700 bg-green-50 hover:bg-green-100"
                                                     }`}
-                                                    title={
-                                                        category.is_active
-                                                            ? "Nonaktifkan"
-                                                            : "Aktifkan"
-                                                    }
+                                                    title={category.is_active ? "Nonaktifkan" : "Aktifkan"}
                                                 >
                                                     {category.is_active ? (
-                                                        <EyeSlashIcon className="h-4 w-4" />
+                                                        <>
+                                                            <EyeSlashIcon className="h-4 w-4 mr-1" />
+                                                            Nonaktifkan
+                                                        </>
                                                     ) : (
-                                                        <EyeIcon className="h-4 w-4" />
+                                                        <>
+                                                            <EyeIcon className="h-4 w-4 mr-1" />
+                                                            Aktifkan
+                                                        </>
                                                     )}
                                                 </button>
                                                 <button
-                                                    onClick={() =>
-                                                        handleDelete(category)
-                                                    }
-                                                    className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                                                    title="Hapus"
+                                                    onClick={() => handleDelete(category)}
+                                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-150"
+                                                    title="Hapus kategori"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
                                                 </button>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </div>
+                                    </div>
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {categories.length === 0 && (
-                        <div className="text-center py-12">
-                            <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                                <FireIcon className="h-8 w-8 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                 Belum ada kategori
                             </h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                Mulai dengan menambahkan kategori kerusakan
-                                pertama.
+                            <p className="text-sm text-gray-500 mb-6">
+                                Mulai dengan menambahkan kategori kerusakan pertama.
                             </p>
+                            <button
+                                onClick={() => setShowForm(true)}
+                                className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                            >
+                                <PlusIcon className="h-5 w-5 mr-2" />
+                                Tambah Kategori Pertama
+                            </button>
                         </div>
                     )}
                 </div>
