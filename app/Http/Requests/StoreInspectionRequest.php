@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreInspectionRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        // Only authenticated users can create inspections
+        return $this->user() !== null;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        $photoMaxSize = config('inspection.photo.max_size');
+        $selfieMaxSize = config('inspection.selfie.max_size');
+        $damagePhotoMaxSize = config('inspection.damage_photo.max_size');
+        $conditions = config('inspection.conditions');
+        $damageSeverityLevels = config('inspection.damage_severity_levels');
+
+        return [
+            'apar_id' => 'required|exists:apars,id',
+            'condition' => 'required|in:' . implode(',', $conditions),
+            'notes' => 'nullable|string',
+            'photo' => "required|image|max:{$photoMaxSize}",
+            'selfie' => "required|image|max:{$selfieMaxSize}",
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
+            'damage_categories' => 'nullable|array',
+            'damage_categories.*.category_id' => 'required_with:damage_categories|exists:damage_categories,id',
+            'damage_categories.*.notes' => 'nullable|string',
+            'damage_categories.*.severity' => 'required_with:damage_categories|in:' . implode(',', $damageSeverityLevels),
+            'damage_categories.*.damage_photo' => "required_with:damage_categories|image|max:{$damagePhotoMaxSize}",
+            'schedule_id' => 'nullable|exists:inspection_schedules,id',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'apar_id.required' => 'APAR harus dipilih.',
+            'apar_id.exists' => 'APAR tidak ditemukan.',
+            'condition.required' => 'Kondisi APAR harus dipilih.',
+            'condition.in' => 'Kondisi APAR tidak valid.',
+            'photo.required' => 'Foto APAR wajib diambil.',
+            'photo.image' => 'File foto harus berupa gambar.',
+            'photo.max' => 'Ukuran foto maksimal 5MB.',
+            'selfie.required' => 'Foto selfie wajib diambil.',
+            'selfie.image' => 'File selfie harus berupa gambar.',
+            'selfie.max' => 'Ukuran selfie maksimal 5MB.',
+            'lat.numeric' => 'Latitude harus berupa angka.',
+            'lat.between' => 'Latitude harus antara -90 dan 90.',
+            'lng.numeric' => 'Longitude harus berupa angka.',
+            'lng.between' => 'Longitude harus antara -180 dan 180.',
+            'damage_categories.*.category_id.required_with' => 'Kategori kerusakan harus dipilih.',
+            'damage_categories.*.category_id.exists' => 'Kategori kerusakan tidak ditemukan.',
+            'damage_categories.*.severity.required_with' => 'Tingkat keparahan harus dipilih.',
+            'damage_categories.*.severity.in' => 'Tingkat keparahan tidak valid.',
+            'damage_categories.*.damage_photo.required_with' => 'Foto kerusakan wajib diambil.',
+            'damage_categories.*.damage_photo.image' => 'File foto kerusakan harus berupa gambar.',
+            'damage_categories.*.damage_photo.max' => 'Ukuran foto kerusakan maksimal 5MB.',
+        ];
+    }
+}
