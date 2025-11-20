@@ -28,6 +28,7 @@ const InspectionForm: React.FC = () => {
         removePhoto,
         handleSubmit,
         handleAparSelect,
+        handleCancel,
     } = useInspectionForm(qrCode);
 
     // Loading state
@@ -156,7 +157,7 @@ const InspectionForm: React.FC = () => {
                     <div className="flex space-x-4">
                         <button
                             type="button"
-                            onClick={() => navigate({ to: '/dashboard' })}
+                            onClick={handleCancel}
                             className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
                             disabled={submitting}
                         >

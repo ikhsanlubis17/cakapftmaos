@@ -7,6 +7,7 @@ import {
     formatScheduleTime,
     getDaysUntilSchedule,
 } from '@/utils/scheduleTime';
+import { getFrequencyText } from '@/features/schedules/utils/scheduleUtils';
 import {
     CalendarIcon,
     ClockIcon,
@@ -138,18 +139,7 @@ const MySchedules = () => {
         return <CalendarIcon className="h-5 w-5" />;
     };
 
-    const getFrequencyText = (frequency) => {
-        switch (frequency) {
-            case 'daily':
-                return 'Harian';
-            case 'weekly':
-                return 'Mingguan';
-            case 'monthly':
-                return 'Bulanan';
-            default:
-                return frequency;
-        }
-    };
+
 
     const formatDate = (schedule) => formatScheduleDate(schedule);
 
@@ -467,7 +457,7 @@ const MySchedules = () => {
                                                 <div className="flex items-center space-x-2">
                                                     <ClockIcon className="h-4 w-4 text-gray-400" />
                                                     <span className="text-sm text-gray-600">
-                                                        {formatTime(schedule)}
+                                                        {schedule.start_time} - {schedule.end_time}
                                                     </span>
                                                 </div>
 

@@ -51,13 +51,16 @@ class ScheduleService
         if (!empty($filters['status']) && $filters['status'] !== 'all') {
             switch ($filters['status']) {
                 case 'overdue':
+                    // Overdue: start time is before now
                     $query->where('start_at', '<', $nowUtc);
                     break;
                 case 'today':
+                    // Today: any schedule that starts between start and end of today
                     $query->whereBetween('start_at', [$startOfTodayUtc, $endOfTodayUtc]);
                     break;
                 case 'upcoming':
-                    $query->where('start_at', '>', $nowUtc);
+                    // Upcoming: schedules that start after today (tomorrow onwards)
+                    $query->where('start_at', '>', $endOfTodayUtc);
                     break;
             }
         }

@@ -343,6 +343,16 @@ export const useInspectionForm = (qrCode?: string) => {
         }
     };
 
+    const handleCancel = () => {
+        if (user?.role === 'teknisi') {
+            // @ts-ignore
+            navigate({ to: '/my-inspections' });
+        } else {
+            // @ts-ignore
+            navigate({ to: '/apar' });
+        }
+    };
+
     return {
         // State
         apar,
@@ -363,5 +373,6 @@ export const useInspectionForm = (qrCode?: string) => {
         removePhoto,
         handleSubmit,
         handleAparSelect,
+        handleCancel,
     };
 };

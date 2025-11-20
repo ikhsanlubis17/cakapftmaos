@@ -149,48 +149,6 @@ export const useSchedulesData = () => {
                       )
                     : [];
 
-                // Additional client-side validation to ensure filter consistency
-                if (statusFilter !== "all" || activeFilter !== "all") {
-                    validSchedules = validSchedules.filter((schedule) => {
-                        if (activeFilter !== "all") {
-                            if (
-                                activeFilter === "active" &&
-                                !schedule.is_active
-                            )
-                                return false;
-                            if (
-                                activeFilter === "inactive" &&
-                                schedule.is_active
-                            )
-                                return false;
-                        }
-
-                        if (statusFilter !== "all") {
-                            const now = new Date();
-                            const scheduledDate =
-                                schedule.scheduled_date.split("T")[0];
-                            const scheduledDateTime = new Date(
-                                `${scheduledDate}T${schedule.start_time}`
-                            );
-                            const today = now.toISOString().split("T")[0];
-
-                            switch (statusFilter) {
-                                case "overdue":
-                                    if (scheduledDateTime >= now) return false;
-                                    break;
-                                case "today":
-                                    if (scheduledDate !== today) return false;
-                                    break;
-                                case "upcoming":
-                                    if (scheduledDateTime <= now) return false;
-                                    break;
-                            }
-                        }
-
-                        return true;
-                    });
-                }
-
                 setSchedules(validSchedules);
 
                 // Update pagination

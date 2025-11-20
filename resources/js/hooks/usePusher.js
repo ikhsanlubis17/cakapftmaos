@@ -25,6 +25,10 @@ export const usePusher = (options = {}) => {
         try {
             // Initialize Pusher
             if (typeof Pusher !== 'undefined') {
+                if (!appKey || appKey === 'your-pusher-key') {
+                    return;
+                }
+
                 pusherRef.current = new Pusher(appKey, {
                     cluster: cluster,
                     encrypted: true
