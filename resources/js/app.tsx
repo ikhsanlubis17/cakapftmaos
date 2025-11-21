@@ -53,6 +53,7 @@ import ReportsAndAudit from "./features/reports/pages/ReportsAndAudit";
 import AparTypeManagement from "./features/apar/pages/AparTypeManagement";
 import DamageCategoryManagement from "./features/apar/pages/DamageCategoryManagement";
 import RepairApprovalList from "./features/repairs/pages/RepairApprovalList";
+import AdminRepairApprovals from "./features/repairs/pages/AdminRepairApprovals";
 import RepairApprovalDetail from "./features/repairs/pages/RepairApprovalDetail";
 import RepairReportForm from "./features/repairs/pages/RepairReportForm";
 import MyRepairApprovals from "./features/repairs/pages/MyRepairApprovals";
@@ -283,7 +284,11 @@ const repairApprovalsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "repair-approvals",
     beforeLoad: checkRoles(["admin", "supervisor"]),
-    component: RepairApprovalList,
+    component: () => {
+        const { user } = useAuth();
+        // Admin gets the new modern page, Supervisor gets the existing page
+        return user?.role === 'admin' ? <AdminRepairApprovals /> : <RepairApprovalList />;
+    },
 });
 const repairApprovalDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,

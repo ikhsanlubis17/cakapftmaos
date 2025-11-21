@@ -88,13 +88,18 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
 
-    // Repair Approval routes (Admin only)
+    // Repair Approval routes
     Route::get('/repair-approvals', [RepairApprovalController::class, 'index']);
     Route::get('/repair-approvals/pending', [RepairApprovalController::class, 'pending']);
     Route::get('/repair-approvals/stats', [RepairApprovalController::class, 'stats']);
     Route::get('/repair-approvals/{repairApproval}', [RepairApprovalController::class, 'show']);
-    Route::post('/repair-approvals/{repairApproval}/approve', [RepairApprovalController::class, 'approve']);
-    Route::post('/repair-approvals/{repairApproval}/reject', [RepairApprovalController::class, 'reject']);
+    
+    // Supervisor-only actions
+    Route::middleware(['role:supervisor'])->group(function () {
+        Route::post('/repair-approvals/{repairApproval}/approve', [RepairApprovalController::class, 'approve']);
+        Route::post('/repair-approvals/{repairApproval}/reject', [RepairApprovalController::class, 'reject']);
+    });
+    
     Route::post('/repair-approvals/{repairApproval}/mark-completed', [RepairApprovalController::class, 'markCompleted']);
 
     // Repair Report routes

@@ -15,6 +15,7 @@ import {
     EyeIcon,
     XMarkIcon,
     CameraIcon,
+    InformationCircleIcon,
 } from '@heroicons/react/24/outline';
 
 const InspectionsList = () => {
@@ -176,9 +177,14 @@ const InspectionsList = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Data Inspeksi APAR</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {user?.role === 'supervisor' ? 'Laporan & Riwayat Inspeksi' : 'Data Inspeksi APAR'}
+                        </h1>
                         <p className="text-gray-600 mt-1">
-                            Monitoring semua inspeksi APAR yang dilakukan teknisi
+                            {user?.role === 'supervisor' 
+                                ? 'Lihat riwayat dan laporan inspeksi APAR yang dilakukan teknisi'
+                                : 'Monitoring semua inspeksi APAR yang dilakukan teknisi'
+                            }
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -189,6 +195,24 @@ const InspectionsList = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Supervisor Info Banner */}
+            {user?.role === 'supervisor' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                        <InformationCircleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                            <h3 className="text-sm font-medium text-blue-900 mb-1">
+                                Halaman Laporan & Riwayat
+                            </h3>
+                            <p className="text-sm text-blue-700">
+                                Halaman ini hanya untuk melihat riwayat inspeksi. Untuk menyetujui atau menolak permintaan perbaikan, 
+                                silakan ke halaman <strong>Repair Approvals</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
