@@ -86,7 +86,11 @@ const ApprovalCard = ({ approval, onViewDetail }) => {
                                 <p className="font-semibold text-gray-900 text-sm">
                                     {approval.approver.name}
                                 </p>
-                                <p className="text-xs text-gray-600">Supervisor</p>
+                                <p className="text-xs text-gray-600">
+                                    {approval.approver.role 
+                                        ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) 
+                                        : 'Approver'}
+                                </p>
                             </div>
                         </div>
                         <div className="text-right">

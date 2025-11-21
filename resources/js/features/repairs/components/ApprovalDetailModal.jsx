@@ -153,7 +153,11 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                 <p className="font-semibold text-gray-900 text-lg">
                                                     {approval.approver.name}
                                                 </p>
-                                                <p className="text-sm text-gray-600">Supervisor</p>
+                                                <p className="text-sm text-gray-600">
+                                                    {approval.approver.role 
+                                                        ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) 
+                                                        : 'Approver'}
+                                                </p>
                                                 <p className="text-sm text-gray-500 mt-1">
                                                     {approval.approver.email}
                                                 </p>
@@ -256,7 +260,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                         {formatDate(approval.approved_at || approval.decision_made_at)}
                                                     </p>
                                                     <p className="text-sm text-gray-500 mt-1">
-                                                        oleh {approval.approver?.name || 'Supervisor'}
+                                                        oleh {approval.approver?.name || (approval.approver?.role ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) : 'Supervisor')}
                                                     </p>
                                                 </div>
                                             </div>
@@ -297,7 +301,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                         </p>
                                         <div className="mt-3 pt-3 border-t border-blue-200">
                                             <p className="text-sm text-gray-600">
-                                                Oleh: <span className="font-medium">{approval.approver?.name || 'Supervisor'}</span>
+                                                Oleh: <span className="font-medium">{approval.approver?.name || (approval.approver?.role ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) : 'Supervisor')}</span>
                                             </p>
                                             <p className="text-sm text-gray-500">
                                                 {formatDate(approval.decision_made_at || approval.approved_at)}

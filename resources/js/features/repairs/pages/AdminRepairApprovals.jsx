@@ -57,7 +57,7 @@ const AdminRepairApprovals = () => {
     const supervisors = useMemo(() => {
         const uniqueSupervisors = new Map();
         approvalsData.forEach(approval => {
-            if (approval.approver) {
+            if (approval.approver && approval.approver.role === 'supervisor') {
                 uniqueSupervisors.set(approval.approver.id, {
                     id: approval.approver.id,
                     name: approval.approver.name,
