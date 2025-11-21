@@ -119,6 +119,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/tank-trucks', [TankTruckController::class, 'store']);
     Route::put('/tank-trucks/{tankTruck}', [TankTruckController::class, 'update']);
     Route::delete('/tank-trucks/{tankTruck}', [TankTruckController::class, 'destroy']);
+    Route::post('/tank-trucks/{tankTruck}/assign-apar', [TankTruckController::class, 'assignApar']);
+    Route::post('/tank-trucks/{tankTruck}/remove-apar', [TankTruckController::class, 'removeApar']);
+
 
     // Schedule routes
     Route::get('/schedules', [ScheduleController::class, 'index']);

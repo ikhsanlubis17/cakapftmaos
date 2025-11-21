@@ -67,7 +67,7 @@ const TankTruckDetail = () => {
     const apars = tankTruck?.apars || [];
     const allApars = aparsData?.data || aparsData || [];
     const availableApars = allApars.filter(
-        (apar) => !apar.tank_truck_id || apar.tank_truck_id == id
+        (apar) => (apar.location_type === "mobile") && (!apar.tank_truck_id || apar.tank_truck_id == id)
     );
 
     const assignMutation = useMutation({
