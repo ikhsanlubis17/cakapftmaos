@@ -47,7 +47,7 @@ class ReinspectionService
                 'notes' => $scheduleNotes,
                 'is_active' => true,
                 'is_completed' => false,
-                'priority' => 'high', // Mark as high priority
+                'is_completed' => false,
                 'created_by' => $approval->approved_by, // Supervisor who rejected
             ]);
             
@@ -133,7 +133,7 @@ class ReinspectionService
                 'user_id' => $technician->id,
                 'type' => 'repair_rejected_reinspection',
                 'title' => 'Permintaan Perbaikan Ditolak - Inspeksi Ulang Diperlukan',
-                'message' => "{$supervisor->name} meminta inspeksi ulang untuk APAR {$apar->code}",
+                'content' => "{$supervisor->name} meminta inspeksi ulang untuk APAR {$apar->code}",
                 'data' => json_encode([
                     'inspection_id' => $inspection->id,
                     'apar_id' => $apar->id,
@@ -151,8 +151,7 @@ class ReinspectionService
                         'notes' => $reinspectionSchedule->notes,
                     ],
                 ]),
-                'is_read' => false,
-                'priority' => 'high',
+                'status' => 'sent',
             ]);
             
             Log::info('Rejection notification sent to technician', [
@@ -194,7 +193,7 @@ class ReinspectionService
                 'user_id' => $technician->id,
                 'type' => 'repair_approved',
                 'title' => 'Permintaan Perbaikan Disetujui',
-                'message' => "{$supervisor->name} telah menyetujui permintaan perbaikan untuk APAR {$apar->code}",
+                'content' => "{$supervisor->name} telah menyetujui permintaan perbaikan untuk APAR {$apar->code}",
                 'data' => json_encode([
                     'inspection_id' => $inspection->id,
                     'apar_id' => $apar->id,
@@ -204,8 +203,7 @@ class ReinspectionService
                     'supervisor_notes' => $approval->supervisor_notes,
                     'approved_at' => $approval->approved_at->toIso8601String(),
                 ]),
-                'is_read' => false,
-                'priority' => 'normal',
+                'status' => 'sent',
             ]);
             
             Log::info('Approval notification sent to technician', [
@@ -285,7 +283,7 @@ class ReinspectionService
                 'notes' => $scheduleNotes,
                 'is_active' => true,
                 'is_completed' => false,
-                'priority' => 'high',
+                'is_completed' => false,
                 'created_by' => $inspection->user_id, // Created by technician via system
             ]);
             

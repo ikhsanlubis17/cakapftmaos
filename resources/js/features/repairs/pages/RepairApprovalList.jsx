@@ -4,6 +4,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { usePusher } from "@/hooks/usePusher";
+import ActionDialog from "@/components/common/ActionDialog";
 import {
     ClockIcon,
     CheckCircleIcon,
@@ -28,6 +29,12 @@ const RepairApprovalList = () => {
     const [lastUpdate, setLastUpdate] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
     const [hasShownInitialAlert, setHasShownInitialAlert] = useState(false);
+    const [actionDialog, setActionDialog] = useState({
+        isOpen: false,
+        type: 'approve',
+        approval: null,
+    });
+
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
 
@@ -134,7 +141,7 @@ const RepairApprovalList = () => {
     const approveMutation = useMutation({
         mutationFn: ({ id, notes }) =>
             apiClient.post(`/api/repair-approvals/${id}/approve`, {
-                admin_notes: notes,
+                supervisor_notes: notes,
             }),
         onMutate: async ({ id, notes }) => {
             await queryClient.cancelQueries({
@@ -189,7 +196,8 @@ const RepairApprovalList = () => {
     const rejectMutation = useMutation({
         mutationFn: ({ id, notes }) =>
             apiClient.post(`/api/repair-approvals/${id}/reject`, {
-                admin_notes: notes,
+                supervisor_notes: notes,
+                rejection_reason: "Other", // Default reason since UI doesn't have selector yet
             }),
         onMutate: async ({ id, notes }) => {
             await queryClient.cancelQueries({
@@ -238,11 +246,33 @@ const RepairApprovalList = () => {
     });
 
     const handleReject = (approval, notes = "") => {
-        if (!notes.trim()) {
-            showError("Alasan penolakan wajib diisi");
-            return;
-        }
         rejectMutation.mutate({ id: approval.id, notes, approval });
+    };
+
+    const openApproveDialog = (approval) => {
+        setActionDialog({
+            isOpen: true,
+            type: 'approve',
+            approval,
+        });
+    };
+
+    const openRejectDialog = (approval) => {
+        setActionDialog({
+            isOpen: true,
+            type: 'reject',
+            approval,
+        });
+    };
+
+    const handleDialogConfirm = (notes) => {
+        const { type, approval } = actionDialog;
+        if (type === 'approve') {
+            handleApprove(approval, notes);
+        } else {
+            handleReject(approval, notes);
+        }
+        setActionDialog({ ...actionDialog, isOpen: false });
     };
 
     const getStatusBadge = (status) => {
@@ -331,7 +361,7 @@ const RepairApprovalList = () => {
                     <p className="text-sm text-gray-600 mb-6">{error}</p>
                     <div className="flex gap-3 justify-center">
                         <button
-                            onClick={fetchApprovals}
+                            onClick={refetchApprovals}
                             className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
                         >
                             Coba Lagi
@@ -616,34 +646,14 @@ const RepairApprovalList = () => {
                                             {approval.status === "pending" && (
                                                 <div className="flex flex-wrap gap-2 pt-2">
                                                     <button
-                                                        onClick={() => {
-                                                            const notes =
-                                                                prompt(
-                                                                    "Tambahkan catatan (opsional):"
-                                                                );
-                                                            handleApprove(
-                                                                approval,
-                                                                notes
-                                                            );
-                                                        }}
+                                                        onClick={() => openApproveDialog(approval)}
                                                         className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
                                                     >
                                                         <CheckCircleIcon className="h-4 w-4" />
                                                         Setujui
                                                     </button>
                                                     <button
-                                                        onClick={() => {
-                                                            const notes =
-                                                                prompt(
-                                                                    "Alasan penolakan (wajib):"
-                                                                );
-                                                            if (notes) {
-                                                                handleReject(
-                                                                    approval,
-                                                                    notes
-                                                                );
-                                                            }
-                                                        }}
+                                                        onClick={() => openRejectDialog(approval)}
                                                         className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
                                                     >
                                                         <XCircleIcon className="h-4 w-4" />
@@ -689,9 +699,9 @@ const RepairApprovalList = () => {
 
                                         <button
                                             onClick={() =>
-                                                navigate(
-                                                    `/repair-approvals/${approval.id}`
-                                                )
+                                                navigate({
+                                                    to: `/repair-approvals/${approval.id}`,
+                                                })
                                             }
                                             className="lg:self-start inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                                         >
@@ -777,6 +787,20 @@ const RepairApprovalList = () => {
                     </div>
                 </div>
             </div>
+
+            <ActionDialog
+                isOpen={actionDialog.isOpen}
+                onClose={() => setActionDialog({ ...actionDialog, isOpen: false })}
+                onConfirm={handleDialogConfirm}
+                title={actionDialog.type === 'approve' ? 'Setujui Perbaikan' : 'Tolak Perbaikan'}
+                message={actionDialog.type === 'approve' ? 'Apakah Anda yakin ingin menyetujui perbaikan ini?' : 'Apakah Anda yakin ingin menolak perbaikan ini?'}
+                type={actionDialog.type === 'approve' ? 'success' : 'error'}
+                confirmText={actionDialog.type === 'approve' ? 'Setujui' : 'Tolak'}
+                confirmButtonColor={actionDialog.type === 'approve' ? 'green' : 'red'}
+                requireInput={actionDialog.type === 'reject'}
+                inputLabel={actionDialog.type === 'approve' ? 'Catatan (Opsional)' : 'Alasan Penolakan'}
+                inputPlaceholder={actionDialog.type === 'approve' ? 'Tambahkan catatan...' : 'Masukkan alasan penolakan...'}
+            />
         </div>
     );
 };
