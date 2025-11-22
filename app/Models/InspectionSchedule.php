@@ -27,6 +27,7 @@ class InspectionSchedule extends Model
         'reminder_days_before',
         'is_active',
         'is_completed',
+        'priority',
         'notes',
     ];
 

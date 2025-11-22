@@ -14,9 +14,10 @@ return new class extends Migration
             $table->foreignId('assigned_user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->dateTimeTz('start_at');
             $table->dateTimeTz('end_at');
-            $table->enum('frequency', ['weekly', 'monthly', 'quarterly', 'semiannual'])->default('weekly');
+            $table->enum('frequency', ['weekly', 'monthly', 'quarterly', 'semiannual', 'once'])->default('weekly');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_completed')->default(false);
+            $table->enum('priority', ['normal', 'high', 'critical'])->default('normal');
             $table->text('notes')->nullable();
             $table->timestamps();
 

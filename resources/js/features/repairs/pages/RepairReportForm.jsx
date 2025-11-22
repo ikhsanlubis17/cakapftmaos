@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from "@/contexts/AuthContext';
-import { useToast } from "@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import {
     CameraIcon,
     CheckCircleIcon,
@@ -32,7 +32,11 @@ const RepairReportForm = () => {
         repair_description: '',
         before_photo: null,
         after_photo: null,
-        repair_completed_at: new Date().toISOString().slice(0, 16)
+        repair_description: '',
+        before_photo: null,
+        after_photo: null,
+        repair_completed_at: new Date().toISOString().slice(0, 16),
+        needs_reinspection: false
     });
     
     // Camera state
@@ -205,6 +209,7 @@ const RepairReportForm = () => {
             submitData.append('before_photo', formData.before_photo);
             submitData.append('after_photo', formData.after_photo);
             submitData.append('repair_completed_at', formData.repair_completed_at);
+            submitData.append('needs_reinspection', formData.needs_reinspection ? '1' : '0');
 
             if (currentLocation) {
                 submitData.append('repair_lat', currentLocation.lat);
@@ -474,6 +479,30 @@ const RepairReportForm = () => {
                             className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg"
                             required
                         />
+                    </div>
+
+                    {/* Re-inspection Checkbox */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex items-center h-6">
+                                <input
+                                    id="needs_reinspection"
+                                    name="needs_reinspection"
+                                    type="checkbox"
+                                    checked={formData.needs_reinspection}
+                                    onChange={(e) => setFormData({ ...formData, needs_reinspection: e.target.checked })}
+                                    className="h-5 w-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label htmlFor="needs_reinspection" className="font-medium text-gray-900">
+                                    Perlu Re-Inspeksi / Verifikasi Ulang?
+                                </label>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    Centang jika perbaikan ini memerlukan pengecekan ulang oleh teknisi lain atau supervisor (misal: untuk memastikan tekanan stabil).
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Submit Button */}

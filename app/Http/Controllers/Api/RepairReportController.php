@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ImageService;
+use App\Services\ReinspectionService;
 
 class RepairReportController extends Controller
 {
@@ -65,6 +66,7 @@ class RepairReportController extends Controller
             'repair_lat' => 'nullable|numeric|between:-90,90',
             'repair_lng' => 'nullable|numeric|between:-180,180',
             'repair_completed_at' => 'required|date',
+            'needs_reinspection' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -127,15 +129,25 @@ class RepairReportController extends Controller
         // Mark repair approval as completed
         $repairApproval->markCompleted();
 
-        // Update inspection status
-        $repairApproval->inspection->update([
-            'repair_status' => 'completed',
-            'repair_notes' => $request->repair_description
-        ]);
+        if ($request->needs_reinspection) {
+            // Trigger re-inspection workflow
+            $reinspectionService = new ReinspectionService();
+            $reinspectionService->handlePostRepairReinspection(
+                $repairApproval->inspection,
+                $repairApproval,
+                $request->repair_description
+            );
+        } else {
+            // Standard completion flow
+            $repairApproval->inspection->update([
+                'repair_status' => 'completed',
+                'repair_notes' => $request->repair_description
+            ]);
 
-        // Update APAR status back to active if condition was good
-        if ($repairApproval->inspection->condition === 'good') {
-            $repairApproval->inspection->apar->update(['status' => 'active']);
+            // Update APAR status back to active if condition was good
+            if ($repairApproval->inspection->condition === 'good') {
+                $repairApproval->inspection->apar->update(['status' => 'active']);
+            }
         }
 
         return response()->json([

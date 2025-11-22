@@ -226,4 +226,84 @@ class ReinspectionService
             // Don't throw - notification failure shouldn't break the workflow
         }
     }
+    /**
+     * Handle re-inspection request after repair report.
+     *
+     * @param Inspection $inspection
+     * @param RepairApproval $approval
+     * @param string $notes
+     * @return InspectionSchedule
+     */
+    public function handlePostRepairReinspection(Inspection $inspection, RepairApproval $approval, string $notes): InspectionSchedule
+    {
+        try {
+            // 1. Update inspection status
+            $inspection->update([
+                'status' => 'needs_reinspection',
+                'repair_status' => 'completed', // Repair is technically done, but needs verification
+                'reinspection_reason' => 'Post-repair verification',
+                'repair_notes' => $notes,
+            ]);
+
+            // 2. Create re-inspection schedule
+            // Calculate next available date (configurable, default +1 day from now for post-repair)
+            $daysUntilReinspection = 1;
+            $scheduledDate = Carbon::now()->addDays($daysUntilReinspection);
+            
+            // Set default time window (08:00 - 17:00)
+            $startTime = '08:00:00';
+            $endTime = '17:00:00';
+            
+            // Create schedule notes
+            $scheduleNotes = "VERIFIKASI HASIL PERBAIKAN\n\n";
+            $scheduleNotes .= "Catatan Teknisi:\n{$notes}\n\n";
+            $scheduleNotes .= "Mohon lakukan inspeksi ulang untuk memverifikasi hasil perbaikan.";
+            
+            // Calculate start_at and end_at in UTC
+            $appTimezone = config('app.timezone', 'UTC');
+            $startAt = Carbon::createFromFormat('Y-m-d H:i:s', 
+                $scheduledDate->format('Y-m-d') . ' ' . $startTime, 
+                $appTimezone
+            )->setTimezone('UTC');
+            
+            $endAt = Carbon::createFromFormat('Y-m-d H:i:s', 
+                $scheduledDate->format('Y-m-d') . ' ' . $endTime, 
+                $appTimezone
+            )->setTimezone('UTC');
+
+            // Create the re-inspection schedule
+            $schedule = InspectionSchedule::create([
+                'apar_id' => $inspection->apar_id,
+                'assigned_user_id' => $inspection->user_id, // Assign to same technician
+                'scheduled_date' => $scheduledDate->format('Y-m-d'),
+                'scheduled_time' => $startTime,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'start_at' => $startAt,
+                'end_at' => $endAt,
+                'frequency' => 'once',
+                'notes' => $scheduleNotes,
+                'is_active' => true,
+                'is_completed' => false,
+                'priority' => 'high',
+                'created_by' => $inspection->user_id, // Created by technician via system
+            ]);
+            
+            Log::info('Post-repair re-inspection schedule created', [
+                'inspection_id' => $inspection->id,
+                'schedule_id' => $schedule->id,
+                'technician_id' => $inspection->user_id,
+            ]);
+            
+            return $schedule;
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to create post-repair re-inspection schedule', [
+                'inspection_id' => $inspection->id,
+                'error' => $e->getMessage(),
+            ]);
+            
+            throw $e;
+        }
+    }
 }

@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // First, modify the status enum to include 'needs_reinspection'
-        DB::statement("ALTER TABLE inspections MODIFY COLUMN status ENUM('pending', 'completed', 'failed', 'needs_reinspection') DEFAULT 'pending'");
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE inspections MODIFY COLUMN status ENUM('pending', 'completed', 'failed', 'needs_reinspection') DEFAULT 'pending'");
+        }
         
         Schema::table('inspections', function (Blueprint $table) {
             // Add re-inspection tracking fields
