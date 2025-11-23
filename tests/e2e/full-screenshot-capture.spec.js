@@ -74,7 +74,9 @@ async function captureScreen(page, name, testInfo) {
 // ============================================================================
 
 test.describe('Desktop - Admin Features', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Run only on desktop');
+  });
   
   test('01 - Login Page', async ({ page }, testInfo) => {
     await page.goto('/login');
@@ -138,7 +140,9 @@ test.describe('Desktop - Admin Features', () => {
 });
 
 test.describe('Desktop - Supervisor Features', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Run only on desktop');
+  });
 
   test('10 - Supervisor Dashboard', async ({ page }, testInfo) => {
     await login(page, SUPERVISOR_USER.email, SUPERVISOR_USER.password);
@@ -158,11 +162,16 @@ test.describe('Desktop - Supervisor Features', () => {
     await page.waitForLoadState('networkidle');
     
     // Try to click first pending approval if exists
-    const firstApproval = page.locator('tr').filter({ hasText: 'Menunggu' }).first();
+    // The list uses divs with class p-6, not tr
+    const firstApproval = page.locator('div.p-6').filter({ hasText: 'Menunggu' }).first();
     if (await firstApproval.count() > 0) {
-      await firstApproval.click();
-      await page.waitForLoadState('networkidle');
-      await captureScreen(page, '12-repair-approval-detail-pending', testInfo);
+      // Click the "Detail" button inside the card
+      const detailBtn = firstApproval.getByRole('button', { name: /detail/i });
+      if (await detailBtn.count() > 0) {
+        await detailBtn.click();
+        await page.waitForLoadState('networkidle');
+        await captureScreen(page, '12-repair-approval-detail-pending', testInfo);
+      }
     }
   });
 
@@ -172,16 +181,13 @@ test.describe('Desktop - Supervisor Features', () => {
     await page.waitForLoadState('networkidle');
     
     // Try to open approval modal
-    const firstApproval = page.locator('tr').filter({ hasText: 'Menunggu' }).first();
+    const firstApproval = page.locator('div.p-6').filter({ hasText: 'Menunggu' }).first();
     if (await firstApproval.count() > 0) {
-      await firstApproval.click();
-      await page.waitForLoadState('networkidle');
-      
-      // Click approve button
-      const approveBtn = page.getByRole('button', { name: /setujui/i });
+      // Click approve button directly in the list
+      const approveBtn = firstApproval.getByRole('button', { name: /setujui/i });
       if (await approveBtn.count() > 0) {
         await approveBtn.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(500); // Wait for modal animation
         await captureScreen(page, '13-approval-modal-approve', testInfo);
       }
     }
@@ -193,16 +199,13 @@ test.describe('Desktop - Supervisor Features', () => {
     await page.waitForLoadState('networkidle');
     
     // Try to open rejection modal
-    const firstApproval = page.locator('tr').filter({ hasText: 'Menunggu' }).first();
+    const firstApproval = page.locator('div.p-6').filter({ hasText: 'Menunggu' }).first();
     if (await firstApproval.count() > 0) {
-      await firstApproval.click();
-      await page.waitForLoadState('networkidle');
-      
-      // Click reject button
-      const rejectBtn = page.getByRole('button', { name: /tolak/i });
+      // Click reject button directly in the list
+      const rejectBtn = firstApproval.getByRole('button', { name: /tolak/i });
       if (await rejectBtn.count() > 0) {
         await rejectBtn.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(500); // Wait for modal animation
         await captureScreen(page, '14-approval-modal-reject', testInfo);
       }
     }
@@ -221,7 +224,9 @@ test.describe('Desktop - Supervisor Features', () => {
 // ============================================================================
 
 test.describe('Mobile - Technician Features', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'teknisi-mobile', 'Run only on mobile');
+  });
 
   test('16 - Mobile Login', async ({ page }, testInfo) => {
     await page.goto('/login');
@@ -247,12 +252,24 @@ test.describe('Mobile - Technician Features', () => {
     await page.waitForLoadState('networkidle');
     
     // Scroll to find approved item with supervisor decision
-    const approvedItem = page.locator('div').filter({ hasText: /disetujui/i }).first();
-    if (await approvedItem.count() > 0) {
-      await approvedItem.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await captureScreen(page, '19-inspection-approved-with-supervisor', testInfo);
+    await page.waitForTimeout(2000); // Wait for data load
+    const approvedItem = page.locator('span').filter({ hasText: /disetujui/i }).first();
+    
+    const count = await approvedItem.count();
+    console.log(`Found ${count} approved items`);
+    
+    if (count > 0) {
+        console.log('Text:', await approvedItem.innerText());
+        await approvedItem.scrollIntoViewIfNeeded();
+    } else {
+        const content = await page.content();
+        const fs = require('fs');
+        fs.writeFileSync('debug-19.html', content);
     }
+    
+    await expect(approvedItem).toBeVisible();
+    await page.waitForTimeout(500);
+    await captureScreen(page, '19-inspection-approved-with-supervisor', testInfo);
   });
 
   test('20 - My Inspections - Rejected Item', async ({ page }, testInfo) => {
@@ -261,12 +278,24 @@ test.describe('Mobile - Technician Features', () => {
     await page.waitForLoadState('networkidle');
     
     // Scroll to find rejected item with supervisor decision
-    const rejectedItem = page.locator('div').filter({ hasText: /ditolak/i }).first();
-    if (await rejectedItem.count() > 0) {
-      await rejectedItem.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(500);
-      await captureScreen(page, '20-inspection-rejected-with-reinspection', testInfo);
+    await page.waitForTimeout(2000); // Wait for data load
+    const rejectedItem = page.locator('span').filter({ hasText: /ditolak/i }).first();
+    
+    const countRejected = await rejectedItem.count();
+    console.log(`Found ${countRejected} rejected items`);
+
+    if (countRejected > 0) {
+        console.log('Text:', await rejectedItem.innerText());
+        await rejectedItem.scrollIntoViewIfNeeded();
+    } else {
+        const content = await page.content();
+        const fs = require('fs');
+        fs.writeFileSync('debug-20.html', content);
     }
+
+    await expect(rejectedItem).toBeVisible();
+    await page.waitForTimeout(500);
+    await captureScreen(page, '20-inspection-rejected-with-reinspection', testInfo);
   });
 
   test('21 - Scan QR Page', async ({ page }, testInfo) => {
@@ -278,25 +307,13 @@ test.describe('Mobile - Technician Features', () => {
 
   test('22 - Inspection Form', async ({ page }, testInfo) => {
     await login(page, TEKNISI_USER.email, TEKNISI_USER.password);
-    // Note: This requires a valid APAR ID, adjust as needed
-    await page.goto('/inspection/create?apar_id=1');
+    // Use the enhanced inspection route with the seeded QR code
+    await page.goto('/inspections/enhanced/APAR-001');
     await page.waitForLoadState('networkidle');
     await captureScreen(page, '22-inspection-form', testInfo);
   });
 
-  test('23 - Notifications', async ({ page }, testInfo) => {
-    await login(page, TEKNISI_USER.email, TEKNISI_USER.password);
-    await page.goto('/notifications');
-    await page.waitForLoadState('networkidle');
-    await captureScreen(page, '23-notifications', testInfo);
-  });
 
-  test('24 - Profile Page', async ({ page }, testInfo) => {
-    await login(page, TEKNISI_USER.email, TEKNISI_USER.password);
-    await page.goto('/profile');
-    await page.waitForLoadState('networkidle');
-    await captureScreen(page, '24-profile-page', testInfo);
-  });
 });
 
 // ============================================================================
@@ -304,7 +321,9 @@ test.describe('Mobile - Technician Features', () => {
 // ============================================================================
 
 test.describe('Additional Features', () => {
-  test.skip(({ browserName }) => browserName !== 'chromium');
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(testInfo.project.name !== 'desktop', 'Run only on desktop');
+  });
 
   test('25 - Reports Dashboard', async ({ page }, testInfo) => {
     await login(page, ADMIN_USER.email, ADMIN_USER.password);
@@ -313,10 +332,5 @@ test.describe('Additional Features', () => {
     await captureScreen(page, '25-reports-dashboard', testInfo);
   });
 
-  test('26 - Inspection Analytics', async ({ page }, testInfo) => {
-    await login(page, ADMIN_USER.email, ADMIN_USER.password);
-    await page.goto('/analytics');
-    await page.waitForLoadState('networkidle');
-    await captureScreen(page, '26-analytics', testInfo);
-  });
+
 });

@@ -1,0 +1,66 @@
+
+Running 6 tests using 1 worker
+
+  -  1 [desktop] › tests/e2e/full-screenshot-capture.spec.js:242:3 › Mobile - Technician Features › 18 - My Inspections List
+  -  2 [desktop] › tests/e2e/full-screenshot-capture.spec.js:249:3 › Mobile - Technician Features › 19 - My Inspections - Approved Item
+  -  3 [desktop] › tests/e2e/full-screenshot-capture.spec.js:275:3 › Mobile - Technician Features › 20 - My Inspections - Rejected Item
+  ✓  4 [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:242:3 › Mobile - Technician Features › 18 - My Inspections List (11.2s)
+Found 0 approved items
+  ✘  5 [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:249:3 › Mobile - Technician Features › 19 - My Inspections - Approved Item (8.9s)
+Found 0 rejected items
+  ✘  6 [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:275:3 › Mobile - Technician Features › 20 - My Inspections - Rejected Item (8.4s)
+
+
+  1) [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:249:3 › Mobile - Technician Features › 19 - My Inspections - Approved Item 
+
+    ReferenceError: require is not defined
+
+      264 |     } else {
+      265 |         const content = await page.content();
+    > 266 |         const fs = require('fs');
+          |                    ^
+      267 |         fs.writeFileSync('debug-19.html', content);
+      268 |     }
+      269 |     
+        at /Users/me/Herd/cakapftmaos/tests/e2e/full-screenshot-capture.spec.js:266:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/full-screenshot-capture-Mo-fcd2f-Inspections---Approved-Item-teknisi-mobile/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/full-screenshot-capture-Mo-fcd2f-Inspections---Approved-Item-teknisi-mobile/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/full-screenshot-capture-Mo-fcd2f-Inspections---Approved-Item-teknisi-mobile/error-context.md
+
+  2) [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:275:3 › Mobile - Technician Features › 20 - My Inspections - Rejected Item 
+
+    ReferenceError: require is not defined
+
+      290 |     } else {
+      291 |         const content = await page.content();
+    > 292 |         const fs = require('fs');
+          |                    ^
+      293 |         fs.writeFileSync('debug-20.html', content);
+      294 |     }
+      295 |
+        at /Users/me/Herd/cakapftmaos/tests/e2e/full-screenshot-capture.spec.js:292:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/full-screenshot-capture-Mo-eb18f-Inspections---Rejected-Item-teknisi-mobile/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/full-screenshot-capture-Mo-eb18f-Inspections---Rejected-Item-teknisi-mobile/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/full-screenshot-capture-Mo-eb18f-Inspections---Rejected-Item-teknisi-mobile/error-context.md
+
+  2 failed
+    [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:249:3 › Mobile - Technician Features › 19 - My Inspections - Approved Item 
+    [teknisi-mobile] › tests/e2e/full-screenshot-capture.spec.js:275:3 › Mobile - Technician Features › 20 - My Inspections - Rejected Item 
+  3 skipped
+  1 passed (34.4s)
+
+[36m  Serving HTML report at http://localhost:53265. Press Ctrl+C to quit.[39m
