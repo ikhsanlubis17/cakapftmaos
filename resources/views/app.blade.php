@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CAKAP FT MAOS - Sistem Monitoring APAR</title>
 
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/images/logo2.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     @viteReactRefresh

@@ -465,7 +465,12 @@ const LayoutEnhanced = () => {
         </main>
       </div>
 
-      <ConfirmDialog isOpen={isOpen} config={config} onConfirm={confirm} onClose={close} />
+      <ConfirmDialog 
+        {...config}
+        isOpen={isOpen} 
+        onClose={config.onCancel || close} 
+        onConfirm={config.onConfirm}
+      />
     </>
   )
 }

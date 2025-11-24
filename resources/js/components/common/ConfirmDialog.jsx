@@ -54,7 +54,6 @@ const ConfirmDialog = ({
 
     const handleConfirm = () => {
         onConfirm();
-        onClose();
     };
 
     const handleBackdropClick = (e) => {

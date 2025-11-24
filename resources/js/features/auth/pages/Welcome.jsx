@@ -134,14 +134,16 @@ const Welcome = () => {
                     <div className="flex justify-between items-center h-16 lg:h-20">
                         {/* Logo */}
                         <div className="flex items-center group cursor-pointer">
-                            <div className="h-10 w-10 lg:h-12 lg:w-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-all duration-300">
-                                <FireIcon className="h-6 w-6 lg:h-7 lg:w-7 text-white" />
-                            </div>
+                            <img 
+                                src="/images/logo2.svg" 
+                                alt="Logo" 
+                                className="h-9 w-9 lg:h-12 lg:w-12 shadow-lg rounded-xl group-hover:scale-105 transition-all duration-300"
+                            />
                             <div className="ml-3">
-                                <span className="text-xl lg:text-2xl font-bold text-gray-500">
+                                <span className="text-lg lg:text-2xl font-bold text-gray-500">
                                     CAKAP FT MAOS
                                 </span>
-                                <div className="text-sm text-gray-500 font-medium">
+                                <div className="hidden sm:block text-sm text-gray-500 font-medium">
                                     Monitoring APAR
                                 </div>
                             </div>
@@ -178,7 +180,7 @@ const Welcome = () => {
                         <div className="flex items-center space-x-4">
                             <Link
                                 to="/login"
-                                className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                                className="group inline-flex items-center px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                             >
                                 <SparklesIcon className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform duration-300" />
                                 <span className="hidden md:inline">Masuk ke Sistem</span>
@@ -200,12 +202,12 @@ const Welcome = () => {
                         </div>
                     </div>
 
-                    {/* Mobile Navigation */}
-                    <div className={`lg:hidden transition-all duration-300 overflow-hidden ${
-                        isMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'
+                    {/* Mobile Navigation Menu */}
+                    <div className={`lg:hidden absolute top-full left-0 right-0 p-4 transition-all duration-300 ${
+                        isMenuOpen ? 'opacity-100 translate-y-0 visible' : 'opacity-0 -translate-y-4 invisible'
                     }`}>
-                        <div className="pt-4 border-t border-gray-200">
-                            <div className="space-y-2">
+                        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                            <div className="p-2 space-y-1">
                                 {[
                                     { id: 'about', label: 'Tentang' },
                                     { id: 'features', label: 'Fitur' },
@@ -215,9 +217,10 @@ const Welcome = () => {
                                     <button
                                         key={item.id}
                                         onClick={() => scrollToSection(item.id)}
-                                        className="block w-full text-left px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-300"
+                                        className="w-full flex items-center justify-between px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-300 group"
                                     >
-                                        {item.label}
+                                        <span className="font-medium">{item.label}</span>
+                                        <ArrowRightIcon className="h-4 w-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
                                     </button>
                                 ))}
                             </div>
@@ -227,7 +230,7 @@ const Welcome = () => {
             </header>
 
             {/* Hero Section */}
-            <section id="hero" className="relative min-h-screen flex items-center bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 overflow-hidden">
+            <section id="hero" className="relative min-h-screen flex items-start lg:items-center bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 overflow-hidden pt-32 lg:pt-0">
                 {/* Animated Background Pattern */}
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-transparent to-orange-500/20"></div>
@@ -255,7 +258,7 @@ const Welcome = () => {
 
                             {/* Main Headline */}
                             <div className="space-y-6">
-                                <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
+                                <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                                     <span className="block text-white mb-2">
                                         Sistem Monitoring
                                     </span>
@@ -297,8 +300,8 @@ const Welcome = () => {
                         <div className="relative flex justify-center lg:justify-end">
                             <div className="relative max-w-md w-full">
                                 {/* Main Card */}
-                                <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-all duration-500">
-                                    <div className="bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl p-8 text-white text-center relative overflow-hidden">
+                                <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 sm:p-8 transform hover:scale-105 transition-all duration-500">
+                                    <div className="bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
                                         <div className="absolute inset-0 bg-white/10 rounded-2xl"></div>
                                         <div className="relative z-10">
                                             <QrCodeIcon className="h-20 w-20 mx-auto mb-6 animate-pulse" />
@@ -621,9 +624,11 @@ const Welcome = () => {
                     <div className="grid md:grid-cols-4 gap-8 lg:gap-12">
                         <div className="col-span-2 space-y-6">
                             <div className="flex items-center">
-                                <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl">
-                                    <FireIcon className="h-7 w-7 text-white" />
-                                </div>
+                                <img 
+                                    src="/images/logo2.svg" 
+                                    alt="Logo" 
+                                    className="h-12 w-12 rounded-2xl shadow-xl"
+                                />
                                 <div className="ml-4">
                                     <span className="text-2xl font-bold">CAKAP FT MAOS</span>
                                     <div className="text-sm text-gray-400 font-medium">Monitoring APAR</div>

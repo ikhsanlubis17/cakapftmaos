@@ -578,15 +578,10 @@ const UserList = () => {
 
             {/* Confirm Dialog */}
             <ConfirmDialog
+                {...config}
                 isOpen={isOpen}
-                onClose={close}
+                onClose={config.onCancel || close}
                 onConfirm={config.onConfirm}
-                title={config.title}
-                message={config.message}
-                type={config.type}
-                confirmText={config.confirmText}
-                cancelText={config.cancelText}
-                confirmButtonColor={config.confirmButtonColor}
             />
         </Fragment>
     );

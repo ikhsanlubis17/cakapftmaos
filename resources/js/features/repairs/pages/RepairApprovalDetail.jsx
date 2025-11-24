@@ -38,8 +38,7 @@ const RepairApprovalDetail = () => {
     const { data: approvalData, isLoading: loading, refetch } = useQuery({
         queryKey: ['repair-approval', id],
         queryFn: async () => {
-            // keep using test endpoint if that is expected by backend, otherwise switch to standard
-            const response = await apiClient.get(`/api/test-repair-approval/${id}`);
+            const response = await apiClient.get(`/api/repair-approvals/${id}`);
             if (response.data?.success) return response.data.data;
             throw new Error('Gagal memuat detail persetujuan');
         },
@@ -200,7 +199,7 @@ const RepairApprovalDetail = () => {
                     <p className="text-gray-600 mb-6 text-lg">{error || 'Data tidak ditemukan'}</p>
                     <div className="space-y-3">
                         <button
-                            onClick={fetchApprovalDetail}
+                            onClick={() => refetch()}
                             className="w-full bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium text-lg"
                         >
                             Coba Lagi

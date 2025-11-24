@@ -700,7 +700,7 @@ const RepairApprovalList = () => {
                                         <button
                                             onClick={() =>
                                                 navigate({
-                                                    to: `/repair-approvals/${approval.id}`,
+                                                    to: `/view/${approval.id}`,
                                                 })
                                             }
                                             className="lg:self-start inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"

@@ -343,10 +343,10 @@ const UsersManagement = () => {
 
             {/* Confirm Dialog */}
             <ConfirmDialog
+                {...config}
                 isOpen={isOpen}
-                config={config}
-                onConfirm={confirm}
-                onClose={close}
+                onClose={config.onCancel || close}
+                onConfirm={config.onConfirm}
             />
         </div>
     );

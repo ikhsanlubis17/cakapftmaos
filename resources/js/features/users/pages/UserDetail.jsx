@@ -3,9 +3,9 @@ import {
     Link,
     useParams,
     useNavigate,
-    getRouteApi,
 } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
@@ -24,8 +24,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 const UserDetail = () => {
-    const route = getRouteApi("/administrator/users/$id");
-    const { id } = route.useParams();
+    const { id } = useParams({ strict: false });
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { isOpen, config, confirm, close } = useConfirmDialog();
@@ -351,15 +350,10 @@ const UserDetail = () => {
 
             {/* Confirm Dialog */}
             <ConfirmDialog
+                {...config}
                 isOpen={isOpen}
-                onClose={close}
+                onClose={config.onCancel || close}
                 onConfirm={config.onConfirm}
-                title={config.title}
-                message={config.message}
-                type={config.type}
-                confirmText={config.confirmText}
-                cancelText={config.cancelText}
-                confirmButtonColor={config.confirmButtonColor}
             />
         </Fragment>
     );

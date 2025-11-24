@@ -286,20 +286,22 @@ const repairApprovalsRoute = createRoute({
     beforeLoad: checkRoles(["admin", "supervisor"]),
     component: () => {
         const { user } = useAuth();
-        // Admin gets the new modern page, Supervisor gets the existing page
         return user?.role === 'admin' ? <AdminRepairApprovals /> : <RepairApprovalList />;
     },
 });
+
+// Detail route with simple path to avoid conflicts
 const repairApprovalDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
-    path: "repair-approvals/$id",
+    path: "view/$id",
     beforeLoad: checkRoles(["admin", "supervisor"]),
     component: RepairApprovalDetail,
 });
+
 const myRepairsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "my-repairs",
-    component: MyRepairApprovals, // All authenticated users can see this
+    component: MyRepairApprovals,
 });
 
 // Reports and Audit Route
