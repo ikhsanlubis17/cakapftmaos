@@ -28,6 +28,13 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 // Import pages from feature-based structure
 import Login from "./features/auth/pages/Login";
 import Welcome from "./features/auth/pages/Welcome";
+import Profile from "./features/auth/pages/Profile";
+
+// ... (existing imports)
+
+
+
+
 import DashboardEnhanced from "./features/dashboard/pages/DashboardEnhanced";
 import AparList from "./features/apar/pages/AparList";
 import AparDetail from "./features/apar/pages/AparDetail";
@@ -123,6 +130,13 @@ const dashboardRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "/",
     component: DashboardEnhanced,
+});
+
+// Profile Route
+const profileRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "profile",
+    component: Profile,
 });
 
 // A helper function for role-based authorization
@@ -325,6 +339,7 @@ const routeTree = rootRoute.addChildren([
     loginRoute,
     authenticatedRoute.addChildren([
         dashboardRoute,
+        profileRoute,
         aparRoute,
         aparCreateRoute,
         aparDetailRoute,

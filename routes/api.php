@@ -46,6 +46,7 @@ Route::prefix('dev')->group(function () {
 Route::middleware('auth:api')->group(function () {
     // User info
     Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
 
 
     // Dashboard - Semua route dashboard harus dilindungi
@@ -161,5 +162,9 @@ Route::middleware('auth:api')->group(function () {
 
     // Audit Log routes (Admin only)
     Route::get('/audit-logs', [AuditLogController::class, 'index']);
+    Route::get('/audit-logs/stats', [AuditLogController::class, 'stats']);
+    Route::get('/audit-logs/anomalies', [AuditLogController::class, 'anomalies']);
+    Route::get('/audit-logs/cleanup-stats', [AuditLogController::class, 'cleanupStats']);
+    Route::post('/audit-logs/cleanup', [AuditLogController::class, 'cleanup']);
     Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
 });

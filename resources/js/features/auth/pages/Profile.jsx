@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -8,59 +8,56 @@ import {
     ArrowLeftIcon,
     ShieldCheckIcon,
     UserGroupIcon,
+    KeyIcon,
+    EnvelopeIcon,
+    PhoneIcon,
 } from '@heroicons/react/24/outline';
 
-const UserEdit = () => {
+const Profile = () => {
     const navigate = useNavigate();
-    const { id } = useParams({ strict: false });
-    console.log('UserEdit mounted, id:', id);
     const { showSuccess, showError } = useToast();
-    const { apiClient } = useAuth();
+    const { apiClient, user: authUser } = useAuth();
     const queryClient = useQueryClient();
     const [saving, setSaving] = useState(false);
+    
+    // Fetch fresh user data
     const { data: user, isLoading: loading, isError } = useQuery({
-        queryKey: ['users', id],
+        queryKey: ['profile'],
         queryFn: async () => {
-            const res = await apiClient.get(`/api/users/${id}`);
+            const res = await apiClient.get('/api/user');
             return res.data;
         },
-        enabled: !!id,
-        throwOnError: false,
     });
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        confirmPassword: '',
+        password_confirmation: '',
         phone: '',
-        role: 'teknisi',
-        is_active: true,
     });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
         if (user) {
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 name: user.name || '',
                 email: user.email || '',
-                password: '',
-                confirmPassword: '',
                 phone: user.phone || '',
-                role: user.role || 'teknisi',
-                is_active: user.is_active !== undefined ? user.is_active : true,
-            });
+            }));
         }
 
         if (isError) {
-            showError('Gagal memuat data pengguna');
+            showError('Gagal memuat data profil');
         }
     }, [user, isError]);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: value
         }));
         
         // Clear error when user starts typing
@@ -90,8 +87,8 @@ const UserEdit = () => {
             if (formData.password.length < 8) {
                 newErrors.password = 'Password minimal 8 karakter';
             }
-            if (formData.password !== formData.confirmPassword) {
-                newErrors.confirmPassword = 'Konfirmasi password tidak cocok';
+            if (formData.password !== formData.password_confirmation) {
+                newErrors.password_confirmation = 'Konfirmasi password tidak cocok';
             }
         }
 
@@ -116,21 +113,35 @@ const UserEdit = () => {
                 name: formData.name,
                 email: formData.email,
                 phone: formData.phone || null,
-                role: formData.role,
-                is_active: formData.is_active,
             };
 
             if (formData.password) {
                 updateData.password = formData.password;
+                updateData.password_confirmation = formData.password_confirmation;
             }
 
-            await apiClient.put(`/api/users/${id}`, updateData);
+            const res = await apiClient.put('/api/user/profile', updateData);
 
-            showSuccess('Pengguna berhasil diperbarui!');
-            queryClient.invalidateQueries({ queryKey: ['users'] });
-            navigate({ to: '/users' });
+            showSuccess('Profil berhasil diperbarui!');
+            
+            // Update auth context by invalidating user query
+            queryClient.invalidateQueries({ queryKey: ['user'] });
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+            
+            // Clear password fields
+            setFormData(prev => ({
+                ...prev,
+                password: '',
+                password_confirmation: ''
+            }));
+
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+                navigate({ to: '/' });
+            }, 1500);
+            
         } catch (error) {
-            console.error('Error updating user:', error);
+            console.error('Error updating profile:', error);
             if (error?.response?.data?.errors) {
                 const serverErrors = {};
                 Object.keys(error.response.data.errors).forEach(key => {
@@ -138,7 +149,7 @@ const UserEdit = () => {
                 });
                 setErrors(serverErrors);
             } else {
-                showError(error?.response?.data?.message || 'Gagal memperbarui pengguna. Silakan coba lagi.');
+                showError(error?.response?.data?.message || 'Gagal memperbarui profil. Silakan coba lagi.');
             }
         } finally {
             setSaving(false);
@@ -179,35 +190,15 @@ const UserEdit = () => {
         );
     }
 
-    if (!user) {
-        return (
-            <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Pengguna tidak ditemukan</h3>
-                <Link
-                    to="/users"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-                >
-                    Kembali ke Daftar Pengguna
-                </Link>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="sm:flex sm:items-center sm:justify-between">
                 <div className="flex items-center">
-                                            <Link
-                            to="/users"
-                            className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        >
-                            <ArrowLeftIcon className="h-5 w-5" />
-                        </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Edit Pengguna</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Profil Saya</h1>
                         <p className="mt-1 text-sm text-gray-500">
-                            Edit informasi pengguna {user.name}
+                            Kelola informasi akun dan profil Anda
                         </p>
                     </div>
                 </div>
@@ -218,7 +209,10 @@ const UserEdit = () => {
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Basic Information */}
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Informasi Dasar</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                            <UserIcon className="h-5 w-5 mr-2 text-gray-400" />
+                            Informasi Dasar
+                        </h3>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             {/* Name */}
                             <div>
@@ -246,17 +240,22 @@ const UserEdit = () => {
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                                     Email *
                                 </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    id="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.email ? 'border-red-300' : 'border-gray-300'
-                                    }`}
-                                    placeholder="contoh@email.com"
-                                />
+                                <div className="mt-1 relative rounded-md shadow-sm">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    </div>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        id="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className={`block w-full pl-10 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                            errors.email ? 'border-red-300' : 'border-gray-300'
+                                        }`}
+                                        placeholder="contoh@email.com"
+                                    />
+                                </div>
                                 {errors.email && (
                                     <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                                 )}
@@ -267,51 +266,51 @@ const UserEdit = () => {
                                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                                     Nomor Telepon
                                 </label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    id="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.phone ? 'border-red-300' : 'border-gray-300'
-                                    }`}
-                                    placeholder="081234567890"
-                                />
+                                <div className="mt-1 relative rounded-md shadow-sm">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <PhoneIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                    </div>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        id="phone"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        className={`block w-full pl-10 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                            errors.phone ? 'border-red-300' : 'border-gray-300'
+                                        }`}
+                                        placeholder="081234567890"
+                                    />
+                                </div>
                                 {errors.phone && (
                                     <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                                 )}
                             </div>
 
-                            {/* Role */}
+                            {/* Role (Read Only) */}
                             <div>
-                                <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                                    Role *
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Role
                                 </label>
-                                <select
-                                    name="role"
-                                    id="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                                >
-                                    <option value="teknisi">Teknisi</option>
-                                    <option value="supervisor">Supervisor</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                                <div className="mt-2 flex items-center text-sm text-gray-500">
-                                    {React.createElement(getRoleIcon(formData.role), { className: "h-4 w-4 mr-1" })}
-                                    {getRoleText(formData.role)}
+                                <div className="mt-1 flex items-center px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-500">
+                                    {React.createElement(getRoleIcon(user?.role), { className: "h-5 w-5 mr-2" })}
+                                    {getRoleText(user?.role)}
                                 </div>
+                                <p className="mt-1 text-xs text-gray-500">
+                                    Role tidak dapat diubah sendiri. Hubungi admin jika perlu perubahan.
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Password */}
-                    <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4">Password</h3>
+                    <div className="pt-6 border-t border-gray-200">
+                        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                            <KeyIcon className="h-5 w-5 mr-2 text-gray-400" />
+                            Ganti Password
+                        </h3>
                         <p className="text-sm text-gray-500 mb-4">
-                            Kosongkan field password jika tidak ingin mengubah password
+                            Kosongkan jika tidak ingin mengubah password
                         </p>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             {/* Password */}
@@ -328,7 +327,7 @@ const UserEdit = () => {
                                     className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
                                         errors.password ? 'border-red-300' : 'border-gray-300'
                                     }`}
-                                    placeholder="Minimal 8 karakter (kosongkan jika tidak diubah)"
+                                    placeholder="Minimal 8 karakter"
                                 />
                                 {errors.password && (
                                     <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -337,52 +336,29 @@ const UserEdit = () => {
 
                             {/* Confirm Password */}
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">
                                     Konfirmasi Password Baru
                                 </label>
                                 <input
                                     type="password"
-                                    name="confirmPassword"
-                                    id="confirmPassword"
-                                    value={formData.confirmPassword}
+                                    name="password_confirmation"
+                                    id="password_confirmation"
+                                    value={formData.password_confirmation}
                                     onChange={handleChange}
                                     className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
+                                        errors.password_confirmation ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                     placeholder="Ulangi password baru"
                                 />
-                                {errors.confirmPassword && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
+                                {errors.password_confirmation && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.password_confirmation}</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Status */}
-                    <div>
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                name="is_active"
-                                id="is_active"
-                                checked={formData.is_active}
-                                onChange={handleChange}
-                                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                            />
-                            <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                                Akun aktif (dapat login)
-                            </label>
-                        </div>
-                    </div>
-
                     {/* Submit Buttons */}
-                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                        <Link
-                            to="/users"
-                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        >
-                            Batal
-                        </Link>
+                    <div className="flex justify-end pt-6 border-t border-gray-200">
                         <button
                             type="submit"
                             disabled={saving}
@@ -408,5 +384,4 @@ const UserEdit = () => {
     );
 };
 
-export default UserEdit; 
-
+export default Profile;

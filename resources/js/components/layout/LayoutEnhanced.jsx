@@ -412,6 +412,16 @@ const LayoutEnhanced = () => {
                       </div>
                     </div>
                     <button
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        navigate({ to: "/profile" });
+                      }}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                    >
+                      <UserCircleIcon className="mr-3 h-4 w-4" />
+                      Profil
+                    </button>
+                    <button
                       onClick={handleLogout}
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
                     >
