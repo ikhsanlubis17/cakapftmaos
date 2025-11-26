@@ -3,6 +3,7 @@ import {
     ClockIcon,
     CheckCircleIcon,
     XCircleIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 const ApprovalStatusBadge = ({ status, size = 'md', showIcon = true }) => {
@@ -30,6 +31,12 @@ const ApprovalStatusBadge = ({ status, size = 'md', showIcon = true }) => {
             icon: CheckCircleIcon,
             text: 'Selesai',
             dotColor: 'bg-blue-500',
+        },
+        needs_reinspection: {
+            color: 'bg-orange-50 text-orange-700 border-orange-200',
+            icon: ExclamationTriangleIcon,
+            text: 'Perlu Inspeksi Ulang',
+            dotColor: 'bg-orange-500',
         },
     };
 

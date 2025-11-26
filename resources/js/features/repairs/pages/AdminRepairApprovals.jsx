@@ -5,6 +5,8 @@ import {
     FireIcon,
     ArrowPathIcon,
     ExclamationTriangleIcon,
+    CameraIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 import ApprovalStats from '../components/ApprovalStats';
 import ApprovalFilters from '../components/ApprovalFilters';
@@ -21,6 +23,8 @@ const AdminRepairApprovals = () => {
     });
     const [selectedApproval, setSelectedApproval] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
 
     // Fetch approvals data
     const {
@@ -154,6 +158,11 @@ const AdminRepairApprovals = () => {
         await refetchApprovals();
     };
 
+    const handlePhotoClick = (url) => {
+        setSelectedPhoto(url);
+        setShowPhotoModal(true);
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -253,6 +262,7 @@ const AdminRepairApprovals = () => {
                                 key={approval.id}
                                 approval={approval}
                                 onViewDetail={handleViewDetail}
+                                onPhotoClick={handlePhotoClick}
                             />
                         ))}
                     </div>
@@ -278,7 +288,35 @@ const AdminRepairApprovals = () => {
                 approval={selectedApproval}
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
+                onPhotoClick={handlePhotoClick}
             />
+
+            {/* Photo Modal */}
+            {showPhotoModal && selectedPhoto && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setShowPhotoModal(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+                            <div className="flex items-center">
+                                <CameraIcon className="h-6 w-6 text-red-600 mr-3" />
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Foto Bukti Inspeksi</h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowPhotoModal(false)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                            >
+                                <XMarkIcon className="h-6 w-6 text-gray-500 hover:text-gray-700" />
+                            </button>
+                        </div>
+                        <div className="p-4 sm:p-6 flex justify-center items-center bg-gray-100 flex-1 overflow-auto">
+                            <img
+                                src={selectedPhoto}
+                                alt="Foto inspeksi full"
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

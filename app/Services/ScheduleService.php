@@ -43,24 +43,23 @@ class ScheduleService
 
         $appTimezone = config('app.timezone', 'UTC');
         $nowLocal = Carbon::now($appTimezone);
-        $nowUtc = $nowLocal->copy()->setTimezone('UTC');
-        $startOfTodayUtc = $nowLocal->copy()->startOfDay()->setTimezone('UTC');
-        $endOfTodayUtc = $nowLocal->copy()->endOfDay()->setTimezone('UTC');
+        $startOfTodayLocal = $nowLocal->copy()->startOfDay();
+        $endOfTodayLocal = $nowLocal->copy()->endOfDay();
 
         // Apply status filter
         if (!empty($filters['status']) && $filters['status'] !== 'all') {
             switch ($filters['status']) {
                 case 'overdue':
                     // Overdue: start time is before now
-                    $query->where('start_at', '<', $nowUtc);
+                    $query->where('start_at', '<', $nowLocal);
                     break;
                 case 'today':
                     // Today: any schedule that starts between start and end of today
-                    $query->whereBetween('start_at', [$startOfTodayUtc, $endOfTodayUtc]);
+                    $query->whereBetween('start_at', [$startOfTodayLocal, $endOfTodayLocal]);
                     break;
                 case 'upcoming':
                     // Upcoming: schedules that start after today (tomorrow onwards)
-                    $query->where('start_at', '>', $endOfTodayUtc);
+                    $query->where('start_at', '>', $endOfTodayLocal);
                     break;
             }
         }
@@ -112,8 +111,8 @@ class ScheduleService
         $schedule = InspectionSchedule::create([
             'apar_id' => $data['apar_id'],
             'assigned_user_id' => $data['assigned_user_id'],
-            'start_at' => $startAtLocal->copy()->setTimezone('UTC'),
-            'end_at' => $endAtLocal->copy()->setTimezone('UTC'),
+            'start_at' => $startAtLocal,
+            'end_at' => $endAtLocal,
             'frequency' => $data['frequency'],
             'is_active' => $data['is_active'] ?? true,
             'notes' => $data['notes'] ?? null,
@@ -152,8 +151,8 @@ class ScheduleService
         $schedule->update([
             'apar_id' => $data['apar_id'],
             'assigned_user_id' => $data['assigned_user_id'],
-            'start_at' => $startAtLocal->copy()->setTimezone('UTC'),
-            'end_at' => $endAtLocal->copy()->setTimezone('UTC'),
+            'start_at' => $startAtLocal,
+            'end_at' => $endAtLocal,
             'frequency' => $data['frequency'],
             'is_active' => $data['is_active'],
             'notes' => $data['notes'] ?? null,
@@ -199,15 +198,15 @@ class ScheduleService
         $startDateInput = $startDate ?? Carbon::now($appTimezone)->toDateString();
         $endDateInput = $endDate ?? Carbon::now($appTimezone)->addDays(7)->toDateString();
 
-        $startBoundaryUtc = Carbon::parse($startDateInput, $appTimezone)->startOfDay()->setTimezone('UTC');
-        $endBoundaryUtc = Carbon::parse($endDateInput, $appTimezone)->endOfDay()->setTimezone('UTC');
-        $nowUtc = Carbon::now('UTC');
+        $startBoundaryLocal = Carbon::parse($startDateInput, $appTimezone)->startOfDay();
+        $endBoundaryLocal = Carbon::parse($endDateInput, $appTimezone)->endOfDay();
+        $nowLocal = Carbon::now($appTimezone);
 
         $schedules = InspectionSchedule::with(['apar', 'assignedUser'])
             ->where('is_active', true)
             ->where('is_completed', false)
-            ->whereBetween('start_at', [$startBoundaryUtc, $endBoundaryUtc])
-            ->where('start_at', '>', $nowUtc)
+            ->whereBetween('start_at', [$startBoundaryLocal, $endBoundaryLocal])
+            ->where('start_at', '>', $nowLocal)
             ->orderBy('start_at')
             ->get();
 

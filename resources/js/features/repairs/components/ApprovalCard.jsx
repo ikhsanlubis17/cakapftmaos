@@ -159,6 +159,79 @@ const ApprovalCard = ({ approval, onViewDetail }) => {
                 </div>
             )}
 
+            {/* Photos Preview */}
+            <div className="px-5 py-4 border-b border-gray-100">
+                <p className="text-xs font-medium text-gray-700 mb-2">
+                    Foto Inspeksi:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {/* APAR Photo */}
+                    {approval.inspection?.photo_url && (
+                        <div 
+                            className="relative group cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPhotoClick && onPhotoClick(approval.inspection.photo_url);
+                            }}
+                        >
+                            <img
+                                src={approval.inspection.photo_url}
+                                alt="Foto APAR"
+                                className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                        </div>
+                    )}
+                    
+                    {/* Selfie Photo */}
+                    {approval.inspection?.selfie_url && (
+                        <div 
+                            className="relative group cursor-pointer"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onPhotoClick && onPhotoClick(approval.inspection.selfie_url);
+                            }}
+                        >
+                            <img
+                                src={approval.inspection.selfie_url}
+                                alt="Foto Selfie"
+                                className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                            />
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                        </div>
+                    )}
+
+                    {/* Damage Photos */}
+                    {approval.inspection?.inspection_damages?.map((damage, idx) => (
+                        damage.damage_photo_url && (
+                            <div 
+                                key={idx}
+                                className="relative group cursor-pointer"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPhotoClick && onPhotoClick(damage.damage_photo_url);
+                                }}
+                            >
+                                <img
+                                    src={damage.damage_photo_url}
+                                    alt={`Kerusakan ${idx + 1}`}
+                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                                />
+                                <div className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
+                                    Rusak
+                                </div>
+                            </div>
+                        )
+                    ))}
+
+                    {(!approval.inspection?.photo_url && 
+                      !approval.inspection?.selfie_url && 
+                      (!approval.inspection?.inspection_damages || approval.inspection.inspection_damages.filter(d => d.damage_photo_url).length === 0)) && (
+                        <span className="text-xs text-gray-500 italic">Tidak ada foto</span>
+                    )}
+                </div>
+            </div>
+
             {/* Footer - Action Button */}
             <div className="px-5 py-4 bg-gray-50">
                 <button

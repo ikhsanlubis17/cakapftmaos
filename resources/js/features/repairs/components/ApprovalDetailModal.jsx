@@ -355,23 +355,79 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                         {activeTab === 'photos' && (
                             <div className="space-y-6">
                                 <h3 className="text-lg font-semibold text-gray-900">Foto Inspeksi</h3>
-                                {approval.inspection?.photo_url ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    {/* APAR Photo */}
+                                    {approval.inspection?.photo_url && (
                                         <div
                                             className="relative group cursor-pointer"
                                             onClick={() => setSelectedPhoto(approval.inspection.photo_url)}
                                         >
-                                            <img
-                                                src={approval.inspection.photo_url}
-                                                alt="Foto inspeksi"
-                                                className="w-full h-64 object-cover rounded-xl border border-gray-200 group-hover:shadow-lg transition-shadow"
-                                            />
-                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
-                                                <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                                <img
+                                                    src={approval.inspection.photo_url}
+                                                    alt="Foto APAR"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                />
                                             </div>
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
+                                                <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                            </div>
+                                            <p className="mt-2 text-sm font-medium text-gray-700">Foto APAR</p>
                                         </div>
-                                    </div>
-                                ) : (
+                                    )}
+
+                                    {/* Selfie Photo */}
+                                    {approval.inspection?.selfie_url && (
+                                        <div
+                                            className="relative group cursor-pointer"
+                                            onClick={() => setSelectedPhoto(approval.inspection.selfie_url)}
+                                        >
+                                            <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                                <img
+                                                    src={approval.inspection.selfie_url}
+                                                    alt="Foto Selfie"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                />
+                                            </div>
+                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
+                                                <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                            </div>
+                                            <p className="mt-2 text-sm font-medium text-gray-700">Foto Selfie</p>
+                                        </div>
+                                    )}
+
+                                    {/* Damage Photos */}
+                                    {approval.inspection?.inspection_damages?.map((damage, idx) => (
+                                        damage.damage_photo_url && (
+                                            <div
+                                                key={idx}
+                                                className="relative group cursor-pointer"
+                                                onClick={() => setSelectedPhoto(damage.damage_photo_url)}
+                                            >
+                                                <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                                    <img
+                                                        src={damage.damage_photo_url}
+                                                        alt={`Kerusakan ${idx + 1}`}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                </div>
+                                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full shadow-sm z-10">
+                                                    Rusak
+                                                </div>
+                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
+                                                    <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                                </div>
+                                                <p className="mt-2 text-sm font-medium text-gray-700">
+                                                    {damage.damage_category?.name || `Kerusakan ${idx + 1}`}
+                                                </p>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+
+                                {(!approval.inspection?.photo_url && 
+                                  !approval.inspection?.selfie_url && 
+                                  (!approval.inspection?.inspection_damages || approval.inspection.inspection_damages.filter(d => d.damage_photo_url).length === 0)) && (
                                     <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                                         <CameraIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                                         <p className="text-gray-500">Tidak ada foto tersedia</p>

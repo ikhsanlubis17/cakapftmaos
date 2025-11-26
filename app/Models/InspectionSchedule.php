@@ -238,7 +238,7 @@ class InspectionSchedule extends Model
     {
         $startAtLocal = $this->startAtLocal();
 
-        return $startAtLocal ? $startAtLocal->format('H:i:s') : null;
+        return $startAtLocal ? $startAtLocal->format('H:i') : null;
     }
 
     /**
@@ -248,7 +248,7 @@ class InspectionSchedule extends Model
     {
         $startAtLocal = $this->startAtLocal();
 
-        return $startAtLocal ? $startAtLocal->format('H:i:s') : null;
+        return $startAtLocal ? $startAtLocal->format('H:i') : null;
     }
 
     /**
@@ -258,7 +258,7 @@ class InspectionSchedule extends Model
     {
         $endAtLocal = $this->endAtLocal();
 
-        return $endAtLocal ? $endAtLocal->format('H:i:s') : null;
+        return $endAtLocal ? $endAtLocal->format('H:i') : null;
     }
 
     /**

@@ -13,6 +13,8 @@ import {
     UserCircleIcon,
     ExclamationTriangleIcon,
     ChatBubbleLeftRightIcon,
+    CameraIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const MyInspections = () => {
@@ -20,6 +22,8 @@ const MyInspections = () => {
     const [inspections, setInspections] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
 
     const { data: inspectionsData, isLoading: inspectionsLoading, refetch } = useQuery({
         queryKey: ['myInspections'],
@@ -47,6 +51,8 @@ const MyInspections = () => {
                 return <XCircleIcon className="h-5 w-5 text-red-500" />;
             case 'pending':
                 return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+            case 'needs_reinspection':
+                return <ExclamationTriangleIcon className="h-5 w-5 text-orange-500" />;
             default:
                 return <ClockIcon className="h-5 w-5 text-gray-400" />;
         }
@@ -60,6 +66,8 @@ const MyInspections = () => {
                 return 'Gagal';
             case 'pending':
                 return 'Menunggu';
+            case 'needs_reinspection':
+                return 'Perlu Inspeksi Ulang';
             default:
                 return 'Tidak Diketahui';
         }
@@ -73,6 +81,8 @@ const MyInspections = () => {
                 return 'bg-red-100 text-red-800';
             case 'pending':
                 return 'bg-yellow-100 text-yellow-800';
+            case 'needs_reinspection':
+                return 'bg-orange-100 text-orange-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -103,6 +113,11 @@ const MyInspections = () => {
         );
     };
 
+    const handlePhotoClick = (url) => {
+        setSelectedPhoto(url);
+        setShowPhotoModal(true);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center h-48 sm:h-64">
@@ -121,7 +136,7 @@ const MyInspections = () => {
                     <XCircleIcon className="h-10 w-10 sm:h-12 sm:w-12 text-red-500 mx-auto mb-4" />
                     <p className="text-sm sm:text-base text-red-600">{error}</p>
                     <button
-                        onClick={fetchMyInspections}
+                        onClick={refetch}
                         className="mt-4 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-xs sm:text-sm"
                     >
                         Coba Lagi
@@ -289,16 +304,63 @@ const MyInspections = () => {
                                                     </div>
                                                 )}
 
-                                                {!inspection.is_schedule && inspection.photo_url && (
+                                                {!inspection.is_schedule && (
                                                     <div className="text-sm text-gray-600">
                                                         <span className="font-medium">Foto:</span>
-                                                        <div className="mt-1">
-                                                            <img
-                                                                src={inspection.photo_url}
-                                                                alt="Foto inspeksi"
-                                                                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                                                            />
+                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                            {/* APAR Photo */}
+                                                            {inspection.photo_url && (
+                                                                <div 
+                                                                    className="relative group cursor-pointer"
+                                                                    onClick={() => handlePhotoClick(inspection.photo_url)}
+                                                                >
+                                                                    <img
+                                                                        src={inspection.photo_url}
+                                                                        alt="Foto APAR"
+                                                                        className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* Selfie Photo */}
+                                                            {inspection.selfie_url && (
+                                                                <div 
+                                                                    className="relative group cursor-pointer"
+                                                                    onClick={() => handlePhotoClick(inspection.selfie_url)}
+                                                                >
+                                                                    <img
+                                                                        src={inspection.selfie_url}
+                                                                        alt="Foto Selfie"
+                                                                        className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                                                                    />
+                                                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                                                                </div>
+                                                            )}
+
+                                                            {/* Damage Photos */}
+                                                            {inspection.inspection_damages && inspection.inspection_damages.map((damage, idx) => (
+                                                                damage.damage_photo_url && (
+                                                                    <div 
+                                                                        key={idx}
+                                                                        className="relative group cursor-pointer"
+                                                                        onClick={() => handlePhotoClick(damage.damage_photo_url)}
+                                                                    >
+                                                                        <img
+                                                                            src={damage.damage_photo_url}
+                                                                            alt={`Kerusakan ${idx + 1}`}
+                                                                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
+                                                                        />
+                                                                        <div className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
+                                                                            Rusak
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            ))}
                                                         </div>
+                                                        {(!inspection.photo_url && !inspection.selfie_url && (!inspection.inspection_damages || inspection.inspection_damages.length === 0)) && (
+                                                            <p className="text-gray-400 text-xs italic mt-1">Tidak ada foto</p>
+                                                        )}
                                                     </div>
                                                 )}
 
@@ -428,6 +490,33 @@ const MyInspections = () => {
                     </div>
                 )}
             </div>
+
+            {/* Photo Modal */}
+            {showPhotoModal && selectedPhoto && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setShowPhotoModal(false)}>
+                    <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-200">
+                            <div className="flex items-center">
+                                <CameraIcon className="h-6 w-6 text-red-600 mr-3" />
+                                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Foto Hasil Inspeksi</h3>
+                            </div>
+                            <button 
+                                onClick={() => setShowPhotoModal(false)}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                            >
+                                <XMarkIcon className="h-6 w-6 text-gray-500 hover:text-gray-700" />
+                            </button>
+                        </div>
+                        <div className="p-4 sm:p-6 flex justify-center items-center bg-gray-100 flex-1 overflow-auto">
+                            <img
+                                src={selectedPhoto}
+                                alt="Foto inspeksi full"
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
