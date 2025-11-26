@@ -204,10 +204,11 @@ class AparController extends Controller
      */
     public function qrCode(Apar $apar)
     {
-        // TODO: Only generate QR code once and store it, instead of generating on each request
+        // Match PDF generation parameters to ensure consistency
+        // PDF uses size(200) and margin(5)
         $qrCode = QrCode::format('png')
-            ->size(300)
-            ->margin(10)
+            ->size(200)
+            ->margin(5)
             ->generate($apar->qr_code);
 
         return response($qrCode)

@@ -50,7 +50,8 @@ const AparDetail: React.FC = () => {
     const qrQuery = useQuery({
         queryKey: ['apar', id, 'qr-blob'],
         queryFn: async () => {
-            const response = await apiClient.get(`/api/apar/${id}/qr-code`, {
+            // Add version to bust browser cache since we updated generation params
+            const response = await apiClient.get(`/api/apar/${id}/qr-code?v=2`, {
                 responseType: 'blob',
             });
             return response.data;
