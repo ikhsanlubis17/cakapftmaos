@@ -29,6 +29,7 @@ class InspectionController extends Controller
             'apar.aparType',
             'user',
             'schedule',
+            'inspectionDamages.damageCategory',
             'repairApproval.approver'
         ]);
 

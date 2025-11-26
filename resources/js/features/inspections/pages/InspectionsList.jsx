@@ -17,6 +17,7 @@ import {
     ExclamationTriangleIcon,
     CameraIcon,
     XMarkIcon,
+    EyeIcon,
 } from '@heroicons/react/24/outline';
 
 const InspectionsList = () => {
@@ -40,7 +41,7 @@ const InspectionsList = () => {
         queryKey: ['inspections-list'],
         queryFn: async () => {
             const res = await apiClient.get('/api/inspections');
-            return res.data?.data || [];
+            return res.data || [];
         },
         refetchOnWindowFocus: false,
         staleTime: 60000,
@@ -296,6 +297,7 @@ const InspectionsList = () => {
                                 className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm transition duration-150 ease-in-out appearance-none"
                             >
                                 <option value="all">Semua Lokasi</option>
+                                <option value="all">Semua Lokasi</option>
                                 {locations.map((loc, idx) => (
                                     <option key={idx} value={loc}>{loc}</option>
                                 ))}
@@ -317,166 +319,158 @@ const InspectionsList = () => {
                     </p>
                 </div>
 
-                {/* Inspections List */}
-                <div className="space-y-4">
-                    {sortedInspections.length > 0 ? (
-                        sortedInspections.map((inspection) => (
-                            <div key={inspection.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-                                <div className="p-6">
-                                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                                        {/* Left Section: Info */}
-                                        <div className="flex-1 space-y-4">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                {/* Table Layout */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        APAR / Lokasi
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Teknisi
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Waktu
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Foto
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Catatan
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {sortedInspections.length > 0 ? (
+                                    sortedInspections.map((inspection) => (
+                                        <tr key={inspection.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0 h-10 w-10 bg-red-50 rounded-lg flex items-center justify-center">
                                                         <FireIcon className="h-6 w-6 text-red-600" />
                                                     </div>
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-gray-900">
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-medium text-gray-900">
                                                             {inspection.apar?.serial_number || 'N/A'}
-                                                        </h3>
-                                                        <p className="text-sm text-gray-500">
-                                                            {inspection.apar?.apar_type?.name || 'Tipe tidak tersedia'}
-                                                        </p>
+                                                        </div>
+                                                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                                                            {getLocationTypeIcon(inspection.apar?.location_type)}
+                                                            {inspection.apar?.location_name || 'Lokasi tidak tersedia'}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(inspection.status)}`}>
-                                                    {getStatusText(inspection.status)}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                                <div className="flex items-center gap-2 text-gray-600">
-                                                    {getLocationTypeIcon(inspection.apar?.location_type)}
-                                                    <span className="truncate">
-                                                        {inspection.apar?.location_name || 'Lokasi tidak tersedia'}
-                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0 h-8 w-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                                        <UserCircleIcon className="h-5 w-5 text-gray-500" />
+                                                    </div>
+                                                    <div className="ml-3">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {inspection.user?.name || 'Teknisi tidak tersedia'}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
-                                                    <UserCircleIcon className="h-4 w-4 flex-shrink-0" />
-                                                    <span>
-                                                        {inspection.user?.name || 'Teknisi tidak tersedia'}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-gray-600">
-                                                    <CalendarIcon className="h-4 w-4 flex-shrink-0" />
-                                                    <span>
-                                                        {formatDate(inspection.created_at)}
-                                                    </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">
+                                                    {formatDate(inspection.created_at)}
                                                 </div>
                                                 {inspection.is_schedule && (
-                                                    <div className="flex items-center gap-2 text-blue-600">
-                                                        <ClockIcon className="h-4 w-4 flex-shrink-0" />
-                                                        <span className="font-medium">Jadwal Inspeksi</span>
+                                                    <div className="text-xs text-blue-600 mt-1">
+                                                        Jadwal Inspeksi
                                                     </div>
                                                 )}
-                                            </div>
-
-                                            {inspection.notes && (
-                                                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
-                                                    <span className="font-medium text-gray-900">Catatan: </span>
-                                                    {inspection.notes}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Right Section: Photos & Actions */}
-                                        <div className="lg:w-1/3 space-y-4">
-                                            {!inspection.is_schedule && (
-                                                <div className="text-sm text-gray-600">
-                                                    <div className="flex items-center mb-2">
-                                                        <CameraIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                                        <span className="font-medium">Foto Inspeksi:</span>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {/* APAR Photo */}
-                                                        {inspection.photo_url && (
-                                                            <div 
-                                                                className="relative group cursor-pointer"
-                                                                onClick={() => handlePhotoClick(inspection.photo_url)}
-                                                            >
-                                                                <img
-                                                                    src={inspection.photo_url}
-                                                                    alt="Foto APAR"
-                                                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
-                                                                />
-                                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
-                                                            </div>
-                                                        )}
-                                                        
-                                                        {/* Selfie Photo */}
-                                                        {inspection.selfie_url && (
-                                                            <div 
-                                                                className="relative group cursor-pointer"
-                                                                onClick={() => handlePhotoClick(inspection.selfie_url)}
-                                                            >
-                                                                <img
-                                                                    src={inspection.selfie_url}
-                                                                    alt="Foto Selfie"
-                                                                    className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
-                                                                />
-                                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
-                                                            </div>
-                                                        )}
-
-                                                        {/* Damage Photos */}
-                                                        {inspection.inspection_damages && inspection.inspection_damages.map((damage, idx) => (
-                                                            damage.damage_photo_url && (
-                                                                <div 
-                                                                    key={idx}
-                                                                    className="relative group cursor-pointer"
-                                                                    onClick={() => handlePhotoClick(damage.damage_photo_url)}
-                                                                >
-                                                                    <img
-                                                                        src={damage.damage_photo_url}
-                                                                        alt={`Kerusakan ${idx + 1}`}
-                                                                        className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
-                                                                    />
-                                                                    <div className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
-                                                                        Rusak
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        ))}
-                                                    </div>
-                                                    
-                                                    {(!inspection.photo_url && !inspection.selfie_url && (!inspection.inspection_damages || inspection.inspection_damages.length === 0)) && (
-                                                        <div className="text-sm text-gray-500 italic">
-                                                            Tidak ada foto
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inspection.status)}`}>
+                                                    {getStatusText(inspection.status)}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex -space-x-2 overflow-hidden">
+                                                    {/* APAR Photo */}
+                                                    {inspection.photo_url && (
+                                                        <div 
+                                                            className="relative inline-block h-10 w-10 rounded-full ring-2 ring-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
+                                                            onClick={() => handlePhotoClick(inspection.photo_url)}
+                                                            title="Foto APAR"
+                                                        >
+                                                            <img
+                                                                className="h-full w-full object-cover rounded-full"
+                                                                src={inspection.photo_url}
+                                                                alt="Foto APAR"
+                                                            />
                                                         </div>
                                                     )}
-                                                </div>
-                                            )}
+                                                    
+                                                    {/* Selfie Photo */}
+                                                    {inspection.selfie_url && (
+                                                        <div 
+                                                            className="relative inline-block h-10 w-10 rounded-full ring-2 ring-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
+                                                            onClick={() => handlePhotoClick(inspection.selfie_url)}
+                                                            title="Foto Selfie"
+                                                        >
+                                                            <img
+                                                                className="h-full w-full object-cover rounded-full"
+                                                                src={inspection.selfie_url}
+                                                                alt="Foto Selfie"
+                                                            />
+                                                        </div>
+                                                    )}
 
-                                            {inspection.is_schedule && (
-                                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 text-center">
-                                                    <ClockIcon className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                                                    <p className="text-sm font-medium text-blue-900">Belum Dilakukan</p>
-                                                    <p className="text-xs text-blue-700 mt-1">
-                                                        Inspeksi dijadwalkan pada {formatDate(inspection.scheduled_date)}
-                                                    </p>
+                                                    {/* Damage Photos */}
+                                                    {inspection.inspection_damages?.map((damage, idx) => (
+                                                        damage.damage_photo_url && (
+                                                            <div 
+                                                                key={idx}
+                                                                className="relative inline-block h-10 w-10 rounded-full ring-2 ring-white cursor-pointer hover:z-10 transition-transform hover:scale-110"
+                                                                onClick={() => handlePhotoClick(damage.damage_photo_url)}
+                                                                title={`Kerusakan: ${damage.damage_category?.name || 'Unknown'}`}
+                                                            >
+                                                                <img
+                                                                    className="h-full w-full object-cover rounded-full"
+                                                                    src={damage.damage_photo_url}
+                                                                    alt="Foto Kerusakan"
+                                                                />
+                                                                <div className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full border-2 border-white"></div>
+                                                            </div>
+                                                        )
+                                                    ))}
+
+                                                    {(!inspection.photo_url && !inspection.selfie_url && (!inspection.inspection_damages || inspection.inspection_damages.length === 0)) && (
+                                                        <span className="text-xs text-gray-400 italic">No photos</span>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <ClipboardDocumentListIcon className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                Tidak ada data
-                            </h3>
-                            <p className="text-sm text-gray-600 max-w-md mx-auto">
-                                {filters.search || filters.status !== 'all' || filters.location !== 'all'
-                                    ? 'Tidak ada inspeksi yang sesuai dengan filter yang dipilih.'
-                                    : 'Belum ada data inspeksi yang tersedia.'}
-                            </p>
-                        </div>
-                    )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-500 max-w-xs truncate">
+                                                    {inspection.notes || '-'}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6" className="px-6 py-12 text-center">
+                                            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 mb-4">
+                                                <ClipboardDocumentListIcon className="h-6 w-6 text-gray-400" />
+                                            </div>
+                                            <h3 className="text-lg font-medium text-gray-900">Tidak ada data</h3>
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Belum ada data inspeksi yang tersedia.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
