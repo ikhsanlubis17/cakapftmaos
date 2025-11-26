@@ -591,10 +591,21 @@ const InspectionFormEnhanced = () => {
     };
 
     // Camera and location methods
+    const [locationSkipped, setLocationSkipped] = useState(false);
+
     const getCurrentLocation = () => {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
+            setLocationLoading(true);
+            setLocationError('');
+            setLocationSkipped(false);
+            
+            // Use watchPosition instead of getCurrentPosition for better reliability
+            const watchId = navigator.geolocation.watchPosition(
                 (position) => {
+                    // We got a position! Stop watching.
+                    navigator.geolocation.clearWatch(watchId);
+                    
+                    setLocationLoading(false);
                     const location = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
@@ -614,19 +625,51 @@ const InspectionFormEnhanced = () => {
                     }
                 },
                 (error) => {
-                    console.error('Error getting location:', error);
-                    showError('Tidak dapat mendapatkan lokasi. Pastikan GPS aktif dan izin lokasi diizinkan.');
+                    // Only handle error if we haven't got a position yet
+                    // But watchPosition might call error multiple times or eventually success
+                    // We'll set a timeout to clear the watch if it takes too long
+                    console.warn('Watch position error:', error);
                 },
                 {
                     enableHighAccuracy: true,
                     timeout: 10000,
-                    maximumAge: 300000
+                    maximumAge: 10000
                 }
             );
+
+            // Set a timeout to stop watching if no position is found within 10 seconds
+            setTimeout(() => {
+                navigator.geolocation.clearWatch(watchId);
+                setLocationLoading((prev) => {
+                    if (prev) { // If still loading
+                        console.error('Geolocation timed out');
+                        showError('Gagal mendapatkan lokasi. Silakan coba lagi atau lanjutkan tanpa lokasi.');
+                        setLocationError('Waktu permintaan lokasi habis.');
+                        return false;
+                    }
+                    return prev;
+                });
+            }, 10000);
+
         } else {
             showError('Geolokasi tidak didukung di browser ini');
         }
     };
+
+    const skipLocation = () => {
+        setLocationSkipped(true);
+        setCurrentLocation(null);
+        setLocationValid(true); // Bypass validation
+        setLocationError('');
+    };
+
+    // ... (inside the render return)
+    
+    // Find the location section in the JSX and add the retry button
+    // It seems the location section is not explicitly separated in the provided code snippet, 
+    // but I can see where `locationError` is used or where the location status is displayed.
+    // I will search for where `locationError` is likely displayed or add a new section for it.
+
 
     const startCamera = async () => {
         try {
@@ -990,6 +1033,99 @@ const InspectionFormEnhanced = () => {
                             className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg resize-none"
                             placeholder="Tambahkan catatan inspeksi (opsional)..."
                         />
+                    </div>
+
+                    {/* Location Status */}
+                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <label className="block text-lg font-semibold text-gray-900 flex items-center">
+                                <MapPinIcon className="h-6 w-6 mr-2 text-gray-600" />
+                                Lokasi Inspeksi
+                            </label>
+                            {locationLoading && (
+                                <span className="text-sm text-gray-500 flex items-center">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2"></div>
+                                    Mencari lokasi...
+                                </span>
+                            )}
+                        </div>
+
+                        {currentLocation ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center text-sm text-gray-600">
+                                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                                    <span>Koordinat: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</span>
+                                </div>
+                                
+                                {apar?.latitude && apar?.longitude && (
+                                    <div className={`flex items-center p-3 rounded-lg ${locationValid ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                                        {locationValid ? (
+                                            <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                                        ) : (
+                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                                        )}
+                                        <div>
+                                            <p className="font-medium">
+                                                {locationValid ? 'Lokasi Valid' : 'Lokasi Tidak Valid'}
+                                            </p>
+                                            <p className="text-sm mt-1">
+                                                Jarak ke APAR: <strong>{locationDistance}m</strong> (Maks: {locationValidRadius}m)
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ) : locationSkipped ? (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div className="flex items-start">
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-blue-800">
+                                            Lokasi Dilewati
+                                        </p>
+                                        <p className="text-sm text-blue-700 mt-1">
+                                            Inspeksi akan disimpan tanpa data lokasi.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div className="flex items-start">
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-medium text-yellow-800">
+                                            Lokasi belum terdeteksi
+                                        </p>
+                                        <p className="text-sm text-yellow-700 mt-1">
+                                            {locationError || 'Pastikan GPS aktif dan izin lokasi diberikan.'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                            <button
+                                type="button"
+                                onClick={getCurrentLocation}
+                                disabled={locationLoading}
+                                className="flex-1 flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                            >
+                                <MapPinIcon className="h-4 w-4 mr-2" />
+                                {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi'}
+                            </button>
+                            
+                            {!currentLocation && !locationLoading && (
+                                <button
+                                    type="button"
+                                    onClick={skipLocation}
+                                    className="flex-1 flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                >
+                                    Lanjutkan Tanpa Lokasi
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* Submit Button */}
