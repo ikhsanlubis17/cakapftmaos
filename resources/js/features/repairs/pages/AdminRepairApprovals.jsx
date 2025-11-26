@@ -7,11 +7,13 @@ import {
     ExclamationTriangleIcon,
     CameraIcon,
     XMarkIcon,
+    EyeIcon,
+    MagnifyingGlassIcon,
+    FunnelIcon,
 } from '@heroicons/react/24/outline';
 import ApprovalStats from '../components/ApprovalStats';
-import ApprovalFilters from '../components/ApprovalFilters';
-import ApprovalCard from '../components/ApprovalCard';
 import ApprovalDetailModal from '../components/ApprovalDetailModal';
+import ApprovalStatusBadge from '../components/ApprovalStatusBadge';
 
 const AdminRepairApprovals = () => {
     const { apiClient } = useAuth();
@@ -146,12 +148,8 @@ const AdminRepairApprovals = () => {
         setSelectedApproval(null);
     };
 
-    const handleFilterChange = (newFilters) => {
-        setFilters(newFilters);
-    };
-
-    const handleSearch = (searchTerm) => {
-        setFilters(prev => ({ ...prev, search: searchTerm }));
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
     };
 
     const handleRefresh = async () => {
@@ -161,6 +159,18 @@ const AdminRepairApprovals = () => {
     const handlePhotoClick = (url) => {
         setSelectedPhoto(url);
         setShowPhotoModal(true);
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
     };
 
     if (loading) {
@@ -234,12 +244,69 @@ const AdminRepairApprovals = () => {
                 <ApprovalStats stats={statsData} />
 
                 {/* Filters */}
-                <ApprovalFilters
-                    onFilterChange={handleFilterChange}
-                    onSearch={handleSearch}
-                    supervisors={supervisors}
-                    teknisis={teknisis}
-                />
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {/* Search */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Cari..."
+                                value={filters.search}
+                                onChange={(e) => handleFilterChange('search', e.target.value)}
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm transition duration-150 ease-in-out"
+                            />
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <FunnelIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <select
+                                value={filters.status}
+                                onChange={(e) => handleFilterChange('status', e.target.value)}
+                                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm transition duration-150 ease-in-out appearance-none"
+                            >
+                                <option value="all">Semua Status</option>
+                                <option value="pending">Menunggu</option>
+                                <option value="approved">Disetujui</option>
+                                <option value="rejected">Ditolak</option>
+                                <option value="completed">Selesai</option>
+                            </select>
+                        </div>
+
+                        {/* Supervisor Filter */}
+                        <div className="relative">
+                            <select
+                                value={filters.supervisor}
+                                onChange={(e) => handleFilterChange('supervisor', e.target.value)}
+                                className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm transition duration-150 ease-in-out appearance-none"
+                            >
+                                <option value="all">Semua Supervisor</option>
+                                {supervisors.map((sup) => (
+                                    <option key={sup.id} value={sup.id}>{sup.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Teknisi Filter */}
+                        <div className="relative">
+                            <select
+                                value={filters.teknisi}
+                                onChange={(e) => handleFilterChange('teknisi', e.target.value)}
+                                className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm transition duration-150 ease-in-out appearance-none"
+                            >
+                                <option value="all">Semua Teknisi</option>
+                                {teknisis.map((tech) => (
+                                    <option key={tech.id} value={tech.id}>{tech.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Results Info */}
                 <div className="flex items-center justify-between px-2">
@@ -247,40 +314,130 @@ const AdminRepairApprovals = () => {
                         Menampilkan <span className="font-semibold text-gray-900">{sortedApprovals.length}</span> dari{' '}
                         <span className="font-semibold text-gray-900">{approvalsData.length}</span> persetujuan
                     </p>
-                    {filters.search && (
-                        <p className="text-sm text-gray-500">
-                            Hasil pencarian: "{filters.search}"
-                        </p>
-                    )}
                 </div>
 
-                {/* Approvals Grid */}
-                {sortedApprovals.length > 0 ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {sortedApprovals.map((approval) => (
-                            <ApprovalCard
-                                key={approval.id}
-                                approval={approval}
-                                onViewDetail={handleViewDetail}
-                                onPhotoClick={handlePhotoClick}
-                            />
-                        ))}
+                {/* Table View */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        APAR / Lokasi
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Teknisi
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Supervisor
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Foto
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Aksi
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {sortedApprovals.length > 0 ? (
+                                    sortedApprovals.map((approval) => (
+                                        <tr key={approval.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0 h-10 w-10 bg-red-50 rounded-lg flex items-center justify-center">
+                                                        <FireIcon className="h-6 w-6 text-red-600" />
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-medium text-gray-900">
+                                                            {approval.inspection?.apar?.serial_number || 'N/A'}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500">
+                                                            {approval.inspection?.apar?.location_name || 'Lokasi N/A'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{approval.inspection?.user?.name || '-'}</div>
+                                                <div className="text-xs text-gray-500">{formatDate(approval.inspection?.created_at)}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">{approval.approver?.name || '-'}</div>
+                                                {approval.approver && (
+                                                    <div className="text-xs text-gray-500">
+                                                        {approval.approver.role ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) : 'Approver'}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <ApprovalStatusBadge status={approval.status} size="sm" />
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex -space-x-2 overflow-hidden">
+                                                    {approval.inspection?.photo_url && (
+                                                        <img
+                                                            className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform"
+                                                            src={approval.inspection.photo_url}
+                                                            alt="APAR"
+                                                            onClick={() => handlePhotoClick(approval.inspection.photo_url)}
+                                                            title="Foto APAR"
+                                                        />
+                                                    )}
+                                                    {approval.inspection?.selfie_url && (
+                                                        <img
+                                                            className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform"
+                                                            src={approval.inspection.selfie_url}
+                                                            alt="Selfie"
+                                                            onClick={() => handlePhotoClick(approval.inspection.selfie_url)}
+                                                            title="Foto Selfie"
+                                                        />
+                                                    )}
+                                                    {approval.inspection?.inspection_damages?.map((damage, idx) => (
+                                                        damage.damage_photo_url && (
+                                                            <img
+                                                                key={idx}
+                                                                className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform border-2 border-red-500"
+                                                                src={damage.damage_photo_url}
+                                                                alt="Kerusakan"
+                                                                onClick={() => handlePhotoClick(damage.damage_photo_url)}
+                                                                title={`Kerusakan: ${damage.damage_category?.name || 'Unknown'}`}
+                                                            />
+                                                        )
+                                                    ))}
+                                                    {(!approval.inspection?.photo_url && !approval.inspection?.selfie_url && (!approval.inspection?.inspection_damages || approval.inspection.inspection_damages.length === 0)) && (
+                                                        <span className="text-xs text-gray-400 italic">No photos</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <button
+                                                    onClick={() => handleViewDetail(approval)}
+                                                    className="text-blue-600 hover:text-blue-900 flex items-center justify-end gap-1 ml-auto"
+                                                >
+                                                    <EyeIcon className="h-4 w-4" />
+                                                    Detail
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6" className="px-6 py-12 text-center">
+                                            <div className="mx-auto flex flex-col items-center justify-center">
+                                                <FireIcon className="h-12 w-12 text-gray-300 mb-3" />
+                                                <p className="text-gray-500 text-sm">Tidak ada data persetujuan yang ditemukan.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <FireIcon className="h-8 w-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            Tidak ada data
-                        </h3>
-                        <p className="text-sm text-gray-600 max-w-md mx-auto">
-                            {filters.status !== 'all' || filters.supervisor !== 'all' || filters.teknisi !== 'all' || filters.search
-                                ? 'Tidak ada persetujuan yang sesuai dengan filter yang dipilih.'
-                                : 'Belum ada permintaan perbaikan yang perlu ditinjau.'}
-                        </p>
-                    </div>
-                )}
+                </div>
             </div>
 
             {/* Detail Modal */}
@@ -288,7 +445,6 @@ const AdminRepairApprovals = () => {
                 approval={selectedApproval}
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
-                onPhotoClick={handlePhotoClick}
             />
 
             {/* Photo Modal */}

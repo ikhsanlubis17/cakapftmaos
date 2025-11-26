@@ -16,7 +16,7 @@ class RepairApprovalController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RepairApproval::with(['inspection.apar.aparType', 'inspection.user', 'approver']);
+        $query = RepairApproval::with(['inspection.apar.aparType', 'inspection.user', 'inspection.inspectionDamages.damageCategory', 'approver']);
 
         // Filter by status
         if ($request->has('status')) {

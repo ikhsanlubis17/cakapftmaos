@@ -88,6 +88,7 @@ class InspectionController extends Controller
         $inspections = Inspection::with([
             'apar.aparType',
             'schedule',
+            'inspectionDamages.damageCategory',
             'repairApproval.approver'
         ])
             ->where('user_id', $user->id)

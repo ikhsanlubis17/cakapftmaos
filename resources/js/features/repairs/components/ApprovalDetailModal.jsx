@@ -369,8 +369,8 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
-                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
-                                                <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                                <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                             </div>
                                             <p className="mt-2 text-sm font-medium text-gray-700">Foto APAR</p>
                                         </div>
@@ -389,8 +389,8 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
-                                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
-                                                <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                                <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                             </div>
                                             <p className="mt-2 text-sm font-medium text-gray-700">Foto Selfie</p>
                                         </div>
@@ -414,8 +414,8 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                 <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full shadow-sm z-10">
                                                     Rusak
                                                 </div>
-                                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-xl transition-all flex items-center justify-center">
-                                                    <CameraIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                                    <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                                 </div>
                                                 <p className="mt-2 text-sm font-medium text-gray-700">
                                                     {damage.damage_category?.name || `Kerusakan ${idx + 1}`}

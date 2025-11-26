@@ -179,7 +179,9 @@ const ApprovalCard = ({ approval, onViewDetail }) => {
                                 alt="Foto APAR"
                                 className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                                <EyeIcon className="h-6 w-6 text-white drop-shadow-lg" />
+                            </div>
                         </div>
                     )}
                     
@@ -197,7 +199,9 @@ const ApprovalCard = ({ approval, onViewDetail }) => {
                                 alt="Foto Selfie"
                                 className="w-16 h-16 object-cover rounded-lg border border-gray-200 hover:opacity-90 transition-opacity"
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                                <EyeIcon className="h-6 w-6 text-white drop-shadow-lg" />
+                            </div>
                         </div>
                     )}
 
@@ -219,6 +223,9 @@ const ApprovalCard = ({ approval, onViewDetail }) => {
                                 />
                                 <div className="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
                                     Rusak
+                                </div>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                                    <EyeIcon className="h-6 w-6 text-white drop-shadow-lg" />
                                 </div>
                             </div>
                         )
