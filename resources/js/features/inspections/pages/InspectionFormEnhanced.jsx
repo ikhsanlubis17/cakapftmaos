@@ -288,7 +288,17 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan <span className="text-red-500">*</span></label>
-                            <select value={newDamage.category_id} onChange={(e) => setNewDamage({ ...newDamage, category_id: e.target.value })} className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" required>
+                            <select 
+                                value={newDamage.category_id} 
+                                onChange={(e) => {
+                                    const category = damageCategories.find(c => c.id === parseInt(e.target.value));
+                                    setNewDamage({ 
+                                        ...newDamage, 
+                                        category_id: e.target.value,
+                                        severity: category ? category.severity : 'medium'
+                                    });
+                                }} 
+                                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" required>
                                 <option value="">Pilih kategori kerusakan</option>
                                 {damageCategories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}
                             </select>
@@ -296,11 +306,14 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Keparahan</label>
-                            <select value={newDamage.severity} onChange={(e) => setNewDamage({ ...newDamage, severity: e.target.value })} className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white">
+                            <select 
+                                value={newDamage.severity} 
+                                disabled
+                                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-100 cursor-not-allowed text-gray-500"
+                            >
                                 <option value="low">Rendah</option>
                                 <option value="medium">Sedang</option>
                                 <option value="high">Tinggi</option>
-                                <option value="critical">Kritis</option>
                             </select>
                         </div>
                     </div>
@@ -1018,7 +1031,25 @@ const InspectionFormEnhanced = () => {
                     </div>
 
                     {condition === 'damaged' && (
-                        <DamageSection selectedDamages={selectedDamages} removeDamage={removeDamage} showDamageForm={showDamageForm} setShowDamageForm={setShowDamageForm} newDamage={newDamage} setNewDamage={setNewDamage} damageCategories={damageCategories} startDamageCamera={startDamageCamera} damageCameraActive={damageCameraActive} damageCameraLoading={damageCameraLoading} damageVideoRef={damageVideoRef} damageCanvasRef={damageCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} captureDamagePhoto={captureDamagePhoto} stopDamageCamera={stopDamageCamera} addDamage={addDamage} />
+                        <DamageSection 
+                            selectedDamages={selectedDamages} 
+                            removeDamage={removeDamage} 
+                            showDamageForm={showDamageForm} 
+                            setShowDamageForm={setShowDamageForm} 
+                            newDamage={newDamage} 
+                            setNewDamage={setNewDamage} 
+                            damageCategories={damageCategories.filter(cat => cat.type === apar?.apar_type?.name)} 
+                            startDamageCamera={startDamageCamera} 
+                            damageCameraActive={damageCameraActive} 
+                            damageCameraLoading={damageCameraLoading} 
+                            damageVideoRef={damageVideoRef} 
+                            damageCanvasRef={damageCanvasRef} 
+                            captureCountdown={captureCountdown} 
+                            showFlash={showFlash} 
+                            captureDamagePhoto={captureDamagePhoto} 
+                            stopDamageCamera={stopDamageCamera} 
+                            addDamage={addDamage} 
+                        />
                     )}
 
 

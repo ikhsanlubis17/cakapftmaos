@@ -25,6 +25,7 @@ const DamageCategoryManagement = () => {
         name: "",
         type: "",
         description: "",
+        severity: "medium",
         is_active: true,
     });
     const [availableTypes, setAvailableTypes] = useState([]);
@@ -169,6 +170,7 @@ const DamageCategoryManagement = () => {
             name: category.name,
             type: category.type || defaultType,
             description: category.description || "",
+            severity: category.severity || "medium",
             is_active: category.is_active,
         });
         setSelectedTypeForAdd(""); // Clear selected type when editing
@@ -182,6 +184,7 @@ const DamageCategoryManagement = () => {
             name: "",
             type: defaultType,
             description: "",
+            severity: "medium",
             is_active: true,
         });
         setEditingCategory(null);
@@ -237,7 +240,7 @@ const DamageCategoryManagement = () => {
 
     const resetForm = () => {
         const defaultType = availableTypes.length > 0 ? availableTypes[0] : "";
-        setFormData({ name: "", type: defaultType, description: "", is_active: true });
+        setFormData({ name: "", type: defaultType, description: "", severity: "medium", is_active: true });
         setEditingCategory(null);
         setShowForm(false);
     };
@@ -458,6 +461,28 @@ const DamageCategoryManagement = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Tingkat Keparahan{" "}
+                                        <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={formData.severity}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                severity: e.target.value,
+                                            })
+                                        }
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        required
+                                    >
+                                        <option value="low">Rendah</option>
+                                        <option value="medium">Sedang</option>
+                                        <option value="high">Tinggi</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Deskripsi
                                     </label>
                                     <textarea
@@ -595,6 +620,16 @@ const DamageCategoryManagement = () => {
                                                                     {category.description}
                                                                 </p>
                                                             )}
+                                                            <div className="mt-1">
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                                                                    category.severity === 'high' ? 'bg-red-100 text-red-800' :
+                                                                    category.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                                                    'bg-green-100 text-green-800'
+                                                                }`}>
+                                                                    {category.severity === 'high' ? 'Tinggi' :
+                                                                     category.severity === 'medium' ? 'Sedang' : 'Rendah'}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
                                                         {/* Action Buttons */}

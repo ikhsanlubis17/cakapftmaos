@@ -15,6 +15,7 @@ class DamageCategory extends Model
         'description',
         'is_active',
         'type',
+        'severity',
     ];
 
     protected $casts = [

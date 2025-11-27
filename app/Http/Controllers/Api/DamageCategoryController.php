@@ -61,6 +61,7 @@ class DamageCategoryController extends Controller
             'name' => 'required|string|max:255|unique:damage_categories',
             'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
             'description' => 'nullable|string',
+            'severity' => 'required|in:low,medium,high',
         ]);
 
         if ($validator->fails()) {
@@ -71,7 +72,7 @@ class DamageCategoryController extends Controller
             ], 422);
         }
 
-        $category = DamageCategory::create($request->only(['name', 'type', 'description']));
+        $category = DamageCategory::create($request->only(['name', 'type', 'description', 'severity']));
 
         return response()->json([
             'success' => true,
@@ -101,6 +102,7 @@ class DamageCategoryController extends Controller
             'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'severity' => 'required|in:low,medium,high',
         ]);
 
         if ($validator->fails()) {
@@ -111,7 +113,7 @@ class DamageCategoryController extends Controller
             ], 422);
         }
 
-        $damageCategory->update($request->only(['name', 'type', 'description', 'is_active']));
+        $damageCategory->update($request->only(['name', 'type', 'description', 'is_active', 'severity']));
 
         return response()->json([
             'success' => true,
