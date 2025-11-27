@@ -6,10 +6,11 @@ import {
     PencilIcon, 
     TrashIcon,
     ShieldCheckIcon,
-    UserGroupIcon
+    UserGroupIcon,
+    LockOpenIcon
 } from '@heroicons/react/24/outline';
 
-const UsersTable = ({ users, onEdit, onDelete }) => {
+const UsersTable = ({ users, onEdit, onDelete, onUnblock }) => {
     const getRoleIcon = (role) => {
         switch (role) {
             case 'admin':
@@ -156,6 +157,17 @@ const UsersTable = ({ users, onEdit, onDelete }) => {
                                         >
                                             <PencilIcon className="h-4 w-4" />
                                         </button>
+                                        {/* Unblock Button */}
+                                        {user.blocked_until && new Date(user.blocked_until) > new Date() && (
+                                            <button
+                                                onClick={() => onUnblock(user)}
+                                                className="p-1.5 rounded-md text-purple-600 bg-purple-100 hover:bg-purple-200 transition-colors"
+                                                title="Buka Blokir"
+                                            >
+                                                <LockOpenIcon className="h-4 w-4" />
+                                            </button>
+                                        )}
+
                                         {user.role !== 'admin' && (
                                             <button
                                                 onClick={() => onDelete(user.id)}

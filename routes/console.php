@@ -16,6 +16,12 @@ Schedule::command('inspections:send-reminders')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/inspection-reminders.log'));
 
+// Generate recurring schedules daily at 01:00 AM
+Schedule::command('inspections:generate-recurring')
+    ->dailyAt('01:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/recurring-schedules.log'));
+
 // Update APAR status daily at 6:00 AM
 Schedule::command('apar:update-status')
     ->dailyAt('06:00')

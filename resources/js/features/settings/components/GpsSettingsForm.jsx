@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPinIcon } from '@heroicons/react/24/outline';
 
-const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
+const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError, disabled }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-4">
@@ -20,7 +20,8 @@ const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
                         max="1000"
                         value={settings.gps_radius_validation || ''}
                         onChange={(e) => onChange('gps_radius_validation', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('gps_radius_validation') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('gps_radius_validation') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('gps_radius_validation') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -44,7 +45,8 @@ const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
                         max="120"
                         value={settings.inspection_time_window || ''}
                         onChange={(e) => onChange('inspection_time_window', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('inspection_time_window') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('inspection_time_window') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('inspection_time_window') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -66,7 +68,8 @@ const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
                         type="time"
                         value={settings.working_hours_start || ''}
                         onChange={(e) => onChange('working_hours_start', e.target.value)}
-                        className={`w-full border ${hasError('working_hours_start') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('working_hours_start') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('working_hours_start') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -88,7 +91,8 @@ const GpsSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
                         type="time"
                         value={settings.working_hours_end || ''}
                         onChange={(e) => onChange('working_hours_end', e.target.value)}
-                        className={`w-full border ${hasError('working_hours_end') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('working_hours_end') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('working_hours_end') && (
                         <p className="text-sm text-red-600 mt-1">

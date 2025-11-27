@@ -16,6 +16,7 @@ import {
     XMarkIcon,
     ShieldCheckIcon,
     UserGroupIcon,
+    LockOpenIcon,
 } from "@heroicons/react/24/outline";
 
 const UserList = () => {
@@ -69,6 +70,28 @@ const UserList = () => {
             } catch (error) {
                 console.error("Error deleting user:", error);
                 showError("Gagal menghapus pengguna. Silakan coba lagi.");
+            }
+        }
+    };
+
+    const handleUnblock = async (userId, userName) => {
+        const confirmed = await confirm({
+            title: "Konfirmasi Buka Blokir",
+            message: `Apakah Anda yakin ingin membuka blokir pengguna ${userName}?`,
+            type: "info",
+            confirmText: "Ya, Buka Blokir",
+            cancelText: "Batal",
+            confirmButtonColor: "purple",
+        });
+
+        if (confirmed) {
+            try {
+                await apiClient.post(`/api/users/${userId}/unblock`);
+                showSuccess("Blokir pengguna berhasil dibuka");
+                queryClient.invalidateQueries({ queryKey: ["users"] });
+            } catch (error) {
+                console.error("Error unblocking user:", error);
+                showError("Gagal membuka blokir pengguna. Silakan coba lagi.");
             }
         }
     };
@@ -482,6 +505,11 @@ const UserList = () => {
                                                                     user.is_active
                                                                 )}
                                                             </span>
+                                                            {user.blocked_until && new Date(user.blocked_until) > new Date() && (
+                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                                    Terblokir
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -535,6 +563,17 @@ const UserList = () => {
                                                         >
                                                             <PencilIcon className="h-4 w-4" />
                                                         </Link>
+
+                                                        {/* Unblock Button */}
+                                                        {user.blocked_until && new Date(user.blocked_until) > new Date() && (
+                                                            <button
+                                                                onClick={() => handleUnblock(user.id, user.name)}
+                                                                className="inline-flex items-center justify-center p-2 border border-transparent text-xs font-medium rounded text-purple-600 bg-purple-100 hover:bg-purple-200 transition-colors"
+                                                                title="Buka Blokir"
+                                                            >
+                                                                <LockOpenIcon className="h-4 w-4" />
+                                                            </button>
+                                                        )}
 
                                                         {/* Delete Button */}
                                                         <button

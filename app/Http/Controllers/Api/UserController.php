@@ -15,7 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'created_at')
+        $users = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'blocked_until', 'created_at')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -112,6 +112,23 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Pengguna berhasil dihapus'
+        ]);
+    }
+    /**
+     * Unblock a user.
+     */
+    public function unblock(User $user)
+    {
+        // Clear rate limiter
+        $throttleKey = 'login|' . $user->email;
+        \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
+
+        // Clear blocked_until
+        $user->blocked_until = null;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Blokir pengguna berhasil dibuka'
         ]);
     }
 } 

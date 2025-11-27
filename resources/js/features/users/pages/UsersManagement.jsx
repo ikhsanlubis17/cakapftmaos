@@ -103,6 +103,28 @@ const UsersManagement = () => {
         }
     };
 
+    const handleUnblock = async (user) => {
+        const confirmed = await confirm({
+            title: "Konfirmasi Buka Blokir",
+            message: `Apakah Anda yakin ingin membuka blokir pengguna ${user.name}?`,
+            type: "info",
+            confirmText: "Ya, Buka Blokir",
+            cancelText: "Batal",
+            confirmButtonColor: "purple",
+        });
+
+        if (confirmed) {
+            try {
+                await apiClient.post(`/api/users/${user.id}/unblock`);
+                showSuccess("Blokir pengguna berhasil dibuka");
+                queryClient.invalidateQueries({ queryKey: ["users"] });
+            } catch (error) {
+                console.error("Error unblocking user:", error);
+                showError("Gagal membuka blokir pengguna");
+            }
+        }
+    };
+
     const resetForm = () => {
         setFormData({
             name: "",
@@ -328,6 +350,7 @@ const UsersManagement = () => {
                     users={filteredUsers}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onUnblock={handleUnblock}
                 />
             </div>
 

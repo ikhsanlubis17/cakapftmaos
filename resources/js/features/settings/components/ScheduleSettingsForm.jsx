@@ -1,7 +1,7 @@
 import React from 'react';
 import { CogIcon } from '@heroicons/react/24/outline';
 
-const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
+const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError, disabled }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-4">
@@ -20,7 +20,8 @@ const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="365"
                         value={settings.default_inspection_interval || ''}
                         onChange={(e) => onChange('default_inspection_interval', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('default_inspection_interval') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('default_inspection_interval') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('default_inspection_interval') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -44,7 +45,8 @@ const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="30"
                         value={settings.reminder_notification_days || ''}
                         onChange={(e) => onChange('reminder_notification_days', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('reminder_notification_days') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('reminder_notification_days') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('reminder_notification_days') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -68,7 +70,8 @@ const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="90"
                         value={settings.escalation_notification_days || ''}
                         onChange={(e) => onChange('escalation_notification_days', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('escalation_notification_days') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('escalation_notification_days') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('escalation_notification_days') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -87,11 +90,12 @@ const ScheduleSettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         <h3 className="text-sm font-medium text-gray-900">Generate Jadwal Otomatis</h3>
                         <p className="text-sm text-gray-500">Buat jadwal inspeksi secara otomatis</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className={`relative inline-flex items-center ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                         <input
                             type="checkbox"
                             checked={settings.auto_schedule_generation || false}
                             onChange={(e) => onChange('auto_schedule_generation', e.target.checked)}
+                            disabled={disabled}
                             className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>

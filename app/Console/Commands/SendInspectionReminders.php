@@ -27,139 +27,69 @@ class SendInspectionReminders extends Command
     /**
      * Execute the console command.
      */
+    /**
+     * Execute the console command.
+     */
     public function handle()
     {
         $this->info('Starting inspection reminder process...');
 
         $notificationService = new NotificationService();
         
-        // Send reminders based on frequency
-        $dailyCount = $this->sendDailyReminders($notificationService);
-        $weeklyCount = $this->sendWeeklyReminders($notificationService);
-        $monthlyCount = $this->sendMonthlyReminders($notificationService);
+        // Send reminders for H-7, H-3, and H-1
+        $h7Count = $this->sendRemindersForDays($notificationService, 7);
+        $h3Count = $this->sendRemindersForDays($notificationService, 3);
+        $h1Count = $this->sendRemindersForDays($notificationService, 1);
         
-        $totalCount = $dailyCount + $weeklyCount + $monthlyCount;
+        $totalCount = $h7Count + $h3Count + $h1Count;
 
         if ($totalCount > 0) {
             $this->info("Successfully sent {$totalCount} reminders:");
-            $this->info("- Daily: {$dailyCount}");
-            $this->info("- Weekly: {$weeklyCount}");
-            $this->info("- Monthly: {$monthlyCount}");
+            $this->info("- H-7: {$h7Count}");
+            $this->info("- H-3: {$h3Count}");
+            $this->info("- H-1: {$h1Count}");
         } else {
-            $this->info('No reminders sent. No inspections scheduled or no teknisi assigned.');
+            $this->info('No reminders sent. No inspections scheduled for H-7, H-3, or H-1.');
         }
     }
 
     /**
-     * Send daily inspection reminders (H-1)
+     * Send inspection reminders for schedules due in X days
      */
-    private function sendDailyReminders($notificationService)
+    private function sendRemindersForDays($notificationService, $days)
     {
-        $this->info('Checking daily inspection reminders...');
+        $this->info("Checking inspection reminders for H-{$days}...");
         
         try {
             $sentCount = 0;
-            $tomorrow = Carbon::tomorrow();
+            $targetDate = Carbon::now()->addDays($days);
             
-            // Ambil jadwal harian untuk besok
-            $dailySchedules = InspectionSchedule::with(['apar', 'assignedUser'])
+            // Get schedules due on the target date
+            $schedules = InspectionSchedule::with(['apar', 'assignedUser'])
                 ->where('is_active', true)
-                ->where('frequency', 'daily')
-                ->where('scheduled_date', $tomorrow->toDateString())
+                ->where('is_completed', false)
+                ->whereDate('start_at', $targetDate->toDateString())
                 ->get();
             
-            foreach ($dailySchedules as $schedule) {
+            foreach ($schedules as $schedule) {
                 if ($schedule->assignedUser && $schedule->assignedUser->email) {
+                    // Check if we already sent a reminder today for this schedule (avoid duplicates)
+                    // This is a basic check, ideally we should check the notification logs
+                    
                     $sent = $notificationService->sendScheduleNotification($schedule, 'reminder');
                     if ($sent) {
                         $sentCount++;
-                        $this->line("Daily reminder sent for APAR: {$schedule->apar->serial_number}");
+                        $this->line("Reminder (H-{$days}) sent for APAR: {$schedule->apar->serial_number}");
                     }
                 }
             }
             
-            Log::info("Daily inspection reminders sent: {$sentCount} notifications");
+            Log::info("Inspection reminders (H-{$days}) sent: {$sentCount} notifications");
             return $sentCount;
             
         } catch (\Exception $e) {
-            Log::error('Error sending daily inspection reminders: ' . $e->getMessage());
-            $this->error('Error sending daily reminders: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Send weekly inspection reminders (H-3)
-     */
-    private function sendWeeklyReminders($notificationService)
-    {
-        $this->info('Checking weekly inspection reminders...');
-        
-        try {
-            $sentCount = 0;
-            $threeDaysLater = Carbon::now()->addDays(3);
-            
-            // Ambil jadwal mingguan untuk 3 hari ke depan
-            $weeklySchedules = InspectionSchedule::with(['apar', 'assignedUser'])
-                ->where('is_active', true)
-                ->where('frequency', 'weekly')
-                ->where('scheduled_date', $threeDaysLater->toDateString())
-                ->get();
-            
-            foreach ($weeklySchedules as $schedule) {
-                if ($schedule->assignedUser && $schedule->assignedUser->email) {
-                    $sent = $notificationService->sendScheduleNotification($schedule, 'reminder');
-                    if ($sent) {
-                        $sentCount++;
-                        $this->line("Weekly reminder sent for APAR: {$schedule->apar->serial_number}");
-                    }
-                }
-            }
-            
-            Log::info("Weekly inspection reminders sent: {$sentCount} notifications");
-            return $sentCount;
-            
-        } catch (\Exception $e) {
-            Log::error('Error sending weekly inspection reminders: ' . $e->getMessage());
-            $this->error('Error sending weekly reminders: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Send monthly inspection reminders (H-7)
-     */
-    private function sendMonthlyReminders($notificationService)
-    {
-        $this->info('Checking monthly inspection reminders...');
-        
-        try {
-            $sentCount = 0;
-            $sevenDaysLater = Carbon::now()->addDays(7);
-            
-            // Ambil jadwal bulanan untuk 7 hari ke depan
-            $monthlySchedules = InspectionSchedule::with(['apar', 'assignedUser'])
-                ->where('is_active', true)
-                ->where('frequency', 'monthly')
-                ->where('scheduled_date', $sevenDaysLater->toDateString())
-                ->get();
-            
-            foreach ($monthlySchedules as $schedule) {
-                if ($schedule->assignedUser && $schedule->assignedUser->email) {
-                    $sent = $notificationService->sendScheduleNotification($schedule, 'reminder');
-                    if ($sent) {
-                        $sentCount++;
-                        $this->line("Monthly reminder sent for APAR: {$schedule->apar->serial_number}");
-                    }
-                }
-            }
-            
-            Log::info("Monthly inspection reminders sent: {$sentCount} notifications");
-            return $sentCount;
-            
-        } catch (\Exception $e) {
-            Log::error('Error sending monthly inspection reminders: ' . $e->getMessage());
-            $this->error('Error sending monthly reminders: ' . $e->getMessage());
+            Log::error("Error sending H-{$days} inspection reminders: " . $e->getMessage());
+            $this->error("Error sending H-{$days} reminders: " . $e->getMessage());
             return 0;
         }
     }

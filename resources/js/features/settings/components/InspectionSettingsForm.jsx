@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 
-const InspectionSettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
+const InspectionSettingsForm = ({ settings, onChange, getFieldError, hasError, disabled }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-4">
@@ -16,11 +16,12 @@ const InspectionSettingsForm = ({ settings, onChange, getFieldError, hasError })
                             <h3 className="text-sm font-medium text-gray-900">Blokir Inspeksi Otomatis</h3>
                             <p className="text-sm text-gray-500">Blokir inspeksi di luar jadwal</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className={`relative inline-flex items-center ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                             <input
                                 type="checkbox"
                                 checked={settings.auto_block_inspection || false}
                                 onChange={(e) => onChange('auto_block_inspection', e.target.checked)}
+                                disabled={disabled}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
@@ -32,43 +33,31 @@ const InspectionSettingsForm = ({ settings, onChange, getFieldError, hasError })
                             <h3 className="text-sm font-medium text-gray-900">Wajib Foto APAR</h3>
                             <p className="text-sm text-gray-500">Teknisi harus mengambil foto APAR</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className={`relative inline-flex items-center ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                             <input
                                 type="checkbox"
                                 checked={settings.require_photo || false}
                                 onChange={(e) => onChange('require_photo', e.target.checked)}
+                                disabled={disabled}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
                         </label>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-sm font-medium text-gray-900">Wajib Selfie Teknisi</h3>
-                            <p className="text-sm text-gray-500">Teknisi harus mengambil selfie</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={settings.require_selfie || false}
-                                onChange={(e) => onChange('require_selfie', e.target.checked)}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
-                        </label>
-                    </div>
+
 
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-sm font-medium text-gray-900">Validasi Lokasi Wajib</h3>
                             <p className="text-sm text-gray-500">Wajib validasi GPS saat inspeksi</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className={`relative inline-flex items-center ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                             <input
                                 type="checkbox"
                                 checked={settings.require_location_validation || false}
                                 onChange={(e) => onChange('require_location_validation', e.target.checked)}
+                                disabled={disabled}
                                 className="sr-only peer"
                             />
                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
@@ -87,7 +76,8 @@ const InspectionSettingsForm = ({ settings, onChange, getFieldError, hasError })
                             max="20"
                             value={settings.max_photo_size || ''}
                             onChange={(e) => onChange('max_photo_size', parseInt(e.target.value))}
-                            className={`w-full border ${hasError('max_photo_size') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                            disabled={disabled}
+                            className={`w-full border ${hasError('max_photo_size') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                         />
                         {hasError('max_photo_size') && (
                             <p className="text-sm text-red-600 mt-1">

@@ -26,6 +26,7 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'password',
         'is_active',
+        'blocked_until',
     ];
 
     /**
@@ -49,6 +50,7 @@ class User extends Authenticatable implements JWTSubject
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'blocked_until' => 'datetime',
         ];
     }
 

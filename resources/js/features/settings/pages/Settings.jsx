@@ -1,12 +1,12 @@
-import React from 'react';
-import { CogIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { CogIcon, CheckCircleIcon, PencilSquareIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useSettings } from '../hooks/useSettings';
 import GpsSettingsForm from '../components/GpsSettingsForm';
 import ScheduleSettingsForm from '../components/ScheduleSettingsForm';
 import NotificationSettingsForm from '../components/NotificationSettingsForm';
 import InspectionSettingsForm from '../components/InspectionSettingsForm';
 import SecuritySettingsForm from '../components/SecuritySettingsForm';
-import SystemSettingsForm from '../components/SystemSettingsForm';
+
 
 const Settings = () => {
     const {
@@ -18,6 +18,14 @@ const Settings = () => {
         getFieldError,
         hasError,
     } = useSettings();
+
+    const [isEditing, setIsEditing] = useState(false);
+
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        await handleSubmit(e);
+        setIsEditing(false);
+    };
 
     if (isLoading) {
         return (
@@ -47,13 +55,14 @@ const Settings = () => {
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleFormSubmit} className="space-y-6">
                 {/* GPS & Location Settings */}
                 <GpsSettingsForm
                     settings={settings}
                     onChange={handleChange}
                     getFieldError={getFieldError}
                     hasError={hasError}
+                    disabled={!isEditing}
                 />
 
                 {/* Schedule & Interval Settings */}
@@ -62,6 +71,7 @@ const Settings = () => {
                     onChange={handleChange}
                     getFieldError={getFieldError}
                     hasError={hasError}
+                    disabled={!isEditing}
                 />
 
                 {/* Notification Settings */}
@@ -70,6 +80,7 @@ const Settings = () => {
                     onChange={handleChange}
                     getFieldError={getFieldError}
                     hasError={hasError}
+                    disabled={!isEditing}
                 />
 
                 {/* Inspection Settings */}
@@ -78,6 +89,7 @@ const Settings = () => {
                     onChange={handleChange}
                     getFieldError={getFieldError}
                     hasError={hasError}
+                    disabled={!isEditing}
                 />
 
                 {/* Security & Session Settings */}
@@ -86,35 +98,50 @@ const Settings = () => {
                     onChange={handleChange}
                     getFieldError={getFieldError}
                     hasError={hasError}
+                    disabled={!isEditing}
                 />
 
-                {/* System Settings */}
-                <SystemSettingsForm
-                    settings={settings}
-                    onChange={handleChange}
-                    getFieldError={getFieldError}
-                    hasError={hasError}
-                />
-
-                {/* Save Button */}
-                <div className="flex justify-end">
-                    <button
-                        type="submit"
-                        disabled={saving}
-                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {saving ? (
-                            <>
-                                <div className="loading-spinner mr-2"></div>
-                                Menyimpan...
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircleIcon className="h-5 w-5 mr-2" />
-                                Simpan Pengaturan
-                            </>
-                        )}
-                    </button>
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-3">
+                    {!isEditing ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsEditing(true)}
+                            className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                            <PencilSquareIcon className="h-5 w-5 mr-2" />
+                            Edit Pengaturan Default
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                type="button"
+                                onClick={() => setIsEditing(false)}
+                                disabled={saving}
+                                className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <XMarkIcon className="h-5 w-5 mr-2" />
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {saving ? (
+                                    <>
+                                        <div className="loading-spinner mr-2"></div>
+                                        Menyimpan...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircleIcon className="h-5 w-5 mr-2" />
+                                        Simpan Pengaturan
+                                    </>
+                                )}
+                            </button>
+                        </>
+                    )}
                 </div>
             </form>
         </div>

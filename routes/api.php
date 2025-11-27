@@ -118,6 +118,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update']);
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::post('/users/{user}/unblock', [UserController::class, 'unblock']);
 
     // Tank Truck routes
     Route::get('/tank-trucks', [TankTruckController::class, 'index']);
@@ -152,7 +153,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Settings routes (Admin only)
     Route::get('/settings', [SettingController::class, 'index']);
-    Route::put('/settings/{setting}', [SettingController::class, 'update']);
+    Route::put('/settings', [SettingController::class, 'update']);
 
     // Report routes
     Route::get('/reports/inspections', [ReportController::class, 'inspections']);

@@ -239,12 +239,12 @@ class NotificationService
     private function getFrequencyText($frequency)
     {
         switch ($frequency) {
-            case 'daily':
-                return 'Harian';
-            case 'weekly':
-                return 'Mingguan';
             case 'monthly':
                 return 'Bulanan';
+            case 'quarterly':
+                return 'Per-3 Bulan';
+            case 'semiannual':
+                return 'Per-6 Bulan';
             default:
                 return $frequency;
         }

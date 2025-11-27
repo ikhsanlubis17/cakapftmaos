@@ -1,7 +1,7 @@
 import React from 'react';
 import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 
-const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError }) => {
+const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError, disabled }) => {
     return (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-4">
@@ -20,7 +20,8 @@ const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="480"
                         value={settings.session_timeout || ''}
                         onChange={(e) => onChange('session_timeout', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('session_timeout') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('session_timeout') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('session_timeout') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -44,7 +45,8 @@ const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="10"
                         value={settings.max_login_attempts || ''}
                         onChange={(e) => onChange('max_login_attempts', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('max_login_attempts') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('max_login_attempts') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('max_login_attempts') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -68,7 +70,8 @@ const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                         max="60"
                         value={settings.lockout_duration || ''}
                         onChange={(e) => onChange('lockout_duration', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('lockout_duration') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                        disabled={disabled}
+                        className={`w-full border ${hasError('lockout_duration') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-100 disabled:cursor-not-allowed`}
                     />
                     {hasError('lockout_duration') && (
                         <p className="text-sm text-red-600 mt-1">
@@ -78,30 +81,6 @@ const SecuritySettingsForm = ({ settings, onChange, getFieldError, hasError }) =
                     {!hasError('lockout_duration') && (
                         <p className="text-sm text-gray-500 mt-1">
                             Durasi blokir setelah melebihi maksimal percobaan
-                        </p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ganti Password Wajib (hari)
-                    </label>
-                    <input
-                        type="number"
-                        min="30"
-                        max="365"
-                        value={settings.require_password_change || ''}
-                        onChange={(e) => onChange('require_password_change', parseInt(e.target.value))}
-                        className={`w-full border ${hasError('require_password_change') ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
-                    />
-                    {hasError('require_password_change') && (
-                        <p className="text-sm text-red-600 mt-1">
-                            {getFieldError('require_password_change')}
-                        </p>
-                    )}
-                    {!hasError('require_password_change') && (
-                        <p className="text-sm text-gray-500 mt-1">
-                            Interval wajib ganti password untuk pengguna
                         </p>
                     )}
                 </div>

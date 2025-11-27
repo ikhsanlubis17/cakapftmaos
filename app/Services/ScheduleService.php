@@ -123,6 +123,9 @@ class ScheduleService
         // Clear cache
         $this->clearSchedulesCache();
 
+        // Send notification
+        $this->notificationService->sendScheduleNotification($schedule, 'created');
+
         return $schedule;
     }
 
@@ -308,9 +311,15 @@ class ScheduleService
                 'old_start_at' => $oldStartAtIso,
                 'new_start_at' => $newStartAtIso,
             ]);
+
+            // Send notification if important fields changed
+            $this->notificationService->sendScheduleNotification($schedule, 'updated');
         }
 
-        return $hasChanges;
+        return [
+            'schedule' => $schedule,
+            'has_changes' => $hasChanges,
+        ];
     }
 
     /**

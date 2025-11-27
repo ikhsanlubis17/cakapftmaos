@@ -14,6 +14,9 @@ class AuthController extends Controller
     /**
      * Login user and return JWT token
      */
+    /**
+     * Login user and return JWT token
+     */
     public function login(Request $request)
     {
         $request->validate([
@@ -21,11 +24,49 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        // Rate Limiting Logic
+        $maxAttempts = \App\Models\Setting::getValue('max_login_attempts', 5);
+        $lockoutMinutes = \App\Models\Setting::getValue('lockout_duration', 15);
+        // Use email as key to allow admin unblocking (IP independent)
+        $throttleKey = 'login|' . $request->email;
+
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        // Check if user is blocked in DB
+        if ($user && $user->blocked_until && now()->lessThan($user->blocked_until)) {
+            $minutes = (int) ceil(now()->floatDiffInMinutes($user->blocked_until));
             throw ValidationException::withMessages([
-                'email' => ['Email atau password salah.'],
+                'email' => ["Akun Anda diblokir sementara. Silakan coba lagi dalam {$minutes} menit."],
+            ]);
+        }
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($throttleKey);
+            $minutes = ceil($seconds / 60);
+
+            // Sync lockout to DB if not already set
+            if ($user && (!$user->blocked_until || now()->greaterThan($user->blocked_until))) {
+                $user->blocked_until = now()->addSeconds($seconds);
+                $user->save();
+            }
+            
+            throw ValidationException::withMessages([
+                'email' => ["Terlalu banyak percobaan login. Silakan coba lagi dalam {$minutes} menit."],
+            ]);
+        }
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            \Illuminate\Support\Facades\RateLimiter::hit($throttleKey, $lockoutMinutes * 60);
+            $remaining = \Illuminate\Support\Facades\RateLimiter::remaining($throttleKey, $maxAttempts);
+            
+            // If this hit caused a lockout, update DB
+            if ($remaining === 0 && $user) {
+                $user->blocked_until = now()->addMinutes($lockoutMinutes);
+                $user->save();
+            }
+
+            throw ValidationException::withMessages([
+                'email' => ["Email atau password salah. Sisa percobaan: {$remaining}"],
             ]);
         }
 
@@ -33,6 +74,13 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['Akun tidak aktif.'],
             ]);
+        }
+
+        // Clear rate limiter and blocked_until on successful login
+        \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
+        if ($user->blocked_until) {
+            $user->blocked_until = null;
+            $user->save();
         }
 
         $token = Auth::guard('api')->login($user);

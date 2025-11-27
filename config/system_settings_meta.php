@@ -128,15 +128,6 @@ return [
             'help_text' => 'Teknisi harus mengambil foto APAR',
             'validation' => 'boolean',
         ],
-        'require_selfie' => [
-            'default' => false,
-            'type' => 'boolean',
-            'group' => 'inspection',
-            'label' => 'Wajib Selfie Teknisi',
-            'description' => 'Wajib selfie saat inspeksi',
-            'help_text' => 'Teknisi harus mengambil selfie',
-            'validation' => 'boolean',
-        ],
         'require_location_validation' => [
             'default' => true,
             'type' => 'boolean',
@@ -154,15 +145,6 @@ return [
             'description' => 'Ukuran maksimal foto (MB)',
             'help_text' => 'Ukuran maksimal file foto yang diupload',
             'validation' => 'required|integer|min:1|max:20',
-        ],
-        'allowed_photo_types' => [
-            'default' => ['jpg', 'jpeg', 'png'],
-            'type' => 'array',
-            'group' => 'inspection',
-            'label' => 'Tipe Foto yang Diizinkan',
-            'description' => 'Tipe file foto yang diizinkan',
-            'help_text' => 'Format file foto yang dapat diupload',
-            'validation' => 'array',
         ],
 
         // Security & Session Settings
@@ -193,53 +175,7 @@ return [
             'help_text' => 'Durasi blokir setelah melebihi maksimal percobaan',
             'validation' => 'required|integer|min:5|max:60',
         ],
-        'require_password_change' => [
-            'default' => 90,
-            'type' => 'integer',
-            'group' => 'security',
-            'label' => 'Ganti Password Wajib (hari)',
-            'description' => 'Wajib ganti password setiap (hari)',
-            'help_text' => 'Interval wajib ganti password untuk pengguna',
-            'validation' => 'required|integer|min:30|max:365',
-        ],
 
-        // System Settings
-        'maintenance_mode' => [
-            'default' => false,
-            'type' => 'boolean',
-            'group' => 'system',
-            'label' => 'Mode Maintenance',
-            'description' => 'Mode maintenance',
-            'help_text' => 'Aktifkan mode maintenance untuk perbaikan sistem',
-            'validation' => 'boolean',
-        ],
-        'debug_mode' => [
-            'default' => false,
-            'type' => 'boolean',
-            'group' => 'system',
-            'label' => 'Mode Debug',
-            'description' => 'Mode debug',
-            'help_text' => 'Aktifkan mode debug untuk troubleshooting',
-            'validation' => 'boolean',
-        ],
-        'log_retention_days' => [
-            'default' => 90,
-            'type' => 'integer',
-            'group' => 'system',
-            'label' => 'Retensi Log (hari)',
-            'description' => 'Retensi log (hari)',
-            'help_text' => 'Berapa lama log sistem disimpan',
-            'validation' => 'required|integer|min:30|max:365',
-        ],
-        'backup_frequency' => [
-            'default' => 7,
-            'type' => 'integer',
-            'group' => 'system',
-            'label' => 'Frekuensi Backup (hari)',
-            'description' => 'Frekuensi backup (hari)',
-            'help_text' => 'Interval backup otomatis database',
-            'validation' => 'required|integer|min:1|max:30',
-        ],
     ],
 
     /*
