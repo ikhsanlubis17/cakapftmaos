@@ -38,7 +38,15 @@ const LayoutEnhanced = () => {
 
   // Handle navigation errors
   useEffect(() => {
-    const handleNavigationError = (error) => {
+    const handleNavigationError = (event) => {
+      // Suppress background.js extension errors
+      if (event.filename && event.filename.includes('background.js')) {
+          event.preventDefault();
+          return;
+      }
+
+      const error = event.error || event;
+
       // Only handle actual navigation errors, not general page errors
       if (
         error &&
