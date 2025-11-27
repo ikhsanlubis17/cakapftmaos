@@ -98,8 +98,6 @@ return [
 
     'conditions' => [
         'good',
-        'needs_refill',
-        'expired',
         'damaged',
     ],
 

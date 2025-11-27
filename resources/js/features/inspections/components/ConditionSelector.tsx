@@ -24,9 +24,7 @@ export const ConditionSelector: React.FC<ConditionSelectorProps> = ({
 }) => {
     const conditions = [
         { value: 'good', label: 'Baik', icon: CheckCircleIcon, color: 'green' },
-        { value: 'needs_refill', label: 'Perlu Isi Ulang', icon: ExclamationTriangleIcon, color: 'yellow' },
-        { value: 'expired', label: 'Kadaluarsa', icon: ExclamationTriangleIcon, color: 'orange' },
-        { value: 'damaged', label: 'Rusak', icon: FireIcon, color: 'red' },
+        { value: 'damaged', label: 'Butuh Perbaikan', icon: FireIcon, color: 'red' },
     ];
 
     return (
@@ -123,9 +121,7 @@ export const ConditionSelector: React.FC<ConditionSelectorProps> = ({
             )}
 
             {/* Repair Required */}
-            {(formData.condition === 'needs_refill' ||
-                formData.condition === 'expired' ||
-                formData.condition === 'damaged') && (
+            {formData.condition === 'damaged' && (
                 <div className="mt-4 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                     <label className="flex items-center space-x-3 cursor-pointer">
                         <input

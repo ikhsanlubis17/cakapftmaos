@@ -211,9 +211,9 @@ class AparController extends Controller
             ->margin(5)
             ->generate($apar->qr_code);
 
-        return response($qrCode)
-            ->header('Content-Type', 'image/png')
-            ->header('Cache-Control', 'public, max-age=31536000');
+        return response()->json([
+            'qr_code' => base64_encode($qrCode)
+        ]);
     }
 
     /**

@@ -46,14 +46,12 @@ const AparDetail: React.FC = () => {
 
 
 
-    // Use react-query to fetch and cache the QR code blob
+    // Use react-query to fetch the QR code base64 string
     const qrQuery = useQuery({
-        queryKey: ['apar', id, 'qr-blob'],
+        queryKey: ['apar', id, 'qr-code'],
         queryFn: async () => {
             // Add version to bust browser cache since we updated generation params
-            const response = await apiClient.get(`/api/apar/${id}/qr-code?v=2`, {
-                responseType: 'blob',
-            });
+            const response = await apiClient.get(`/api/apar/${id}/qr-code?v=3`);
             return response.data;
         },
         enabled: !!id,
@@ -61,29 +59,16 @@ const AparDetail: React.FC = () => {
         staleTime: 24 * 60 * 60 * 1000,
     });
 
-    // Create object URL when blob is available and revoke on change/unmount
+    // Set QR code URL when data is available
     useEffect(() => {
-        let objectUrl: string | null = null;
         setQrCodeError(false);
         setQrCodeUrl('');
 
-        if (qrQuery.data) {
-            try {
-                objectUrl = URL.createObjectURL(qrQuery.data as Blob);
-                setQrCodeUrl(objectUrl);
-            } catch (err) {
-                console.error('Failed to create object URL for QR blob', err);
-                setQrCodeError(true);
-            }
+        if (qrQuery.data?.qr_code) {
+            setQrCodeUrl(`data:image/png;base64,${qrQuery.data.qr_code}`);
         } else if (qrQuery.isError) {
             setQrCodeError(true);
         }
-
-        return () => {
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
-            }
-        };
     }, [qrQuery.data, qrQuery.isError]);
 
     const getStatusColor = (status?: string): string => {

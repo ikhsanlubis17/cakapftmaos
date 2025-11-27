@@ -1013,27 +1013,15 @@ const InspectionFormEnhanced = () => {
                             required
                         >
                             <option value="good">Baik</option>
-                            <option value="needs_refill">Perlu Isi Ulang</option>
-                            {/* <option value="expired">Kadaluwarsa</option> */}
-                            <option value="damaged">Rusak</option>
+                            <option value="damaged">Butuh Perbaikan</option>
                         </select>
                     </div>
 
-                    <DamageSection selectedDamages={selectedDamages} removeDamage={removeDamage} showDamageForm={showDamageForm} setShowDamageForm={setShowDamageForm} newDamage={newDamage} setNewDamage={setNewDamage} damageCategories={damageCategories} startDamageCamera={startDamageCamera} damageCameraActive={damageCameraActive} damageCameraLoading={damageCameraLoading} damageVideoRef={damageVideoRef} damageCanvasRef={damageCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} captureDamagePhoto={captureDamagePhoto} stopDamageCamera={stopDamageCamera} addDamage={addDamage} />
+                    {condition === 'damaged' && (
+                        <DamageSection selectedDamages={selectedDamages} removeDamage={removeDamage} showDamageForm={showDamageForm} setShowDamageForm={setShowDamageForm} newDamage={newDamage} setNewDamage={setNewDamage} damageCategories={damageCategories} startDamageCamera={startDamageCamera} damageCameraActive={damageCameraActive} damageCameraLoading={damageCameraLoading} damageVideoRef={damageVideoRef} damageCanvasRef={damageCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} captureDamagePhoto={captureDamagePhoto} stopDamageCamera={stopDamageCamera} addDamage={addDamage} />
+                    )}
 
-                    {/* Notes */}
-                    <div>
-                        <label className="block text-lg font-semibold text-gray-900 mb-4">
-                            📝 Catatan
-                        </label>
-                        <textarea
-                            value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            rows={4}
-                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg resize-none"
-                            placeholder="Tambahkan catatan inspeksi (opsional)..."
-                        />
-                    </div>
+
 
                     {/* Location Status */}
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">

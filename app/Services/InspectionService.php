@@ -213,7 +213,7 @@ class InspectionService
         $schedule = $this->findRelatedSchedule($data, $apar->id, $userId);
 
         // Determine if repair is required
-        $requiresRepair = in_array($data['condition'], ['needs_refill', 'expired', 'damaged']) ||
+        $requiresRepair = $data['condition'] === 'damaged' ||
                          (isset($data['damage_categories']) && count($data['damage_categories']) > 0);
 
         // Create inspection
@@ -318,8 +318,6 @@ class InspectionService
     protected function updateAparStatus(Apar $apar, string $condition): void
     {
         $statusMap = [
-            'needs_refill' => 'refill',
-            'expired' => 'expired',
             'damaged' => 'damaged',
         ];
 
