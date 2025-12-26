@@ -234,24 +234,20 @@ class InspectionController extends Controller
      */
     public function validateInspectionTime(Request $request)
     {
-        try {
-            $request->validate([
-                'apar_qrCode' => 'required|string',
-            ]);
+        $validated = $request->validate([
+            'apar_qrCode' => 'required|string',
+        ]);
 
+        try {
             $result = $this->inspectionService->validateInspectionTime(
-                $request->input('apar_qrCode'),
+                $validated['apar_qrCode'],
                 Auth::id()
             );
 
             return response()->json($result, $result['status_code']);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'valid' => false,
-                'message' => 'Data tidak valid',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
+            Log::error('Validation error: ' . $e->getMessage());
+            
             return response()->json([
                 'valid' => false,
                 'message' => 'Terjadi kesalahan saat memvalidasi jadwal inspeksi'

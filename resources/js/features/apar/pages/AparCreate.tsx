@@ -40,7 +40,7 @@ const AparCreate = () => {
         },
     });
 
-    const getCurrentLocation = () => {
+    const getCurrentLocation = (highAccuracy = true) => {
         if (!navigator.geolocation) {
             showError('Geolocation tidak didukung oleh browser ini.');
             return;
@@ -56,17 +56,28 @@ const AparCreate = () => {
                     latitude: latitude.toFixed(6),
                     longitude: longitude.toFixed(6)
                 }));
-                showSuccess('Lokasi berhasil diperoleh!');
+                showSuccess(
+                    highAccuracy 
+                        ? 'Lokasi akurat berhasil diperoleh!' 
+                        : 'Lokasi perkiraan berhasil diperoleh (mode hemat daya/jaringan).'
+                );
                 setGettingLocation(false);
             },
             (error) => {
+                // If high accuracy failed and it wasn't a permission issue, try low accuracy
+                if (highAccuracy && error.code !== error.PERMISSION_DENIED) {
+                    console.warn('High accuracy location failed, retrying with low accuracy...');
+                    getCurrentLocation(false);
+                    return;
+                }
+
                 setGettingLocation(false);
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
                         showError('Izin lokasi ditolak. Silakan izinkan akses lokasi di browser Anda.');
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        showError('Informasi lokasi tidak tersedia.');
+                        showError('Informasi lokasi tidak tersedia. Pastikan GPS aktif.');
                         break;
                     case error.TIMEOUT:
                         showError('Waktu tunggu untuk mendapatkan lokasi habis.');
@@ -77,7 +88,7 @@ const AparCreate = () => {
                 }
             },
             {
-                enableHighAccuracy: true,
+                enableHighAccuracy: highAccuracy,
                 timeout: 10000,
                 maximumAge: 60000
             }
@@ -245,7 +256,7 @@ const AparCreate = () => {
                         <div className="col-span-2">
                             <button
                                 type="button"
-                                onClick={getCurrentLocation}
+                                onClick={() => getCurrentLocation()}
                                 disabled={gettingLocation}
                                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >

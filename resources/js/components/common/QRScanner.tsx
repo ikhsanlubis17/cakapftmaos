@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useReducer } from "react";
+import React, { useReducer } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useToast } from "../../contexts/ToastContext";
 import {
@@ -10,8 +10,29 @@ import {
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useAuth } from "../../contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 
-// Presentational subcomponents kept in this file
+// Types
+interface QRScannerState {
+    state: "initial" | "scanning" | "barcodeDetected" | "cameraError";
+}
+
+type ScannerAction =
+    | { type: "start" }
+    | { type: "barcodeDetected" }
+    | { type: "cameraError" }
+    | { type: "reset" };
+
+interface ScannerContainerProps {
+    onScan: (result: IDetectedBarcode[]) => void;
+    onError: (error: unknown) => void;
+    paused: boolean;
+    scannerState: string;
+    validatePending: boolean;
+    onReset: () => void;
+}
+
+// Subcomponents
 const Header = ({ state, onStart }: { state: string; onStart: () => void }) => (
     <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
         <div className="text-center">
@@ -84,10 +105,10 @@ const ScannerContainer = ({
     scannerState,
     validatePending,
     onReset,
-}: any) => (
+}: ScannerContainerProps) => (
     <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
         <Scanner
-            onScan={(result) => onScan(result)}
+            onScan={onScan}
             onError={onError}
             scanDelay={500}
             paused={paused}
@@ -179,13 +200,9 @@ const FooterBar = () => (
     </div>
 );
 
-interface QRScannerState {
-    state: "initial" | "scanning" | "barcodeDetected" | "cameraError";
-}
-
 function scannerReducer(
     state: QRScannerState,
-    action: { type: "start" | "barcodeDetected" | "cameraError" | "reset" }
+    action: ScannerAction
 ): QRScannerState {
     switch (action.type) {
         case "start":
@@ -216,7 +233,7 @@ const QRScanner = () => {
             });
             return resp.data;
         },
-        throwOnError: false,
+        retry: false, // Don't retry validation checks
     });
 
     const onScanSuccess = async (barcode: IDetectedBarcode[]) => {
@@ -229,7 +246,7 @@ const QRScanner = () => {
             // Extract QR code from decoded text
             const qrCode = barcode[0].rawValue.trim();
 
-            // Validate QR code format (assuming it contains APAR ID or serial number)
+            // Validate QR code format
             if (qrCode && qrCode.length > 0) {
                 try {
                     const data = await validateMutation.mutateAsync(qrCode);
@@ -245,52 +262,48 @@ const QRScanner = () => {
                             const navigationPath = scheduleId
                                 ? `/inspections/enhanced/${qrCode}?schedule_id=${scheduleId}`
                                 : `/inspections/enhanced/${qrCode}`;
-                            // Use router navigate instead of window.location
-                            // Cast to any to avoid strict typed `search` requirements here
+                            
                             navigate({ to: navigationPath } as any);
                         }, 1500);
                     } else {
-                        showError(data?.message || "QR Code tidak valid");
-                        // Reset scanner after error
-                        setTimeout(() => {
-                            dispatch({ type: "reset" });
-                        }, 2000);
+                        // Data valid: false (business logic failure)
+                        // Backend now returns 200 OK for this, so it lands here.
+                        showError(data?.message || "QR Code tidak valid atau tidak ada jadwal");
+                        resetScanner();
                     }
                 } catch (error: any) {
+                    // Only genuine network/server errors land here now (500s)
+                    const axiosError = error as AxiosError<any>;
+                    
                     console.error("Error validating QR code:", error);
-
                     const errorMessage =
-                        error?.response?.data?.message ||
-                        error?.message ||
+                        axiosError.response?.data?.message ||
+                        axiosError.message ||
                         "Terjadi kesalahan saat memvalidasi QR Code";
-
                     showError(errorMessage);
 
-                    // Reset scanner after error
-                    setTimeout(() => {
-                        dispatch({ type: "reset" });
-                    }, 2000);
+                    resetScanner();
                 }
             } else {
                 showError("QR Code tidak valid");
-                // Reset scanner after error
-                setTimeout(() => {
-                    dispatch({ type: "reset" });
-                }, 2000);
+                resetScanner();
             }
         } catch (error) {
             console.error("Error handling scan success:", error);
             showError("Terjadi kesalahan saat memproses QR Code");
-            // Reset scanner after error
-            setTimeout(() => {
-                dispatch({ type: "reset" });
-            }, 2000);
+            resetScanner();
         }
+    };
+
+    const resetScanner = () => {
+        setTimeout(() => {
+            dispatch({ type: "reset" });
+        }, 2000);
     };
 
     const onScanFailure = (error: unknown) => {
         // Handle scan failure silently (user might be moving camera)
-        console.log("QR scan failed:", error);
+       // console.log("QR scan failed:", error); 
     };
 
     return (
@@ -325,18 +338,6 @@ const QRScanner = () => {
                     )}
 
                 <InstructionsPanel />
-
-                {/* Action Buttons */}
-                {/* <div className="flex space-x-4">
-                    <button
-                        onClick={() => dispatch({ type: 'reset' })}
-                        className="flex-1 px-6 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl text-lg font-semibold hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
-                    >
-                        <ArrowPathIcon className="h-5 w-5" />
-                        <span>Mulai Ulang</span>
-                    </button>
-                </div> */}
-
                 <FooterBar />
             </div>
         </div>

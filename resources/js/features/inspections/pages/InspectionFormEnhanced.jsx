@@ -17,19 +17,19 @@ import {
 
 // Small subcomponents kept in this file for clarity
 const Header = ({ apar }) => (
-    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-        <div className="flex items-center space-x-4">
+    <div className="bg-gradient-to-r from-red-500 to-red-600 shadow-xl rounded-2xl p-4 sm:p-6 border border-red-400">
+        <div className="flex items-center space-x-3 sm:space-x-4">
             <div className="flex-shrink-0">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                    <FireIcon className="h-7 w-7 text-white" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                    <FireIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
             </div>
-            <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Inspeksi APAR</h1>
-                <div className="flex items-center space-x-3">
-                    <p className="text-lg font-semibold text-gray-700">{apar.serial_number}</p>
-                    <span className="text-gray-400">•</span>
-                    <p className="text-gray-600">{apar.location_name}</p>
+            <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">Inspeksi APAR</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
+                    <p className="text-sm sm:text-lg font-semibold text-white/90 truncate">{apar.serial_number}</p>
+                    <span className="hidden sm:inline text-white/60">•</span>
+                    <p className="text-xs sm:text-base text-white/80 truncate">{apar.location_name}</p>
                 </div>
             </div>
         </div>
@@ -37,9 +37,12 @@ const Header = ({ apar }) => (
 );
 
 const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, capturePhoto, stopCamera, videoRef, canvasRef, captureCountdown, showFlash, setPhoto }) => (
-    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200">
-        <label className="block text-lg font-bold text-gray-900 mb-4 flex items-center">
-            📸 Foto APAR <span className="text-red-500 ml-1">*</span>
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
+                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+            </div>
+            <span>Foto APAR <span className="text-red-500">*</span></span>
         </label>
 
         {!photo && !cameraActive && (
@@ -47,18 +50,18 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                 type="button"
                 onClick={startCamera}
                 disabled={cameraLoading}
-                className="w-full aspect-video bg-white border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full aspect-[3/4] bg-white border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <CameraIcon className="h-8 w-8 text-red-600" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-red-600" />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-gray-700 group-hover:text-red-700">Ambil Foto APAR</p>
-                <p className="mt-1 text-sm text-gray-500">Pastikan APAR terlihat jelas</p>
+                <p className="mt-4 text-base sm:text-lg font-semibold text-gray-700 group-hover:text-red-700">Ambil Foto APAR</p>
+                <p className="mt-1 text-xs sm:text-sm text-gray-500 px-4 text-center">Pastikan APAR terlihat jelas dalam frame</p>
             </button>
         )}
 
         {cameraActive && !photo && (
-            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-video group">
+            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4]">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 <canvas ref={canvasRef} className="hidden" />
 
@@ -79,35 +82,35 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
 
                 {captureCountdown > 0 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                        <div className="text-white text-8xl font-bold animate-ping">{captureCountdown}</div>
+                        <div className="text-white text-6xl sm:text-8xl font-bold animate-ping">{captureCountdown}</div>
                     </div>
                 )}
 
                 {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
 
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-6">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
                     <button 
                         type="button" 
                         onClick={stopCamera} 
-                        className="p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
+                        className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
-                        <XMarkIcon className="h-6 w-6" />
+                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                     
                     <button 
                         type="button" 
                         onClick={capturePhoto} 
                         disabled={captureCountdown > 0} 
-                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all"
+                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
-                        <div className="h-16 w-16 rounded-full bg-red-600 hover:bg-red-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
-                            <CameraIcon className="h-8 w-8 text-white" />
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-600 hover:bg-red-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
+                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                         </div>
                     </button>
                 </div>
 
-                <div className="absolute top-4 left-4 bg-red-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-sm font-medium flex items-center shadow-lg">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-red-600/90 backdrop-blur-md text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center shadow-lg">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                     Live Camera
                 </div>
@@ -115,30 +118,34 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
         )}
 
         {photo && (
-            <div className="relative group rounded-xl overflow-hidden shadow-lg aspect-video bg-black">
-                <img src={URL.createObjectURL(photo)} alt="APAR Photo" className="w-full h-full object-contain" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <button 
-                        type="button" 
-                        onClick={() => setPhoto(null)} 
-                        className="bg-white text-red-600 px-6 py-2 rounded-full font-bold shadow-xl transform scale-90 group-hover:scale-100 transition-all hover:bg-gray-100"
-                    >
-                        Ambil Ulang
-                    </button>
+            <div className="space-y-3">
+                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                    <img src={URL.createObjectURL(photo)} alt="APAR Photo" className="w-full h-full object-contain" />
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-green-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                        Foto Tersimpan
+                    </div>
                 </div>
-                <div className="absolute bottom-4 left-4 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg flex items-center">
-                    <CheckCircleIcon className="h-5 w-5 mr-1" />
-                    Foto Tersimpan
-                </div>
+                <button 
+                    type="button" 
+                    onClick={() => setPhoto(null)} 
+                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                >
+                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Ulangi Foto APAR
+                </button>
             </div>
         )}
     </div>
 );
 
 const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieCamera, captureSelfie, stopSelfieCamera, selfieVideoRef, selfieCanvasRef, captureCountdown, showFlash, setSelfie }) => (
-    <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-        <label className="block text-lg font-bold text-gray-900 mb-4 flex items-center">
-            🤳 Selfie Teknisi <span className="text-red-500 ml-1">*</span>
+    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-2xl border border-blue-200 shadow-sm">
+        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+            </div>
+            <span>Selfie Teknisi <span className="text-red-500">*</span></span>
         </label>
 
         {!selfie && !selfieCameraActive && (
@@ -146,52 +153,52 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                 type="button"
                 onClick={startSelfieCamera}
                 disabled={selfieLoading}
-                className="w-full aspect-video bg-white border-2 border-dashed border-blue-300 rounded-xl flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full aspect-[3/4] bg-white border-2 border-dashed border-blue-300 rounded-xl flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <CameraIcon className="h-8 w-8 text-blue-600" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600" />
                 </div>
-                <p className="mt-4 text-lg font-semibold text-gray-700 group-hover:text-blue-700">Ambil Selfie</p>
-                <p className="mt-1 text-sm text-gray-500">Wajib selfie di lokasi</p>
+                <p className="mt-4 text-base sm:text-lg font-semibold text-gray-700 group-hover:text-blue-700">Ambil Selfie</p>
+                <p className="mt-1 text-xs sm:text-sm text-gray-500 px-4 text-center">Wajib selfie di lokasi inspeksi</p>
             </button>
         )}
 
         {selfieCameraActive && !selfie && (
-            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-video group">
+            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4]">
                 <video ref={selfieVideoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
                 <canvas ref={selfieCanvasRef} className="hidden" />
 
                 {captureCountdown > 0 && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                        <div className="text-white text-8xl font-bold animate-ping">{captureCountdown}</div>
+                        <div className="text-white text-6xl sm:text-8xl font-bold animate-ping">{captureCountdown}</div>
                     </div>
                 )}
 
                 {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
 
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-6">
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
                     <button 
                         type="button" 
                         onClick={stopSelfieCamera} 
-                        className="p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
+                        className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
-                        <XMarkIcon className="h-6 w-6" />
+                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                     
                     <button 
                         type="button" 
                         onClick={captureSelfie} 
                         disabled={captureCountdown > 0} 
-                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all"
+                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
-                        <div className="h-16 w-16 rounded-full bg-blue-600 hover:bg-blue-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
-                            <CameraIcon className="h-8 w-8 text-white" />
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-600 hover:bg-blue-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
+                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                         </div>
                     </button>
                 </div>
 
-                <div className="absolute top-4 left-4 bg-blue-600/90 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-sm font-medium flex items-center shadow-lg">
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-blue-600/90 backdrop-blur-md text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center shadow-lg">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
                     Selfie Mode
                 </div>
@@ -199,21 +206,22 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
         )}
 
         {selfie && (
-            <div className="relative group rounded-xl overflow-hidden shadow-lg aspect-video bg-black">
-                <img src={URL.createObjectURL(selfie)} alt="Selfie" className="w-full h-full object-contain transform scale-x-[-1]" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <button 
-                        type="button" 
-                        onClick={() => setSelfie(null)} 
-                        className="bg-white text-blue-600 px-6 py-2 rounded-full font-bold shadow-xl transform scale-90 group-hover:scale-100 transition-all hover:bg-gray-100"
-                    >
-                        Ambil Ulang
-                    </button>
+            <div className="space-y-3">
+                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                    <img src={URL.createObjectURL(selfie)} alt="Selfie" className="w-full h-full object-contain transform scale-x-[-1]" />
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-blue-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                        Selfie Tersimpan
+                    </div>
                 </div>
-                <div className="absolute bottom-4 left-4 bg-blue-600 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg flex items-center">
-                    <CheckCircleIcon className="h-5 w-5 mr-1" />
-                    Selfie Tersimpan
-                </div>
+                <button 
+                    type="button" 
+                    onClick={() => setSelfie(null)} 
+                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                >
+                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                    Ulangi Selfie
+                </button>
             </div>
         )}
     </div>
@@ -331,7 +339,7 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                                 type="button" 
                                 onClick={startDamageCamera} 
                                 disabled={damageCameraLoading} 
-                                className="w-full aspect-video border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group disabled:opacity-50"
+                                className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group disabled:opacity-50"
                             >
                                 <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
                                     <CameraIcon className="h-6 w-6 text-red-600" />
@@ -341,7 +349,7 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                         )}
 
                         {damageCameraActive && !newDamage.damage_photo && (
-                            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-video group">
+                            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
                                 <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                                 <canvas ref={damageCanvasRef} className="hidden" />
 
@@ -363,11 +371,22 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                         )}
 
                         {newDamage.damage_photo && (
-                            <div className="relative group rounded-xl overflow-hidden shadow-lg aspect-video bg-black">
-                                <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                    <button type="button" onClick={() => setNewDamage({ ...newDamage, damage_photo: null })} className="bg-white text-red-600 px-4 py-2 rounded-full font-bold shadow-lg hover:bg-gray-100">Hapus Foto</button>
+                            <div className="space-y-3">
+                                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                                    <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
+                                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                                        Foto Kerusakan
+                                    </div>
                                 </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setNewDamage({ ...newDamage, damage_photo: null })} 
+                                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-orange-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                                >
+                                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                    Ulangi Foto Kerusakan
+                                </button>
                             </div>
                         )}
                     </div>
@@ -488,6 +507,38 @@ const InspectionFormEnhanced = () => {
         }
     }, [damageCategoriesQuery.data, damageCategoriesQuery.isError]);
 
+    // Re-validate location when APAR data loads or location updates
+    useEffect(() => {
+        if (apar?.latitude && apar?.longitude && currentLocation) {
+            // Calculate distance inline to ensure validation runs even if helper is defined lower down
+            const lat1 = currentLocation.lat;
+            const lon1 = currentLocation.lng;
+            const lat2 = parseFloat(apar.latitude);
+            const lon2 = parseFloat(apar.longitude);
+            
+            const R = 6371e3; // Earth's radius in meters
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // in meters
+
+            // Ensure valid_radius is treated as number
+            const validRadius = parseInt(apar.valid_radius) || 30;
+            const valid = distance <= validRadius;
+            
+            // Updates state to reflect validation result
+            setLocationValid(valid);
+            setLocationDistance(Math.round(distance));
+            setLocationValidRadius(validRadius);
+        }
+    }, [apar, currentLocation]);
+
     // Damage category management
     const addDamage = () => {
         if (!newDamage.category_id || !newDamage.damage_photo) {
@@ -606,67 +657,186 @@ const InspectionFormEnhanced = () => {
     // Camera and location methods
     const [locationSkipped, setLocationSkipped] = useState(false);
 
-    const getCurrentLocation = () => {
-        if (navigator.geolocation) {
-            setLocationLoading(true);
+    const getCurrentLocation = async (highAccuracy = true) => {
+        if (!navigator.geolocation) {
+            showError('Geolokasi tidak didukung di browser ini');
+            return;
+        }
+
+        setLocationLoading(true);
+        if (highAccuracy) {
+             // Only clear error if starting fresh (high accuracy)
             setLocationError('');
             setLocationSkipped(false);
-            
-            // Use watchPosition instead of getCurrentPosition for better reliability
-            const watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    // We got a position! Stop watching.
-                    navigator.geolocation.clearWatch(watchId);
-                    
-                    setLocationLoading(false);
-                    const location = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    setCurrentLocation(location);
-
-                    // Validate location if APAR has coordinates
-                    if (apar?.latitude && apar?.longitude) {
-                        const distance = calculateDistance(
-                            location.lat, location.lng,
-                            apar.latitude, apar.longitude
-                        );
-                        const valid = distance <= (apar.valid_radius || 30);
-                        setLocationValid(valid);
-                        setLocationDistance(Math.round(distance));
-                        setLocationValidRadius(apar.valid_radius || 30);
-                    }
-                },
-                (error) => {
-                    // Only handle error if we haven't got a position yet
-                    // But watchPosition might call error multiple times or eventually success
-                    // We'll set a timeout to clear the watch if it takes too long
-                    console.warn('Watch position error:', error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 10000
-                }
-            );
-
-            // Set a timeout to stop watching if no position is found within 10 seconds
-            setTimeout(() => {
-                navigator.geolocation.clearWatch(watchId);
-                setLocationLoading((prev) => {
-                    if (prev) { // If still loading
-                        console.error('Geolocation timed out');
-                        showError('Gagal mendapatkan lokasi. Silakan coba lagi atau lanjutkan tanpa lokasi.');
-                        setLocationError('Waktu permintaan lokasi habis.');
-                        return false;
-                    }
-                    return prev;
-                });
-            }, 10000);
-
-        } else {
-            showError('Geolokasi tidak didukung di browser ini');
         }
+
+        // Check permission state first (if Permissions API is available)
+        try {
+            if (navigator.permissions && navigator.permissions.query) {
+                const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+                console.log('Geolocation permission state:', permissionStatus.state);
+                
+                if (permissionStatus.state === 'denied') {
+                    setLocationLoading(false);
+                    const errorMsg = 'Izin lokasi ditolak. Mohon cek pengaturan browser (ikon gembok/pengaturan situs) dan izinkan akses lokasi.';
+                    showError(errorMsg);
+                    setLocationError(errorMsg);
+                    console.error('Permission denied - detected via Permissions API');
+                    return;
+                }
+            }
+        } catch (permError) {
+            // Permissions API not available or failed, continue with geolocation request
+            console.warn('Permissions API check failed:', permError);
+        }
+
+        const options = {
+            enableHighAccuracy: highAccuracy,
+            timeout: 20000, 
+            maximumAge: 30000 // Allow cached positions up to 30 seconds
+        };
+
+        const successHandler = (position) => {
+            setLocationLoading(false);
+            const location = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            setCurrentLocation(location);
+            setLocationError(''); // Clear any previous errors
+            
+            console.log('📍 Location obtained successfully:', {
+                userLocation: location,
+                accuracy: position.coords.accuracy,
+                timestamp: new Date(position.timestamp).toISOString()
+            });
+
+            // Validate location if APAR has coordinates
+            if (apar?.latitude && apar?.longitude) {
+                const distance = calculateDistance(
+                    location.lat, location.lng,
+                    apar.latitude, apar.longitude
+                );
+                const validRadius = apar.valid_radius || 30;
+                const valid = distance <= validRadius;
+                
+                // Comprehensive validation logging
+                console.log('🎯 Location Validation Details:', {
+                    aparInfo: {
+                        serialNumber: apar.serial_number,
+                        location: apar.location_name,
+                        coordinates: {
+                            lat: apar.latitude,
+                            lng: apar.longitude
+                        },
+                        validRadius: validRadius
+                    },
+                    userCoordinates: location,
+                    calculatedDistance: Math.round(distance),
+                    isValid: valid,
+                    validation: {
+                        distance: `${Math.round(distance)}m`,
+                        maxAllowed: `${validRadius}m`,
+                        difference: `${Math.round(distance - validRadius)}m ${valid ? 'within' : 'exceeds'} limit`
+                    }
+                });
+                
+                setLocationValid(valid);
+                setLocationDistance(Math.round(distance));
+                setLocationValidRadius(validRadius);
+                
+                if (!valid) {
+                    console.warn('⚠️ Location validation FAILED:', {
+                        reason: 'Distance exceeds valid radius',
+                        distance: `${Math.round(distance)}m`,
+                        maxAllowed: `${validRadius}m`,
+                        excess: `${Math.round(distance - validRadius)}m over limit`
+                    });
+                } else {
+                    console.log('✅ Location validation PASSED');
+                }
+            } else {
+                console.log('ℹ️ APAR has no coordinates set - skipping location validation');
+            }
+        };
+
+        const errorHandler = async (error) => {
+            // Comprehensive error logging for debugging
+            console.error('Geolocation Error Details:', {
+                code: error.code,
+                message: error.message,
+                highAccuracy: highAccuracy,
+                errorObject: error,
+                isLocalhost: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            });
+
+            // Check if this is a "false" denial (permission is actually granted)
+            let isFalseDenial = false;
+            if (error.code === 1 && navigator.permissions && navigator.permissions.query) {
+                try {
+                    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
+                    // If permissions says granted, but we got error code 1, it's a flake/race condition
+                    if (permissionStatus.state === 'granted') {
+                        console.warn('⚠️ Detected false PERMISSION_DENIED. Permission is actually granted. Retrying...');
+                        isFalseDenial = true;
+                    }
+                } catch (e) {
+                    console.error('Error checking permissions during error handling:', e);
+                }
+            }
+            
+            // If failed with high accuracy (and not a true permission denial), try low accuracy
+            // 1 = PERMISSION_DENIED
+            if (highAccuracy && (error.code !== 1 || isFalseDenial)) {
+                console.log('Retrying with low accuracy (Network-based)...');
+                getCurrentLocation(false);
+                return;
+            }
+
+            // Final error handling
+            setLocationLoading(false);
+            let errorMessage = 'Gagal mendapatkan lokasi.';
+            
+            // GeolocationPositionError codes:
+            // 1: PERMISSION_DENIED - User denied permission
+            // 2: POSITION_UNAVAILABLE - Location unavailable
+            // 3: TIMEOUT - Request timed out
+            switch(error.code) {
+                case 1:
+                    errorMessage = 'Izin lokasi ditolak. Mohon cek pengaturan browser (ikon gembok/pengaturan situs) dan izinkan akses lokasi.';
+                    console.error('Permission denied - User must enable location in browser settings');
+                    break;
+                case 2:
+                    // Check if running on localhost
+                    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                    if (isLocalhost) {
+                        errorMessage = 'Lokasi tidak tersedia (development mode). Silakan gunakan tombol "Lanjutkan Tanpa Lokasi" di bawah untuk melanjutkan inspeksi.';
+                        console.warn('Position unavailable on localhost - this is normal in development. User can skip location validation.');
+                    } else {
+                        errorMessage = 'Sinyal lokasi tidak tersedia. Pastikan GPS/WiFi aktif, atau gunakan tombol "Lanjutkan Tanpa Lokasi" untuk melanjutkan.';
+                        console.error('Position unavailable - GPS/WiFi signal issue');
+                    }
+                    break;
+                case 3:
+                    errorMessage = 'Waktu permintaan lokasi habis. Silakan gunakan tombol "Lanjutkan Tanpa Lokasi" untuk melanjutkan inspeksi.';
+                    console.error('Timeout - Location request took too long');
+                    break;
+                default:
+                    errorMessage = `Terjadi kesalahan saat mengambil lokasi (Code: ${error.code}, Message: ${error.message}). Gunakan tombol "Lanjutkan Tanpa Lokasi" untuk melanjutkan.`;
+                    console.error('Unknown geolocation error:', error);
+            }
+
+            showError(errorMessage);
+            setLocationError(errorMessage);
+        };
+
+        // Use getCurrentPosition instead of watchPosition for one-time fetch, 
+        // as we have a retry mechanism now.
+        navigator.geolocation.getCurrentPosition(
+            successHandler, 
+            errorHandler, 
+            options
+        );
     };
 
     const skipLocation = () => {
@@ -1004,29 +1174,32 @@ const InspectionFormEnhanced = () => {
     }
 
     return (
-        <div className="min-h-screen">
-            <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <div className="min-h-screen bg-gray-50">
+            <div className="max-w-4xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <Header apar={apar} />
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-6 space-y-8 border border-gray-100">
+                <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-4 sm:p-6 space-y-6 sm:space-y-8 border border-gray-100">
                     <APARPhotoCapture photo={photo} cameraActive={cameraActive} cameraLoading={cameraLoading} startCamera={startCamera} capturePhoto={capturePhoto} stopCamera={stopCamera} videoRef={videoRef} canvasRef={canvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setPhoto={setPhoto} />
 
                     <SelfieCapture selfie={selfie} selfieCameraActive={selfieCameraActive} selfieLoading={selfieLoading} startSelfieCamera={startSelfieCamera} captureSelfie={captureSelfie} stopSelfieCamera={stopSelfieCamera} selfieVideoRef={selfieVideoRef} selfieCanvasRef={selfieCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setSelfie={setSelfie} />
 
                     {/* Condition */}
-                    <div>
-                        <label className="block text-lg font-semibold text-gray-900 mb-4">
-                            🔍 Kondisi APAR <span className="text-red-500">*</span>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
+                                <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                            </div>
+                            <span>Kondisi APAR <span className="text-red-500">*</span></span>
                         </label>
                         <select
                             value={condition}
                             onChange={(e) => setCondition(e.target.value)}
-                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg font-medium"
+                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-base sm:text-lg font-medium bg-white shadow-sm"
                             required
                         >
-                            <option value="good">Baik</option>
-                            <option value="damaged">Butuh Perbaikan</option>
+                            <option value="good">✅ Baik</option>
+                            <option value="damaged">⚠️ Butuh Perbaikan</option>
                         </select>
                     </div>
 
@@ -1055,11 +1228,13 @@ const InspectionFormEnhanced = () => {
 
 
                     {/* Location Status */}
-                    <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <label className="block text-lg font-semibold text-gray-900 flex items-center">
-                                <MapPinIcon className="h-6 w-6 mr-2 text-gray-600" />
-                                Lokasi Inspeksi
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+                            <label className="block text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
+                                    <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                                </div>
+                                <span>Lokasi Inspeksi</span>
                             </label>
                             {locationLoading && (
                                 <span className="text-sm text-gray-500 flex items-center">
@@ -1147,12 +1322,24 @@ const InspectionFormEnhanced = () => {
                         </div>
                     </div>
 
+                    {/* Notes */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
+                        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4">Catatan Tambahan</label>
+                        <textarea
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            rows={4}
+                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none bg-white shadow-sm text-sm sm:text-base"
+                            placeholder="Tambahkan catatan inspeksi jika diperlukan..."
+                        />
+                    </div>
+
                     {/* Submit Button */}
-                    <div className="flex space-x-4 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-lg shadow-lg"
+                            className="w-full sm:flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3.5 sm:py-4 rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl"
                         >
                             {submitting ? (
                                 <div className="flex items-center justify-center space-x-2">
@@ -1166,7 +1353,7 @@ const InspectionFormEnhanced = () => {
                         <button
                             type="button"
                             onClick={() => navigate({ to: '/' })}
-                            className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-lg"
+                            className="w-full sm:w-auto px-6 py-3.5 sm:py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-base sm:text-lg shadow-sm"
                         >
                             Batal
                         </button>
