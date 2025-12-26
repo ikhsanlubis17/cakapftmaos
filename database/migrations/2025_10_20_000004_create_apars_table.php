@@ -25,7 +25,7 @@ return new class extends Migration
             $table->integer('capacity')->nullable();                     // in kg
             $table->date('manufactured_date')->nullable();
             $table->date('expired_at')->nullable();
-            $table->enum('status', ['active', 'refill', 'expired', 'damaged'])->default('active');
+            $table->enum('status', ['active', 'inactive', 'needs_repair', 'under_repair'])->default('active');
             $table->foreignId('tank_truck_id')->nullable()->constrained()->onDelete('set null');
             $table->text('notes')->nullable();
             $table->timestamps();

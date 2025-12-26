@@ -474,10 +474,10 @@ const AparEdit = () => {
                                 className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
                             >
                                 <option value="active">Aktif</option>
+                                <option value="inactive">Non-Aktif</option>
                                 <option value="needs_repair">
                                     Perlu Perbaikan
                                 </option>
-                                <option value="inactive">Nonaktif</option>
                                 <option value="under_repair">
                                     Sedang Perbaikan
                                 </option>

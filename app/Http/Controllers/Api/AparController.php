@@ -129,7 +129,7 @@ class AparController extends Controller
      */
     public function update(Request $request, Apar $apar)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'serial_number' => 'required|unique:apars,serial_number,' . $apar->id,
             'location_type' => 'required|in:statis,mobile',
             'location_name' => 'required|string',
@@ -140,16 +140,24 @@ class AparController extends Controller
             'capacity' => 'required|integer|min:1',
             'manufactured_date' => 'nullable|date',
             'expired_at' => 'nullable|date',
+            'status' => 'required|in:active,inactive,needs_repair,under_repair',
             'tank_truck_id' => 'nullable|exists:tank_trucks,id',
             'notes' => 'nullable|string',
         ]);
 
-        $apar->update($request->all());
+        try {
+            $apar->update($validatedData);
 
-        return response()->json([
-            'message' => 'APAR berhasil diperbarui',
-            'apar' => $apar->load(['tankTruck', 'aparType']),
-        ]);
+            return response()->json([
+                'message' => 'APAR berhasil diperbarui',
+                'apar' => $apar->load(['tankTruck', 'aparType']),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal memperbarui APAR',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
