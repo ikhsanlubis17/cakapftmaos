@@ -7,10 +7,11 @@ import {
     TrashIcon,
     ShieldCheckIcon,
     UserGroupIcon,
-    LockOpenIcon
+    LockOpenIcon,
+    PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
 
-const UsersTable = ({ users, onEdit, onDelete, onUnblock }) => {
+const UsersTable = ({ users, onEdit, onDelete, onUnblock, onResendActivation }) => {
     const getRoleIcon = (role) => {
         switch (role) {
             case 'admin':
@@ -130,16 +131,30 @@ const UsersTable = ({ users, onEdit, onDelete, onUnblock }) => {
                                     <div className="text-sm text-gray-500">{user.phone || '-'}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${
-                                        user.is_active 
-                                            ? 'bg-green-100 text-green-800 border-green-200' 
-                                            : 'bg-red-100 text-red-800 border-red-200'
-                                    }`}>
-                                        <span className={`w-2 h-2 rounded-full mr-2 ${
-                                            user.is_active ? 'bg-green-400' : 'bg-red-400'
-                                        }`}></span>
-                                        {user.is_active ? 'Aktif' : 'Tidak Aktif'}
-                                    </span>
+                                    {(() => {
+                                        if (!user.email_verified_at) {
+                                            return (
+                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-yellow-100 text-yellow-800 border-yellow-200">
+                                                    <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400"></span>
+                                                    Menunggu Aktivasi
+                                                </span>
+                                            );
+                                        }
+                                        if (user.is_active) {
+                                            return (
+                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
+                                                    <span className="w-2 h-2 rounded-full mr-2 bg-green-400"></span>
+                                                    Aktif
+                                                </span>
+                                            );
+                                        }
+                                        return (
+                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-800 border-red-200">
+                                                <span className="w-2 h-2 rounded-full mr-2 bg-red-400"></span>
+                                                Nonaktif
+                                            </span>
+                                        );
+                                    })()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div className="flex items-center space-x-2">
@@ -165,6 +180,17 @@ const UsersTable = ({ users, onEdit, onDelete, onUnblock }) => {
                                                 title="Buka Blokir"
                                             >
                                                 <LockOpenIcon className="h-4 w-4" />
+                                            </button>
+                                        )}
+
+                                        {/* Resend Activation Button */}
+                                        {onResendActivation && !user.email_verified_at && (
+                                            <button
+                                                onClick={() => onResendActivation(user)}
+                                                className="p-1.5 rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors"
+                                                title="Kirim Ulang Aktivasi"
+                                            >
+                                                <PaperAirplaneIcon className="h-4 w-4" />
                                             </button>
                                         )}
 

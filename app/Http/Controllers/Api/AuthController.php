@@ -72,7 +72,13 @@ class AuthController extends Controller
 
         if (!$user->is_active) {
             throw ValidationException::withMessages([
-                'email' => ['Akun tidak aktif.'],
+                'email' => ['Akun tidak aktif (banned).'],
+            ]);
+        }
+
+        if (!$user->email_verified_at) {
+            throw ValidationException::withMessages([
+                'email' => ['Email belum diverifikasi. Silakan cek email Anda untuk aktivasi akun.'],
             ]);
         }
 
@@ -168,6 +174,48 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
             'user' => $user
+        ]);
+    }
+
+    /**
+     * Activate user account via token
+     */
+    public function activate(Request $request) 
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = User::where('activation_token', $request->token)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Token aktivasi tidak valid.'
+            ], 400);
+        }
+
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'Akun sudah aktif.',
+            ], 200);
+        }
+
+        if ($user->activation_expires_at && now()->greaterThan($user->activation_expires_at)) {
+            return response()->json([
+                'message' => 'Token aktivasi sudah kadaluarsa. Silakan hubungi admin untuk mengirim ulang email aktivasi.'
+            ], 400);
+        }
+
+        $user->password = Hash::make($request->password); // Set new password
+        $user->email_verified_at = now();
+        $user->is_active = true; // Activate user
+        // $user->activation_token = null; // Keep token for idempotency
+        $user->activation_expires_at = null;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Akun berhasil diaktivasi. Silakan login.',
         ]);
     }
 }

@@ -27,6 +27,7 @@ const UsersManagement = () => {
         phone: "",
         role: "teknisi",
         password: "",
+        admin_password: "", // Added for admin confirmation
         is_active: true,
     });
 
@@ -63,7 +64,13 @@ const UsersManagement = () => {
             queryClient.invalidateQueries({ queryKey: ["users"] });
         } catch (error) {
             console.error("Error saving user:", error);
-            showError("Gagal menyimpan data pengguna");
+            if (error.response?.status === 422) {
+                const validationErrors = error.response.data.errors;
+                const message = Object.values(validationErrors).flat().join('\n');
+                showError(message || "Data yang dimasukkan tidak valid");
+            } else {
+                showError(error.response?.data?.message || "Gagal menyimpan data pengguna");
+            }
         }
     };
 
@@ -125,6 +132,28 @@ const UsersManagement = () => {
         }
     };
 
+    const handleResendActivation = async (user) => {
+        const confirmed = await confirm({
+            title: "Kirim Ulang Aktivasi",
+            message: `Kirim ulang email aktivasi untuk ${user.name}? Token baru akan berlaku selama 24 jam.`,
+            type: "info",
+            confirmText: "Kirim Email",
+            cancelText: "Batal",
+            confirmButtonColor: "blue",
+        });
+
+        if (confirmed) {
+            try {
+                // Using axios directly or apiClient
+                await apiClient.post(`/api/users/${user.id}/resend-activation`);
+                showSuccess("Email aktivasi berhasil dikirim ulang");
+            } catch (error) {
+                console.error("Error resending activation:", error);
+                showError(error.response?.data?.message || "Gagal mengirim ulang aktivasi");
+            }
+        }
+    };
+
     const resetForm = () => {
         setFormData({
             name: "",
@@ -132,6 +161,7 @@ const UsersManagement = () => {
             phone: "",
             role: "teknisi",
             password: "",
+            admin_password: "",
             is_active: true,
         });
     };
@@ -351,6 +381,7 @@ const UsersManagement = () => {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onUnblock={handleUnblock}
+                    onResendActivation={handleResendActivation}
                 />
             </div>
 

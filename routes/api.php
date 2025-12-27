@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\RepairReportController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/activate', [AuthController::class, 'activate']);
 
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -119,6 +120,7 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy']);
     Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
     Route::post('/users/{user}/unblock', [UserController::class, 'unblock']);
+    Route::post('/users/{user}/resend-activation', [UserController::class, 'resendActivation']);
 
     // Tank Truck routes
     Route::get('/tank-trucks', [TankTruckController::class, 'index']);

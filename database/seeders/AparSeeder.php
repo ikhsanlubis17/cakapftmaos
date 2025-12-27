@@ -146,7 +146,7 @@ class AparSeeder extends Seeder
             'capacity' => 6,
             'manufactured_date' => '2022-12-01',
             'expired_at' => '2025-12-01',
-            'status' => 'refill', 
+            'status' => 'under_repair', 
         ]);
 
         Apar::create([
@@ -161,7 +161,7 @@ class AparSeeder extends Seeder
             'capacity' => 9,
             'manufactured_date' => '2021-08-15',
             'expired_at' => '2024-08-15',
-            'status' => 'expired', 
+            'status' => 'inactive', 
         ]);
     }
 }

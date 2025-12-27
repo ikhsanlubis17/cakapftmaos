@@ -96,6 +96,16 @@ const welcomeRoute = createRoute({
     component: Welcome,
 });
 
+import ActivateAccount from "./features/auth/pages/ActivateAccount";
+
+// ... (existing imports)
+
+const activateAccountRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/activate",
+    component: ActivateAccount,
+});
+
 const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/login",
@@ -337,6 +347,7 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
     welcomeRoute,
     loginRoute,
+    activateAccountRoute,
     authenticatedRoute.addChildren([
         dashboardRoute,
         profileRoute,

@@ -15,7 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'blocked_until', 'created_at')
+        $users = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'email_verified_at', 'blocked_until', 'created_at')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -30,24 +30,45 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi'])],
             'is_active' => 'boolean',
+            'admin_password' => 'required|string', // Validation for admin password
         ]);
+
+        // Validate admin password
+        $admin = \Illuminate\Support\Facades\Auth::user();
+        if (!Hash::check($request->admin_password, $admin->password)) {
+            return response()->json([
+                'message' => 'Password admin salah. Silakan coba lagi.',
+                'errors' => ['admin_password' => ['Password admin salah.']]
+            ], 422);
+        }
+
+        $activationToken = \Illuminate\Support\Str::uuid();
+        $dummyPassword = \Illuminate\Support\Str::random(32); // Secure random password
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($dummyPassword),
             'phone' => $request->phone,
             'role' => $request->role,
-            'is_active' => $request->is_active ?? true,
+            'is_active' => false, // Default to inactive until verified
+            'activation_token' => $activationToken,
+            'activation_expires_at' => now()->addHours(24),
         ]);
+        
+        // Send Activation Email
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\UserActivationMail($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send activation email: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Pengguna berhasil dibuat',
-            'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'is_active', 'created_at'])
+            'user' => $user->only(['id', 'name', 'email', 'phone', 'role', 'is_active', 'email_verified_at', 'created_at'])
         ], 201);
     }
 
@@ -114,6 +135,36 @@ class UserController extends Controller
             'message' => 'Pengguna berhasil dihapus'
         ]);
     }
+    /**
+     * Resend activation email
+     */
+    public function resendActivation(User $user)
+    {
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'Akun ini sudah aktif.'
+            ], 422);
+        }
+
+        $activationToken = \Illuminate\Support\Str::uuid();
+        $user->activation_token = $activationToken;
+        $user->activation_expires_at = now()->addHours(24);
+        $user->save();
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\UserActivationMail($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to resend activation email: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Gagal mengirim email aktivasi. Silakan coba lagi.'
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Email aktivasi berhasil dikirim ulang.'
+        ]);
+    }
+
     /**
      * Unblock a user.
      */

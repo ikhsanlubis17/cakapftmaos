@@ -21,6 +21,7 @@ class UserSeeder extends Seeder
             'role' => 'admin',
             'phone' => '081234567890',
             'is_active' => 1,
+            'email_verified_at' => now(),
         ]);
 
         // Create teknisi users
@@ -31,15 +32,7 @@ class UserSeeder extends Seeder
             'role' => 'teknisi',
             'phone' => '081234567891',
             'is_active' => 1,
-        ]);
-
-        User::create([
-            'name' => 'Ikhsanul Arifin',
-            'email' => 'lubis163774@gmail.com',
-            'password' => Hash::make('password123'),
-            'role' => 'teknisi',
-            'phone' => '085248507938',
-            'is_active' => 1,
+            'email_verified_at' => now(),
         ]);
 
         // Create supervisor user
@@ -50,6 +43,7 @@ class UserSeeder extends Seeder
             'role' => 'supervisor',
             'phone' => '081234567893',
             'is_active' => 1,
+            'email_verified_at' => now(),
         ]);
     }
 }
