@@ -53,16 +53,18 @@ Route::middleware('auth:api')->group(function () {
     // Dashboard - Semua route dashboard harus dilindungi
     Route::get('/stats', [DashboardController::class, 'getStats']);
 
-    // APAR routes
-    Route::get('/apar', [AparController::class, 'index']);
-    Route::get('/apar/{apar}', [AparController::class, 'show']);
-    Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
-    Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
-    Route::post('/apar', [AparController::class, 'store']);
-    Route::put('/apar/{apar}', [AparController::class, 'update']);
-    Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
-    Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
-    Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
+    // APAR routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/apar', [AparController::class, 'index']);
+        Route::get('/apar/{apar}', [AparController::class, 'show']);
+        Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
+        Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
+        Route::post('/apar', [AparController::class, 'store']);
+        Route::put('/apar/{apar}', [AparController::class, 'update']);
+        Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
+        Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
+        Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
+    });
 
     // APAR Type routes (Admin only)
     Route::get('/apar-types', [AparTypeController::class, 'index']);
@@ -122,14 +124,16 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/users/{user}/unblock', [UserController::class, 'unblock']);
     Route::post('/users/{user}/resend-activation', [UserController::class, 'resendActivation']);
 
-    // Tank Truck routes
-    Route::get('/tank-trucks', [TankTruckController::class, 'index']);
-    Route::get('/tank-trucks/{tankTruck}', [TankTruckController::class, 'show']);
-    Route::post('/tank-trucks', [TankTruckController::class, 'store']);
-    Route::put('/tank-trucks/{tankTruck}', [TankTruckController::class, 'update']);
-    Route::delete('/tank-trucks/{tankTruck}', [TankTruckController::class, 'destroy']);
-    Route::post('/tank-trucks/{tankTruck}/assign-apar', [TankTruckController::class, 'assignApar']);
-    Route::post('/tank-trucks/{tankTruck}/remove-apar', [TankTruckController::class, 'removeApar']);
+    // Tank Truck routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/tank-trucks', [TankTruckController::class, 'index']);
+        Route::get('/tank-trucks/{tankTruck}', [TankTruckController::class, 'show']);
+        Route::post('/tank-trucks', [TankTruckController::class, 'store']);
+        Route::put('/tank-trucks/{tankTruck}', [TankTruckController::class, 'update']);
+        Route::delete('/tank-trucks/{tankTruck}', [TankTruckController::class, 'destroy']);
+        Route::post('/tank-trucks/{tankTruck}/assign-apar', [TankTruckController::class, 'assignApar']);
+        Route::post('/tank-trucks/{tankTruck}/remove-apar', [TankTruckController::class, 'removeApar']);
+    });
 
 
     // Schedule routes

@@ -142,14 +142,12 @@ const LayoutEnhanced = () => {
       case "supervisor":
         return [
           { name: "Dashboard", href: "/", icon: HomeIcon, description: "Monitoring APAR" },
-          { name: "APAR", href: "/apar", icon: FireIcon, description: "Data APAR" },
           {
             name: "Inspeksi",
             href: "/inspections",
             icon: ClipboardDocumentListIcon,
             description: "Riwayat inspeksi",
           },
-          { name: "Mobil Tangki", href: "/tank-trucks", icon: TruckIcon, description: "Data mobil tangki" },
           {
             name: "Persetujuan Perbaikan",
             href: "/repair-approvals",

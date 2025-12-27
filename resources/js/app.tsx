@@ -66,6 +66,7 @@ import RepairReportForm from "./features/repairs/pages/RepairReportForm";
 import MyRepairApprovals from "./features/repairs/pages/MyRepairApprovals";
 import Loading from "./components/ui/Loading";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import Unauthorized from "./features/auth/pages/Unauthorized";
 
 interface RouterContext {
     auth: ReturnType<typeof useAuth>;
@@ -149,40 +150,45 @@ const profileRoute = createRoute({
     component: Profile,
 });
 
+// Unauthorized Route
+const unauthorizedRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "unauthorized",
+    component: Unauthorized,
+});
+
 // A helper function for role-based authorization
 const checkRoles =
     (allowedRoles: string[]) =>
     ({ context }: { context: RouterContext }) => {
         if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
-            // Todo: redirect to unauthorized page
-            alert("Access Denied: You do not have the required permissions.");
-            throw redirect({ to: "/welcome" });
+            throw redirect({ to: "/unauthorized" });
         }
     };
 
-// APAR Routes
+// APAR Routes (Admin only)
 const aparRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: AparList,
 });
 const aparCreateRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar/create",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: AparCreate,
 });
 const aparDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar/$id",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: AparDetail,
 });
 const aparEditRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar/$id/edit",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: AparEdit,
 });
 
@@ -202,23 +208,23 @@ const damageCategoriesRoute = createRoute({
     component: DamageCategoryManagement,
 });
 
-// Tank Truck Routes
+// Tank Truck Routes (Admin only)
 const tankTrucksRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "tank-trucks",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: TankTruckList,
 });
 const tankTruckDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "tank-trucks/$id",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: TankTruckDetail,
 });
 const tankTruckEditRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "tank-trucks/$id/edit",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: TankTruckEdit,
 });
 
@@ -351,6 +357,7 @@ const routeTree = rootRoute.addChildren([
     authenticatedRoute.addChildren([
         dashboardRoute,
         profileRoute,
+        unauthorizedRoute,
         aparRoute,
         aparCreateRoute,
         aparDetailRoute,
