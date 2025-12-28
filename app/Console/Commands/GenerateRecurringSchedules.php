@@ -15,7 +15,7 @@ class GenerateRecurringSchedules extends Command
      *
      * @var string
      */
-    protected $signature = 'inspections:generate-recurring';
+    protected $signature = 'inspections:generate-recurring {--force : Force generation without 7-day check (for testing)}';
 
     /**
      * The console command description.
@@ -30,6 +30,10 @@ class GenerateRecurringSchedules extends Command
     public function handle(ScheduleService $scheduleService)
     {
         $this->info('Starting recurring schedule generation...');
+        
+        if ($this->option('force')) {
+            $this->warn('⚠️  FORCE MODE: Bypassing 7-day check for testing purposes');
+        }
         
         try {
             // Get all active schedules that are recurring (not 'once')
@@ -55,7 +59,9 @@ class GenerateRecurringSchedules extends Command
 
                 // Only generate next schedule if the latest one has started or is about to start
                 // This prevents generating infinite schedules into the future
-                if ($latestSchedule->startAtUtc()->greaterThan($now->copy()->addDays(7))) {
+                // Skip this check if --force flag is used (for testing)
+                if (!$this->option('force') && $latestSchedule->startAtUtc()->greaterThan($now->copy()->addDays(7))) {
+                    $this->warn("Skipping APAR {$latestSchedule->apar_id}: Schedule is more than 7 days in the future. Use --force to override.");
                     continue;
                 }
 
@@ -75,6 +81,10 @@ class GenerateRecurringSchedules extends Command
                 if (!$nextStartAt) {
                     continue;
                 }
+
+                // Adjust to working day if falls on weekend (Saturday or Sunday)
+                $nextStartAt = $this->adjustToWorkingDay($nextStartAt);
+                $nextEndAt = $this->adjustToWorkingDay($nextEndAt);
 
                 // Create new schedule
                 $this->info("Generating next schedule for APAR {$latestSchedule->apar_id} ({$latestSchedule->frequency})");
@@ -113,20 +123,54 @@ class GenerateRecurringSchedules extends Command
 
     /**
      * Calculate next date based on frequency
+     * 
+     * Frequency intervals:
+     * - weekly: 7 days
+     * - monthly: 30 days (1 month)
+     * - quarterly: 90 days (3 months)
+     * - semiannual: 180 days (6 months)
      */
     private function calculateNextDate(Carbon $date, string $frequency): ?Carbon
     {
         $nextDate = $date->copy();
 
         switch ($frequency) {
+            case 'weekly':
+                return $nextDate->addDays(7);
             case 'monthly':
-                return $nextDate->addMonth();
+                return $nextDate->addDays(30);
             case 'quarterly':
-                return $nextDate->addMonths(3);
+                return $nextDate->addDays(90);
             case 'semiannual':
-                return $nextDate->addMonths(6);
+                return $nextDate->addDays(180);
             default:
                 return null;
         }
+    }
+
+    /**
+     * Adjust date to working day (Monday-Friday)
+     * If date falls on weekend (Saturday or Sunday), move to previous Friday
+     * 
+     * @param Carbon $date The date to adjust
+     * @return Carbon The adjusted date (Friday if weekend, unchanged if weekday)
+     */
+    private function adjustToWorkingDay(Carbon $date): Carbon
+    {
+        $adjustedDate = $date->copy();
+        $dayOfWeek = $adjustedDate->dayOfWeek; // 0 = Sunday, 6 = Saturday
+
+        // If Saturday (6), subtract 1 day to get Friday
+        if ($dayOfWeek === Carbon::SATURDAY) {
+            $adjustedDate->subDay();
+            Log::info("Adjusted schedule from Saturday to Friday: {$date->toDateString()} -> {$adjustedDate->toDateString()}");
+        }
+        // If Sunday (0), subtract 2 days to get Friday
+        elseif ($dayOfWeek === Carbon::SUNDAY) {
+            $adjustedDate->subDays(2);
+            Log::info("Adjusted schedule from Sunday to Friday: {$date->toDateString()} -> {$adjustedDate->toDateString()}");
+        }
+
+        return $adjustedDate;
     }
 }
