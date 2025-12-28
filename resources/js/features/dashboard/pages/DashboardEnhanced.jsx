@@ -883,13 +883,15 @@ const DashboardEnhanced = () => {
                                         {upcomingInspections.length} jadwal
                                         terdekat
                                     </p>
-                                    <Link
-                                        to="/schedules"
-                                        className="inline-flex items-center gap-2 mt-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
-                                    >
-                                        Lihat Semua Jadwal
-                                        <ArrowPathIcon className="h-3 w-3 rotate-90" />
-                                    </Link>
+                                    {user?.role === "admin" && (
+                                        <Link
+                                            to="/schedules"
+                                            className="inline-flex items-center gap-2 mt-2 text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors"
+                                        >
+                                            Lihat Semua Jadwal
+                                            <ArrowPathIcon className="h-3 w-3 rotate-90" />
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -905,13 +907,15 @@ const DashboardEnhanced = () => {
                                 Semua jadwal inspeksi sudah selesai atau belum
                                 dijadwalkan
                             </p>
-                            <Link
-                                to="/schedules"
-                                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                            >
-                                <PlusIcon className="h-4 w-4" />
-                                Buat Jadwal Baru
-                            </Link>
+                            {user?.role === "admin" && (
+                                <Link
+                                    to="/schedules"
+                                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                                >
+                                    <PlusIcon className="h-4 w-4" />
+                                    Buat Jadwal Baru
+                                </Link>
+                            )}
                         </div>
                     )}
                 </div>
