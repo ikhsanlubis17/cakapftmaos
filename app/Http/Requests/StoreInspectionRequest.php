@@ -36,7 +36,7 @@ class StoreInspectionRequest extends FormRequest
             'selfie' => "required|image|max:{$selfieMaxSize}",
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
-            'damage_categories' => 'nullable|array',
+            'damage_categories' => 'nullable|array|required_if:condition,damaged|min:1',
             'damage_categories.*.category_id' => 'required_with:damage_categories|exists:damage_categories,id',
             'damage_categories.*.notes' => 'nullable|string',
             'damage_categories.*.severity' => 'required_with:damage_categories|in:' . implode(',', $damageSeverityLevels),
@@ -74,6 +74,8 @@ class StoreInspectionRequest extends FormRequest
             'damage_categories.*.damage_photo.required_with' => 'Foto kerusakan wajib diambil.',
             'damage_categories.*.damage_photo.image' => 'File foto kerusakan harus berupa gambar.',
             'damage_categories.*.damage_photo.max' => 'Ukuran foto kerusakan maksimal 5MB.',
+            'damage_categories.required_if' => 'Minimal satu kategori kerusakan harus dipilih jika kondisi rusak.',
+            'damage_categories.min' => 'Deskirpsi kerusakan wajib diisi jika kondisi rusak.',
         ];
     }
 }

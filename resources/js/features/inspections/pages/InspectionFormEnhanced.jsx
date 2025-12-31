@@ -1110,6 +1110,12 @@ const InspectionFormEnhanced = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Validate damage report
+        if (condition === 'damaged' && selectedDamages.length === 0) {
+            showError('Wajib menyertakan foto dan kategori kerusakan jika kondisi APAR rusak');
+            return;
+        }
+
         // BYPASS: Create dummy blobs if missing
         let finalPhoto = photo;
         let finalSelfie = selfie;
