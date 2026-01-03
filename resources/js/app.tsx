@@ -257,7 +257,7 @@ const userEditRoute = createRoute({
 const schedulesRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "schedules",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["admin"]),
     component: SchedulesManagement,
 });
 const mySchedulesRoute = createRoute({

@@ -53,11 +53,14 @@ Route::middleware('auth:api')->group(function () {
     // Dashboard - Semua route dashboard harus dilindungi
     Route::get('/stats', [DashboardController::class, 'getStats']);
 
+    // APAR routes (Accessible to all authenticated users)
+    Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
+
     // APAR routes (Admin only)
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/apar', [AparController::class, 'index']);
         Route::get('/apar/{apar}', [AparController::class, 'show']);
-        Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
+
         Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
         Route::post('/apar', [AparController::class, 'store']);
         Route::put('/apar/{apar}', [AparController::class, 'update']);
@@ -136,16 +139,20 @@ Route::middleware('auth:api')->group(function () {
     });
 
 
-    // Schedule routes
-    Route::get('/schedules', [ScheduleController::class, 'index']);
+    // Schedule routes - Read-only endpoints accessible to all authenticated users
     Route::get('/schedules/my-schedules', [ScheduleController::class, 'mySchedules']);
     Route::get('/schedules/upcoming', [ScheduleController::class, 'upcoming']);
-    Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
-    Route::post('/schedules', [ScheduleController::class, 'store']);
-    Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
-    Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
-    Route::patch('/schedules/{schedule}/mark-completed', [ScheduleController::class, 'markCompleted']);
-    Route::post('/schedules/{schedule}/send-reminder', [ScheduleController::class, 'sendReminder']);
+
+    // Schedule routes - Admin only (CRUD operations)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/schedules', [ScheduleController::class, 'index']);
+        Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
+        Route::post('/schedules', [ScheduleController::class, 'store']);
+        Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
+        Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
+        Route::patch('/schedules/{schedule}/mark-completed', [ScheduleController::class, 'markCompleted']);
+        Route::post('/schedules/{schedule}/send-reminder', [ScheduleController::class, 'sendReminder']);
+    });
 
 
 
