@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, getRouteApi } from '@tanstack/react-router';
+import { useParams, useNavigate, getRouteApi, useLocation } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,9 @@ import {
     FireIcon,
     PlusIcon,
     TrashIcon,
+    MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
+import { AparSelector } from '../components/AparSelector';
 
 // Small subcomponents kept in this file for clarity
 const Header = ({ apar }) => (
@@ -475,9 +477,17 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
 );
 
 const InspectionFormEnhanced = () => {
-    const router = getRouteApi('/authenticated/inspections/enhanced/$qrCode');
-    const { qrCode } = router.useParams();
+    const location = useLocation();
     const navigate = useNavigate();
+    
+    // Get qrCode from URL pathname
+    // Check if we're on /inspections/enhanced/$qrCode route
+    const enhancedMatch = location.pathname.match(/\/inspections\/enhanced\/([^\/\?]+)/);
+    // Check if we're on /inspections/new/$qrCode route (optional qrCode)
+    const newMatch = location.pathname.match(/\/inspections\/new\/([^\/\?]+)/);
+    
+    const qrCode = enhancedMatch?.[1] || newMatch?.[1] || null;
+    
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const selfieVideoRef = useRef(null);
@@ -489,6 +499,9 @@ const InspectionFormEnhanced = () => {
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [damageCategories, setDamageCategories] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [aparList, setAparList] = useState([]);
+    const [filteredAparList, setFilteredAparList] = useState([]);
     const { apiClient } = useAuth();
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
@@ -551,6 +564,17 @@ const InspectionFormEnhanced = () => {
         enabled: Boolean(qrCode),
     });
 
+    // Query untuk mendapatkan daftar APAR jika tidak ada QR code
+    const aparListQuery = useQuery({
+        queryKey: ['apars'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/apar');
+            return res.data.data ?? res.data;
+        },
+        enabled: !qrCode,
+        staleTime: 1000 * 60 * 2,
+    });
+
     const damageCategoriesQuery = useQuery({
         queryKey: ['damage-categories', 'active'],
         queryFn: async () => {
@@ -573,6 +597,31 @@ const InspectionFormEnhanced = () => {
         }
     }, [aparQuery.data, aparQuery.isError]);
 
+    // Update APAR list when query data changes
+    useEffect(() => {
+        if (aparListQuery.data) {
+            setAparList(aparListQuery.data);
+            setFilteredAparList(aparListQuery.data);
+        }
+    }, [aparListQuery.data]);
+
+    // Filter APAR list based on search term
+    useEffect(() => {
+        if (!searchTerm.trim()) {
+            setFilteredAparList(aparList);
+        } else {
+            const filtered = aparList.filter((apar) => {
+                const searchLower = searchTerm.toLowerCase();
+                return (
+                    apar.serial_number?.toLowerCase().includes(searchLower) ||
+                    apar.location_name?.toLowerCase().includes(searchLower) ||
+                    apar.aparType?.name?.toLowerCase().includes(searchLower)
+                );
+            });
+            setFilteredAparList(filtered);
+        }
+    }, [searchTerm, aparList]);
+
     useEffect(() => {
         if (damageCategoriesQuery.data) {
             setDamageCategories(damageCategoriesQuery.data);
@@ -581,6 +630,18 @@ const InspectionFormEnhanced = () => {
             console.error('Error fetching damage categories');
         }
     }, [damageCategoriesQuery.data, damageCategoriesQuery.isError]);
+
+    // Handler untuk memilih APAR dari selector
+    const handleAparSelect = (selectedApar) => {
+        setApar(selectedApar);
+        // Jika APAR memiliki QR code, navigate ke route dengan QR code
+        if (selectedApar.qr_code) {
+            navigate({ 
+                to: `/inspections/enhanced/${selectedApar.qr_code}` 
+            });
+        }
+        // Jika tidak ada QR code, tetap di route yang sama (APAR sudah di-set via setApar)
+    };
 
     // Re-validate location when APAR data loads or location updates
     useEffect(() => {
@@ -1219,7 +1280,9 @@ const InspectionFormEnhanced = () => {
 
         const fd = new FormData();
         fd.append('apar_id', apar.id);
-        fd.append('apar_qrCode', qrCode);
+        // Use QR code from route or from selected APAR
+        const finalQrCode = qrCode || apar.qr_code || '';
+        fd.append('apar_qrCode', finalQrCode);
         fd.append('condition', condition);
         fd.append('notes', notes);
         fd.append('photo', finalPhoto, 'apar_photo.jpg');
@@ -1245,7 +1308,7 @@ const InspectionFormEnhanced = () => {
         submitInspectionMutation.mutate(fd);
     };
 
-    if (aparQuery.isLoading || damageCategoriesQuery.isLoading) {
+    if (aparQuery.isLoading || damageCategoriesQuery.isLoading || (aparListQuery.isLoading && !qrCode)) {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
@@ -1253,12 +1316,32 @@ const InspectionFormEnhanced = () => {
         );
     }
 
-    if (!apar) {
+    // Show APAR selector if no APAR is selected and no QR code is provided
+    if (!apar && !qrCode) {
+        return (
+            <AparSelector
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                aparList={filteredAparList}
+                onAparSelect={handleAparSelect}
+                isLoading={aparListQuery.isLoading}
+            />
+        );
+    }
+
+    // Show error if QR code is provided but APAR not found
+    if (!apar && qrCode && aparQuery.isError) {
         return (
             <div className="text-center py-12">
                 <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-medium text-gray-900">APAR Tidak Ditemukan</h3>
                 <p className="mt-1 text-sm text-gray-500">QR Code tidak valid atau APAR tidak terdaftar.</p>
+                <button
+                    onClick={() => navigate({ to: '/inspections/new' })}
+                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                    Pilih APAR Manual
+                </button>
             </div>
         );
     }

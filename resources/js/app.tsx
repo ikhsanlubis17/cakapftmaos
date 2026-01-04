@@ -48,7 +48,6 @@ import UserCreate from "./features/users/pages/UserCreate";
 import UserEdit from "./features/users/pages/UserEdit";
 import UserDetail from "./features/users/pages/UserDetail";
 import InspectionFormEnhanced from "./features/inspections/pages/InspectionFormEnhanced";
-import InspectionForm from "./features/inspections/pages/InspectionFormPage";
 import QRScanner from "./components/common/QRScanner";
 import MyInspections from "./features/inspections/pages/MyInspections";
 import MySchedules from "./features/schedules/pages/MySchedules";
@@ -277,8 +276,8 @@ const inspectionsRoute = createRoute({
 const newInspectionRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "inspections/new/{-$qrCode}",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
-    component: InspectionForm,
+    beforeLoad: checkRoles(["admin", "supervisor", "teknisi"]),
+    component: InspectionFormEnhanced,
 });
 
 const newInspectionFromQRRoute = createRoute({
