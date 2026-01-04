@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { usePusher, useRepairApprovalUpdates } from '@/hooks/usePusher';
@@ -30,25 +30,26 @@ const MyRepairApprovals = () => {
     const navigate = useNavigate();
     const { showError, showSuccess } = useToast();
     const { apiClient } = useAuth();
+    const queryClient = useQueryClient();
 
     // Pusher connection for real-time updates
     const { isConnected: pusherConnected, error: pusherError } = usePusher({
         appKey: 'your-pusher-key', // Replace with your actual Pusher key
         cluster: 'ap1', // Replace with your actual cluster
-        onMessage: (data) => {
+        onMessage: useCallback((data) => {
             console.log('Real-time update received:', data);
             // Refresh data immediately when status changes
-            refetch();
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
             showSuccess(`Status perbaikan APAR ${data.apar_serial} telah berubah: ${data.message}`);
-        }
+        }, [queryClient, showSuccess])
     });
 
     // Listen for repair approval updates
-    useRepairApprovalUpdates((updateData) => {
+    useRepairApprovalUpdates(useCallback((updateData) => {
         console.log('Repair approval update received:', updateData);
         // Refresh data immediately
-        refetch();
-    });
+        queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
+    }, [queryClient]));
 
     // Auto-refresh interval (reduced to 15 seconds for better responsiveness)
     const AUTO_REFRESH_INTERVAL = 15000;
@@ -68,21 +69,23 @@ const MyRepairApprovals = () => {
         throwOnError: false,
     });
 
+    // Use ref to store refetch function to avoid dependency issues
+    const refetchRef = useRef(refetch);
+    useEffect(() => {
+        refetchRef.current = refetch;
+    }, [refetch]);
+
     useEffect(() => {
         setIsInitialized(true);
         const intervalId = setInterval(() => {
             console.log('Auto-refreshing repair approvals...');
-            refetch();
+            refetchRef.current();
         }, AUTO_REFRESH_INTERVAL);
         return () => clearInterval(intervalId);
-    }, [refetch]);
+    }, []); // Empty dependency array - interval setup only once
 
-    // Separate effect for filter changes - but only after initial load
-    useEffect(() => {
-        if (isInitialized && approvals.length > 0) { // Only fetch if component is already initialized and has data
-            refetch();
-        }
-    }, [filter, isInitialized]);
+    // Note: Filter changes are handled automatically by react-query via queryKey
+    // No need for separate useEffect - removing to prevent infinite loops
 
     // Sync local approvals from query
     useEffect(() => {
@@ -104,7 +107,7 @@ const MyRepairApprovals = () => {
             }
         }
         prevRef.current = approvalsData;
-    }, [approvalsData, isFetching, isInitialized]);
+    }, [approvalsData, isFetching, isInitialized, hasShownInitialAlert, showSuccess]);
 
     // Manual refresh function
     const handleManualRefresh = async () => {
