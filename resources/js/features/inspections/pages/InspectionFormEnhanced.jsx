@@ -14,6 +14,7 @@ import {
     PlusIcon,
     TrashIcon,
     MagnifyingGlassIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
 import { AparSelector } from '../components/AparSelector';
 
@@ -438,9 +439,12 @@ const InspectionFormEnhanced = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [aparList, setAparList] = useState([]);
     const [filteredAparList, setFilteredAparList] = useState([]);
-    const { apiClient } = useAuth();
+    const { apiClient, user } = useAuth();
     const queryClient = useQueryClient();
     const { showSuccess, showError } = useToast();
+    
+    // Check if user is admin or supervisor
+    const isAdminOrSupervisor = user?.role === 'admin' || user?.role === 'supervisor';
 
     // Form state
     const [condition, setCondition] = useState('good');
@@ -472,6 +476,11 @@ const InspectionFormEnhanced = () => {
         severity: 'medium',
         damage_photo: null
     });
+
+    // State for teknisi and schedule selection (admin/supervisor only)
+    const [selectedTeknisiId, setSelectedTeknisiId] = useState('');
+    const [scheduleDate, setScheduleDate] = useState('');
+    const [scheduleTime, setScheduleTime] = useState('');
 
     useEffect(() => {
         // Only handle media cleanup on unmount
@@ -518,6 +527,17 @@ const InspectionFormEnhanced = () => {
             return resp.data.data;
         },
         staleTime: 1000 * 60 * 2,
+    });
+
+    // Query untuk mendapatkan daftar teknisi (hanya untuk admin/supervisor)
+    const teknisiListQuery = useQuery({
+        queryKey: ['users', 'teknisi'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users');
+            return res.data.filter((u) => u.role === 'teknisi' && u.is_active);
+        },
+        enabled: isAdminOrSupervisor,
+        staleTime: 1000 * 60 * 5, // 5 minutes
     });
 
     useEffect(() => {
@@ -1196,6 +1216,22 @@ const InspectionFormEnhanced = () => {
             return;
         }
 
+        // Validate teknisi and schedule for admin/supervisor
+        if (isAdminOrSupervisor && condition === 'damaged') {
+            if (!selectedTeknisiId) {
+                showError('Pilih teknisi yang akan melakukan perbaikan');
+                return;
+            }
+            if (!scheduleDate) {
+                showError('Pilih tanggal jadwal perbaikan');
+                return;
+            }
+            if (!scheduleTime) {
+                showError('Pilih waktu jadwal perbaikan');
+                return;
+            }
+        }
+
         // BYPASS: Create dummy blobs if missing
         let finalPhoto = photo;
         let finalSelfie = selfie;
@@ -1238,6 +1274,13 @@ const InspectionFormEnhanced = () => {
                 fd.append(`damage_categories[${index}][severity]`, damage.severity);
                 fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo, `damage_${index}.jpg`);
             });
+        }
+
+        // Add teknisi and schedule data for admin/supervisor
+        if (isAdminOrSupervisor && condition === 'damaged') {
+            fd.append('assigned_teknisi_id', selectedTeknisiId);
+            fd.append('schedule_date', scheduleDate);
+            fd.append('schedule_time', scheduleTime);
         }
 
         submitInspectionMutation.mutate(fd);
@@ -1342,7 +1385,71 @@ const InspectionFormEnhanced = () => {
                         />
                     )}
 
+                    {/* Teknisi and Schedule Selection (Admin/Supervisor only) */}
+                    {isAdminOrSupervisor && condition === 'damaged' && (
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-blue-200 shadow-sm">
+                            <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-200 flex items-center justify-center mr-3">
+                                    <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                                </div>
+                                <span>Penugasan Perbaikan <span className="text-red-500">*</span></span>
+                            </label>
+                            
+                            <div className="space-y-4">
+                                {/* Teknisi Selection */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Pilih Teknisi yang Akan Melakukan Perbaikan <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={selectedTeknisiId}
+                                        onChange={(e) => setSelectedTeknisiId(e.target.value)}
+                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        required={isAdminOrSupervisor && condition === 'damaged'}
+                                    >
+                                        <option value="">Pilih Teknisi</option>
+                                        {teknisiListQuery.data?.map((teknisi) => (
+                                            <option key={teknisi.id} value={teknisi.id}>
+                                                {teknisi.name} {teknisi.email ? `(${teknisi.email})` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {teknisiListQuery.isLoading && (
+                                        <p className="mt-2 text-sm text-gray-500">Memuat daftar teknisi...</p>
+                                    )}
+                                </div>
 
+                                {/* Schedule Date */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Tanggal Jadwal Perbaikan <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={scheduleDate}
+                                        onChange={(e) => setScheduleDate(e.target.value)}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        required={isAdminOrSupervisor && condition === 'damaged'}
+                                    />
+                                </div>
+
+                                {/* Schedule Time */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Waktu Jadwal Perbaikan <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={scheduleTime}
+                                        onChange={(e) => setScheduleTime(e.target.value)}
+                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        required={isAdminOrSupervisor && condition === 'damaged'}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Location Status */}
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
