@@ -95,6 +95,65 @@ class ScheduleService
     }
 
     /**
+     * Check if there's a schedule conflict for a teknisi
+     * Returns true if there's a conflict, false otherwise
+     */
+    public function checkScheduleConflict(int $teknisiId, string $scheduleDate, string $scheduleTime, ?int $excludeScheduleId = null): array
+    {
+        $appTimezone = config('app.timezone', 'UTC');
+        
+        // Parse the schedule date and time
+        $startAtLocal = Carbon::parse($scheduleDate . ' ' . $scheduleTime, $appTimezone);
+        // Default end time: 1 hour after start (can be adjusted)
+        $endAtLocal = $startAtLocal->copy()->addHour();
+
+        // Check for overlapping schedules for the same teknisi
+        // Two schedules overlap if:
+        // - New start < existing end AND new end > existing start
+        $conflictingSchedules = InspectionSchedule::where('assigned_user_id', $teknisiId)
+            ->where('is_active', true)
+            ->where('is_completed', false)
+            ->where(function ($query) use ($startAtLocal, $endAtLocal) {
+                $query->where(function ($q) use ($startAtLocal, $endAtLocal) {
+                    // Overlap condition: new_start < existing_end AND new_end > existing_start
+                    $q->where('start_at', '<', $endAtLocal)
+                      ->where('end_at', '>', $startAtLocal);
+                });
+            });
+
+        // Exclude current schedule if updating
+        if ($excludeScheduleId) {
+            $conflictingSchedules->where('id', '!=', $excludeScheduleId);
+        }
+
+        $conflicts = $conflictingSchedules->with(['apar', 'assignedUser'])->get();
+
+        if ($conflicts->isEmpty()) {
+            return [
+                'has_conflict' => false,
+                'message' => 'Tidak ada konflik jadwal',
+                'conflicting_schedules' => [],
+            ];
+        }
+
+        $conflictMessages = [];
+        foreach ($conflicts as $conflict) {
+            $conflictMessages[] = [
+                'schedule_id' => $conflict->id,
+                'apar' => $conflict->apar->serial_number ?? 'N/A',
+                'start_at' => $conflict->start_at->format('Y-m-d H:i'),
+                'end_at' => $conflict->end_at->format('Y-m-d H:i'),
+            ];
+        }
+
+        return [
+            'has_conflict' => true,
+            'message' => 'Teknisi sudah memiliki jadwal pada waktu yang sama',
+            'conflicting_schedules' => $conflictMessages,
+        ];
+    }
+
+    /**
      * Create a new schedule
      */
     public function createSchedule(array $data): InspectionSchedule
@@ -106,6 +165,23 @@ class ScheduleService
 
         if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
             $endAtLocal = $startAtLocal->copy()->addHour();
+        }
+
+        // Check for schedule conflicts
+        $conflictCheck = $this->checkScheduleConflict(
+            $data['assigned_user_id'],
+            $data['scheduled_date'],
+            $data['start_time']
+        );
+
+        if ($conflictCheck['has_conflict']) {
+            throw new \Illuminate\Validation\ValidationException(
+                \Illuminate\Support\Facades\Validator::make([], []),
+                ['schedule_conflict' => $conflictCheck['message'] . '. Jadwal yang bentrok: ' . 
+                    collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
+                        return "APAR {$c['apar']} pada {$c['start_at']}";
+                    })->implode(', ')]
+            );
         }
 
         $schedule = InspectionSchedule::create([
@@ -149,6 +225,24 @@ class ScheduleService
 
         if ($endAtLocal->lessThanOrEqualTo($startAtLocal)) {
             $endAtLocal = $startAtLocal->copy()->addHour();
+        }
+
+        // Check for schedule conflicts (exclude current schedule)
+        $conflictCheck = $this->checkScheduleConflict(
+            $data['assigned_user_id'],
+            $data['scheduled_date'],
+            $data['start_time'],
+            $schedule->id
+        );
+
+        if ($conflictCheck['has_conflict']) {
+            throw new \Illuminate\Validation\ValidationException(
+                \Illuminate\Support\Facades\Validator::make([], []),
+                ['schedule_conflict' => $conflictCheck['message'] . '. Jadwal yang bentrok: ' . 
+                    collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
+                        return "APAR {$c['apar']} pada {$c['start_at']}";
+                    })->implode(', ')]
+            );
         }
 
         $schedule->update([
@@ -316,10 +410,7 @@ class ScheduleService
             $this->notificationService->sendScheduleNotification($schedule, 'updated');
         }
 
-        return [
-            'schedule' => $schedule,
-            'has_changes' => $hasChanges,
-        ];
+        return $hasChanges;
     }
 
     /**

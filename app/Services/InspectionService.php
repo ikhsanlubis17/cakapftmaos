@@ -17,10 +17,12 @@ use Carbon\Carbon;
 class InspectionService
 {
     protected ImageService $imageService;
+    protected ScheduleService $scheduleService;
 
-    public function __construct(ImageService $imageService)
+    public function __construct(ImageService $imageService, ScheduleService $scheduleService)
     {
         $this->imageService = $imageService;
+        $this->scheduleService = $scheduleService;
     }
 
     /**
@@ -265,6 +267,64 @@ class InspectionService
         // Create repair approval if needed
         if ($requiresRepair) {
             $this->createRepairApproval($inspection->id);
+        }
+
+        // Create repair schedule if admin/supervisor assigned teknisi
+        $repairSchedule = null;
+        $user = User::find($userId);
+        if ($requiresRepair && $user && ($user->isAdmin() || $user->isSupervisor())) {
+            if (isset($data['assigned_teknisi_id']) && isset($data['schedule_date']) && isset($data['schedule_time'])) {
+                // Check for schedule conflicts
+                $conflictCheck = $this->scheduleService->checkScheduleConflict(
+                    $data['assigned_teknisi_id'],
+                    $data['schedule_date'],
+                    $data['schedule_time']
+                );
+
+                if ($conflictCheck['has_conflict']) {
+                    return [
+                        'success' => false,
+                        'message' => $conflictCheck['message'] . '. Jadwal yang bentrok: ' . 
+                            collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
+                                return "APAR {$c['apar']} pada {$c['start_at']}";
+                            })->implode(', '),
+                        'error' => 'schedule_conflict',
+                        'conflicting_schedules' => $conflictCheck['conflicting_schedules'],
+                        'status_code' => 422,
+                    ];
+                }
+
+                // Create repair schedule
+                try {
+                    $appTimezone = config('app.timezone', 'UTC');
+                    $startAtLocal = Carbon::parse($data['schedule_date'] . ' ' . $data['schedule_time'], $appTimezone);
+                    $endAtLocal = $startAtLocal->copy()->addHour(); // Default 1 hour for repair
+
+                    $repairSchedule = InspectionSchedule::create([
+                        'apar_id' => $apar->id,
+                        'assigned_user_id' => $data['assigned_teknisi_id'],
+                        'start_at' => $startAtLocal,
+                        'end_at' => $endAtLocal,
+                        'frequency' => 'once', // One-time repair schedule
+                        'is_active' => true,
+                        'notes' => 'Jadwal perbaikan dari inspeksi #' . $inspection->id,
+                    ]);
+
+                    Log::info('Repair schedule created from inspection', [
+                        'inspection_id' => $inspection->id,
+                        'schedule_id' => $repairSchedule->id,
+                        'teknisi_id' => $data['assigned_teknisi_id'],
+                        'schedule_date' => $data['schedule_date'],
+                        'schedule_time' => $data['schedule_time'],
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create repair schedule', [
+                        'inspection_id' => $inspection->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Don't fail the inspection if schedule creation fails
+                }
+            }
         }
 
         // Update APAR status

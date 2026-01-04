@@ -62,6 +62,27 @@ class StoreScheduleRequest extends FormRequest
                         'Teknisi yang ditugaskan harus memiliki email untuk menerima notifikasi'
                     );
                 }
+
+                // Check for schedule conflicts
+                if ($assignedUser && $assignedUser->role === 'teknisi' && $this->scheduled_date && $this->start_time) {
+                    $scheduleService = app(\App\Services\ScheduleService::class);
+                    $conflictCheck = $scheduleService->checkScheduleConflict(
+                        $this->assigned_user_id,
+                        $this->scheduled_date,
+                        $this->start_time
+                    );
+
+                    if ($conflictCheck['has_conflict']) {
+                        $conflictDetails = collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
+                            return "APAR {$c['apar']} pada {$c['start_at']}";
+                        })->implode(', ');
+                        
+                        $validator->errors()->add(
+                            'schedule_conflict',
+                            $conflictCheck['message'] . '. Jadwal yang bentrok: ' . $conflictDetails
+                        );
+                    }
+                }
             }
         });
     }
