@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\AparType;
+use Illuminate\Database\Seeder;
 
 class AparTypeSeeder extends Seeder
 {
@@ -17,23 +16,33 @@ class AparTypeSeeder extends Seeder
             [
                 'name' => 'powder',
                 'description' => 'APAR Powder untuk memadamkan api kelas A, B, dan C',
-                'is_active' => true
+                'is_active' => true,
             ],
             [
                 'name' => 'co2',
                 'description' => 'APAR CO2 untuk memadamkan api kelas B dan C',
-                'is_active' => true
+                'is_active' => true,
             ],
             [
                 'name' => 'foam',
                 'description' => 'APAR Foam untuk memadamkan api kelas A dan B',
-                'is_active' => true
+                'is_active' => true,
             ],
             [
                 'name' => 'liquid',
                 'description' => 'APAR Liquid untuk memadamkan api kelas A',
-                'is_active' => true
-            ]
+                'is_active' => true,
+            ],
+            [
+                'name' => 'dcp_pressure',
+                'description' => 'APAR DCP Pressure untuk memadamkan api kelas A, B, dan C',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'dcp_cartridge',
+                'description' => 'APAR DCP Cartridge untuk memadamkan api kelas A, B, dan C',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($aparTypes as $aparType) {
