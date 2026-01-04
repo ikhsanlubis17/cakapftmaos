@@ -32,9 +32,6 @@ import Profile from "./features/auth/pages/Profile";
 
 // ... (existing imports)
 
-
-
-
 import DashboardEnhanced from "./features/dashboard/pages/DashboardEnhanced";
 import AparList from "./features/apar/pages/AparList";
 import AparDetail from "./features/apar/pages/AparDetail";
@@ -161,11 +158,11 @@ const unauthorizedRoute = createRoute({
 // A helper function for role-based authorization
 const checkRoles =
     (allowedRoles: string[]) =>
-        ({ context }: { context: RouterContext }) => {
-            if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
-                throw redirect({ to: "/unauthorized" });
-            }
-        };
+    ({ context }: { context: RouterContext }) => {
+        if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
+            throw redirect({ to: "/unauthorized" });
+        }
+    };
 
 // APAR Routes (Admin only)
 const aparRoute = createRoute({
@@ -317,7 +314,11 @@ const repairApprovalsRoute = createRoute({
     beforeLoad: checkRoles(["admin", "supervisor"]),
     component: () => {
         const { user } = useAuth();
-        return user?.role === 'admin' ? <AdminRepairApprovals /> : <RepairApprovalList />;
+        return user?.role === "admin" ? (
+            <AdminRepairApprovals />
+        ) : (
+            <RepairApprovalList />
+        );
     },
 });
 
@@ -333,6 +334,13 @@ const myRepairsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "my-repairs",
     component: MyRepairApprovals,
+});
+
+// Repair Report Form Route (Technician submits repair report)
+const repairReportFormRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "repair-report/$approvalId",
+    component: RepairReportForm,
 });
 
 // Inspection Review Route (Supervisor only)
@@ -398,6 +406,7 @@ const routeTree = rootRoute.addChildren([
         repairApprovalsRoute,
         repairApprovalDetailRoute,
         myRepairsRoute,
+        repairReportFormRoute,
         inspectionReviewRoute,
         repairReportReviewRoute,
         reportsRoute,

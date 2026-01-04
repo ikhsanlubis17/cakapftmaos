@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const RepairReportForm = () => {
-    const { approvalId } = useParams();
+    const { approvalId } = useParams({ strict: false });
     const navigate = useNavigate();
     const beforeVideoRef = useRef(null);
     const beforeCanvasRef = useRef(null);

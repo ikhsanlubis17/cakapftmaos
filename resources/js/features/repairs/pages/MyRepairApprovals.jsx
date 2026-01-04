@@ -21,12 +21,9 @@ import {
 
 const MyRepairApprovals = () => {
     const { user } = useAuth();
-    const [approvals, setApprovals] = useState([]);
     const [filter, setFilter] = useState('all');
     const [refreshing, setRefreshing] = useState(false);
-    const [lastUpdate, setLastUpdate] = useState(null);
-    const [isInitialized, setIsInitialized] = useState(false);
-    const [hasShownInitialAlert, setHasShownInitialAlert] = useState(false);
+    const hasShownInitialAlertRef = useRef(false);
     const navigate = useNavigate();
     const { showError, showSuccess } = useToast();
     const { apiClient } = useAuth();
@@ -76,7 +73,6 @@ const MyRepairApprovals = () => {
     }, [refetch]);
 
     useEffect(() => {
-        setIsInitialized(true);
         const intervalId = setInterval(() => {
             console.log('Auto-refreshing repair approvals...');
             refetchRef.current();
@@ -84,39 +80,25 @@ const MyRepairApprovals = () => {
         return () => clearInterval(intervalId);
     }, []); // Empty dependency array - interval setup only once
 
-    // Note: Filter changes are handled automatically by react-query via queryKey
-    // No need for separate useEffect - removing to prevent infinite loops
-
-    // Sync local approvals from query
-    useEffect(() => {
-        setApprovals(approvalsData || []);
-        if (approvalsData && approvalsData.length) {
-            setLastUpdate(new Date());
-        }
-    }, [approvalsData]);
-
     // Show initial message once
-    const prevRef = useRef([]);
     useEffect(() => {
-        if (!isInitialized) return;
-        const prev = prevRef.current || [];
-        if (!isFetching && approvalsData && approvalsData.length >= 0) {
-            if (!hasShownInitialAlert && approvalsData.length > 0) {
-                showSuccess(`Berhasil memuat ${approvalsData.length} data perbaikan`);
-                setHasShownInitialAlert(true);
-            }
+        if (!isFetching && approvalsData && approvalsData.length > 0 && !hasShownInitialAlertRef.current) {
+            showSuccess(`Berhasil memuat ${approvalsData.length} data perbaikan`);
+            hasShownInitialAlertRef.current = true;
         }
-        prevRef.current = approvalsData;
-    }, [approvalsData, isFetching, isInitialized, hasShownInitialAlert, showSuccess]);
+    }, [approvalsData, isFetching, showSuccess]);
 
     // Manual refresh function
     const handleManualRefresh = async () => {
         if (refreshing) return;
         setRefreshing(true);
-        setHasShownInitialAlert(false);
+        hasShownInitialAlertRef.current = false;
         await refetch();
         setRefreshing(false);
     };
+
+    // Use query data directly
+    const approvals = approvalsData || [];
 
     const getStatusBadge = (status) => {
         const statusConfig = {
@@ -258,7 +240,7 @@ const MyRepairApprovals = () => {
                                     <div className="pt-2">
                                         {approval.status === 'approved' ? (
                                             <button
-                                                onClick={() => navigate(`/repair-report/${approval.id}`)}
+                                                onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
                                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
                                             >
                                                 <WrenchScrewdriverIcon className="h-4 w-4 mr-2" />
@@ -266,7 +248,7 @@ const MyRepairApprovals = () => {
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={() => navigate(`/repair-approvals/${approval.id}`)}
+                                                onClick={() => navigate({ to: `/repair-approvals/${approval.id}` })}
                                                 className="w-full flex items-center justify-center px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
                                             >
                                                 <EyeIcon className="h-4 w-4 mr-2" />
