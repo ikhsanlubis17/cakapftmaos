@@ -37,7 +37,6 @@ const RepairReportForm = () => {
         before_photo: null,
         after_photo: null,
         repair_completed_at: new Date().toISOString().slice(0, 16),
-        needs_reinspection: false
     });
 
     // Per-damage photos state: { [damageId]: Blob }
@@ -250,7 +249,6 @@ const RepairReportForm = () => {
             submitData.append('before_photo', formData.before_photo);
             submitData.append('after_photo', formData.after_photo);
             submitData.append('repair_completed_at', formData.repair_completed_at);
-            submitData.append('needs_reinspection', formData.needs_reinspection ? '1' : '0');
 
             if (currentLocation) {
                 submitData.append('repair_lat', currentLocation.lat);
@@ -462,19 +460,12 @@ const RepairReportForm = () => {
                         />
                     </div>
 
-                    {/* Reinspection */}
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start space-x-3">
-                        <input
-                            id="needs_reinspection"
-                            type="checkbox"
-                            checked={formData.needs_reinspection}
-                            onChange={(e) => setFormData({ ...formData, needs_reinspection: e.target.checked })}
-                            className="h-5 w-5 text-red-600 border-gray-300 rounded mt-1"
-                        />
-                        <div>
-                            <label htmlFor="needs_reinspection" className="font-medium text-gray-900">Perlu Re-Inspeksi?</label>
-                            <p className="text-sm text-gray-600">Centang jika perlu pengecekan ulang oleh supervisor.</p>
-                        </div>
+                    {/* Info about supervisor review */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p className="text-sm text-blue-800">
+                            <span className="font-medium">Catatan:</span> Setelah laporan disubmit, supervisor akan mereview hasil perbaikan.
+                            Supervisor akan memutuskan apakah perbaikan sudah sesuai, perlu perbaikan ulang, atau APAR tidak dapat diperbaiki.
+                        </p>
                     </div>
 
                     {/* Submit Buttons */}

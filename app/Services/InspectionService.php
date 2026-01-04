@@ -227,6 +227,27 @@ class InspectionService
         $requiresRepair = $data['condition'] === 'damaged' ||
             (isset($data['damage_categories']) && count($data['damage_categories']) > 0);
 
+        // Get user to determine inspection_status based on role
+        $user = User::find($userId);
+        $isAdminOrSupervisor = $user && ($user->isAdmin() || $user->isSupervisor());
+
+        // Teknisi inspections need supervisor review
+        // Admin/supervisor inspections are auto-approved
+        $inspectionStatus = $isAdminOrSupervisor ? 'approved' : 'pending_review';
+
+        // For teknisi, repair_status stays 'none' until supervisor reviews and approves the inspection
+        // For admin/supervisor with damage, they directly assign repair (no RepairApproval needed)
+        $repairStatus = 'none';
+        if ($requiresRepair) {
+            if ($isAdminOrSupervisor) {
+                // Admin/supervisor directly approves and assigns repair
+                $repairStatus = 'approved';
+            } else {
+                // Teknisi inspection needs review first, so repair_status is pending_approval
+                $repairStatus = 'pending_approval';
+            }
+        }
+
         // Create inspection
         $inspection = Inspection::create([
             'apar_id' => $apar->id,
@@ -240,8 +261,9 @@ class InspectionService
             'location_valid' => true,
             'is_valid' => true,
             'status' => 'completed',
+            'inspection_status' => $inspectionStatus,
             'schedule_id' => $schedule?->id,
-            'repair_status' => $requiresRepair ? 'pending_approval' : 'none',
+            'repair_status' => $repairStatus,
             'requires_repair' => $requiresRepair,
             'photo_required' => true,
             'selfie_required' => true,
@@ -264,15 +286,15 @@ class InspectionService
             $this->handleDamageCategories($inspection->id, $data['damage_categories']);
         }
 
-        // Create repair approval if needed
-        if ($requiresRepair) {
+        // Create repair approval only for teknisi inspections that need supervisor review
+        // Admin/supervisor inspections skip RepairApproval and directly assign repair
+        if ($requiresRepair && !$isAdminOrSupervisor) {
             $this->createRepairApproval($inspection->id);
         }
 
-        // Create repair schedule if admin/supervisor assigned teknisi
+        // Create repair schedule if admin/supervisor assigned teknisi (direct assignment, no RepairApproval)
         $repairSchedule = null;
-        $user = User::find($userId);
-        if ($requiresRepair && $user && ($user->isAdmin() || $user->isSupervisor())) {
+        if ($requiresRepair && $isAdminOrSupervisor) {
             if (isset($data['assigned_teknisi_id']) && isset($data['schedule_date']) && isset($data['schedule_time'])) {
                 // Check for schedule conflicts
                 $conflictCheck = $this->scheduleService->checkScheduleConflict(
@@ -327,19 +349,38 @@ class InspectionService
             }
         }
 
-        // Update APAR status
-        $this->updateAparStatus($apar, $data['condition']);
+        // Update APAR status based on condition and user role
+        if ($requiresRepair && $isAdminOrSupervisor && $repairSchedule) {
+            // Admin/supervisor directly assigned repair, set APAR to under_repair
+            $apar->update(['status' => 'under_repair']);
+            Log::info('APAR status set to under_repair by admin/supervisor', [
+                'apar_id' => $apar->id,
+                'inspection_id' => $inspection->id,
+            ]);
+        } else {
+            // Standard flow: update based on condition
+            $this->updateAparStatus($apar, $data['condition']);
+        }
 
         // Mark schedule as completed
         if ($schedule) {
             $schedule->update(['is_completed' => true]);
         }
 
+        // Build success message based on user role and inspection status
+        $message = 'Inspeksi berhasil disimpan';
+        if (!$isAdminOrSupervisor) {
+            $message .= '. Menunggu review dari supervisor.';
+        } elseif ($requiresRepair && $repairSchedule) {
+            $message .= '. Jadwal perbaikan telah dibuat untuk teknisi.';
+        }
+
         return [
             'success' => true,
-            'message' => 'Inspeksi berhasil disimpan',
+            'message' => $message,
             'inspection' => $inspection->load(['apar.aparType', 'user']),
             'location_valid' => true,
+            'inspection_status' => $inspectionStatus,
             'status_code' => 201,
         ];
     }

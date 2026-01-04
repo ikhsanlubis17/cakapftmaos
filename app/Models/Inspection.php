@@ -29,6 +29,10 @@ class Inspection extends Model
         'location_valid',
         'is_valid',
         'status',
+        'inspection_status',
+        'reviewed_by',
+        'reviewed_at',
+        'review_notes',
         'schedule_id',
         'repair_status',
         'repair_notes',
@@ -55,6 +59,7 @@ class Inspection extends Model
             'requires_repair' => 'boolean',
             'photo_required' => 'boolean',
             'selfie_required' => 'boolean',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -160,6 +165,64 @@ class Inspection extends Model
     public function requiresRepair(): bool
     {
         return $this->requires_repair;
+    }
+
+    /**
+     * Check if inspection is pending supervisor review.
+     */
+    public function isPendingReview(): bool
+    {
+        return $this->inspection_status === 'pending_review';
+    }
+
+    /**
+     * Check if inspection is approved by supervisor.
+     */
+    public function isInspectionApproved(): bool
+    {
+        return $this->inspection_status === 'approved';
+    }
+
+    /**
+     * Check if inspection is rejected by supervisor.
+     */
+    public function isInspectionRejected(): bool
+    {
+        return $this->inspection_status === 'rejected';
+    }
+
+    /**
+     * Get the reviewer who approved/rejected the inspection.
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Approve the inspection (by supervisor).
+     */
+    public function approveInspection(int $reviewerId, ?string $notes = null): void
+    {
+        $this->update([
+            'inspection_status' => 'approved',
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Reject the inspection (by supervisor).
+     */
+    public function rejectInspection(int $reviewerId, string $notes): void
+    {
+        $this->update([
+            'inspection_status' => 'rejected',
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+            'review_notes' => $notes,
+        ]);
     }
 
     /**

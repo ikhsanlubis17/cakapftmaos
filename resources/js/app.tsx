@@ -63,6 +63,8 @@ import AdminRepairApprovals from "./features/repairs/pages/AdminRepairApprovals"
 import RepairApprovalDetail from "./features/repairs/pages/RepairApprovalDetail";
 import RepairReportForm from "./features/repairs/pages/RepairReportForm";
 import MyRepairApprovals from "./features/repairs/pages/MyRepairApprovals";
+import InspectionReviewPage from "./features/inspections/pages/InspectionReviewPage";
+import RepairReportReviewPage from "./features/repairs/pages/RepairReportReviewPage";
 import Loading from "./components/ui/Loading";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import Unauthorized from "./features/auth/pages/Unauthorized";
@@ -333,6 +335,22 @@ const myRepairsRoute = createRoute({
     component: MyRepairApprovals,
 });
 
+// Inspection Review Route (Supervisor only)
+const inspectionReviewRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "inspections/review",
+    beforeLoad: checkRoles(["admin", "supervisor"]),
+    component: InspectionReviewPage,
+});
+
+// Repair Report Review Route (Supervisor only)
+const repairReportReviewRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "repair-reports/review",
+    beforeLoad: checkRoles(["admin", "supervisor"]),
+    component: RepairReportReviewPage,
+});
+
 // Reports and Audit Route
 const reportsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
@@ -380,6 +398,8 @@ const routeTree = rootRoute.addChildren([
         repairApprovalsRoute,
         repairApprovalDetailRoute,
         myRepairsRoute,
+        inspectionReviewRoute,
+        repairReportReviewRoute,
         reportsRoute,
         settingsRoute,
     ]),

@@ -140,7 +140,8 @@ class RepairReportController extends Controller
             1080
         );
 
-        // Create repair report
+        // Create repair report with pending_review status
+        // Supervisor will review and decide: approve, rework, or reject (not fixable)
         $repairReport = RepairReport::create([
             'repair_approval_id' => $repairApproval->id,
             'reported_by' => $user->id,
@@ -150,45 +151,24 @@ class RepairReportController extends Controller
             'repair_lat' => $request->repair_lat,
             'repair_lng' => $request->repair_lng,
             'repair_completed_at' => $request->repair_completed_at,
+            'status' => 'pending_review', // Requires supervisor review
         ]);
 
-        // Mark repair approval as completed
-        $repairApproval->markCompleted();
+        // Update inspection to indicate repair report submitted
+        $repairApproval->inspection->update([
+            'repair_notes' => $request->repair_description
+        ]);
 
-        $apar = $repairApproval->inspection->apar;
-
-        if ($request->needs_reinspection) {
-            // Trigger re-inspection workflow
-            $reinspectionService = new ReinspectionService();
-            $reinspectionService->handlePostRepairReinspection(
-                $repairApproval->inspection,
-                $repairApproval,
-                $request->repair_description
-            );
-            
-            // If reinspection is needed, keep APAR status as under_repair until reinspection confirms it's fixed
-            // The status will be updated after reinspection is completed
-        } else {
-            // Standard completion flow
-            $repairApproval->inspection->update([
-                'repair_status' => 'completed',
-                'repair_notes' => $request->repair_description
-            ]);
-
-            // Update APAR status back to active after repair is completed
-            // This indicates the repair was successful and APAR is ready to use
-            if ($apar->status === 'under_repair') {
-                $apar->update(['status' => 'active']);
-                \Log::info('APAR status updated to active after repair completion', [
-                    'apar_id' => $apar->id,
-                    'repair_approval_id' => $repairApproval->id,
-                ]);
-            }
-        }
+        \Log::info('Repair report submitted for review', [
+            'repair_report_id' => $repairReport->id,
+            'repair_approval_id' => $repairApproval->id,
+            'apar_id' => $repairApproval->inspection->apar_id,
+            'teknisi_id' => $user->id,
+        ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Laporan perbaikan berhasil disimpan',
+            'message' => 'Laporan perbaikan berhasil disimpan. Menunggu review dari supervisor.',
             'data' => $repairReport->load([
                 'repairApproval.inspection.apar.aparType',
                 'reporter'
@@ -308,6 +288,260 @@ class RepairReportController extends Controller
                 'this_month' => $thisMonth,
                 'this_year' => $thisYear,
             ]
+        ]);
+    }
+
+    /**
+     * Get repair reports pending supervisor review
+     */
+    public function pendingReview()
+    {
+        $reports = RepairReport::with([
+            'repairApproval.inspection.apar.aparType',
+            'repairApproval.inspection.user',
+            'repairApproval.inspection.inspectionDamages.damageCategory',
+            'reporter'
+        ])
+            ->where('status', 'pending_review')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $reports,
+        ]);
+    }
+
+    /**
+     * Approve a repair report (supervisor only)
+     * This marks the repair as successful and sets APAR back to active
+     */
+    public function approve(Request $request, RepairReport $repairReport)
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Only admin/supervisor can approve
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau supervisor yang dapat menyetujui laporan perbaikan',
+            ], 403);
+        }
+
+        // Check if report is pending review
+        if ($repairReport->status !== 'pending_review') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Laporan perbaikan ini tidak dalam status menunggu review',
+            ], 422);
+        }
+
+        $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        // Approve the repair report
+        $repairReport->approve($user->id, $request->notes);
+
+        // Mark repair approval as completed
+        $repairApproval = $repairReport->repairApproval;
+        $repairApproval->markCompleted($request->notes);
+
+        // Update inspection repair status
+        $repairApproval->inspection->update([
+            'repair_status' => 'completed',
+        ]);
+
+        // Update APAR status to active
+        $apar = $repairApproval->inspection->apar;
+        $apar->update(['status' => 'active']);
+
+        \Log::info('Repair report approved, APAR set to active', [
+            'repair_report_id' => $repairReport->id,
+            'apar_id' => $apar->id,
+            'supervisor_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Laporan perbaikan disetujui. APAR telah aktif kembali.',
+            'data' => $repairReport->fresh([
+                'repairApproval.inspection.apar.aparType',
+                'reviewer',
+                'reporter',
+            ]),
+        ]);
+    }
+
+    /**
+     * Request rework on a repair report (supervisor only)
+     * This assigns the same teknisi to do additional repair work
+     */
+    public function requestRework(Request $request, RepairReport $repairReport)
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Only admin/supervisor can request rework
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau supervisor yang dapat meminta perbaikan ulang',
+            ], 403);
+        }
+
+        // Check if report is pending review
+        if ($repairReport->status !== 'pending_review') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Laporan perbaikan ini tidak dalam status menunggu review',
+            ], 422);
+        }
+
+        $request->validate([
+            'notes' => 'required|string|min:10',
+            'schedule_date' => 'required|date|after_or_equal:today',
+            'schedule_time' => 'required|date_format:H:i',
+        ], [
+            'notes.required' => 'Catatan perbaikan ulang wajib diisi',
+            'notes.min' => 'Catatan minimal 10 karakter',
+            'schedule_date.required' => 'Tanggal jadwal wajib diisi',
+            'schedule_time.required' => 'Waktu jadwal wajib diisi',
+        ]);
+
+        // Mark report as needs rework
+        $repairReport->markNeedsRework($user->id, $request->notes);
+
+        $repairApproval = $repairReport->repairApproval;
+        $inspection = $repairApproval->inspection;
+        $teknisiId = $repairReport->reported_by; // Same teknisi
+
+        // Create new repair schedule for the same teknisi
+        $appTimezone = config('app.timezone', 'UTC');
+        $startAtLocal = \Carbon\Carbon::parse($request->schedule_date . ' ' . $request->schedule_time, $appTimezone);
+        $endAtLocal = $startAtLocal->copy()->addHour();
+
+        $schedule = \App\Models\InspectionSchedule::create([
+            'apar_id' => $inspection->apar_id,
+            'assigned_user_id' => $teknisiId,
+            'start_at' => $startAtLocal,
+            'end_at' => $endAtLocal,
+            'frequency' => 'once',
+            'is_active' => true,
+            'notes' => "Perbaikan ulang dari laporan #" . $repairReport->id . "\n\nCatatan Supervisor: " . $request->notes,
+        ]);
+
+        // Reset repair approval status so teknisi can submit new report
+        $repairApproval->update([
+            'status' => 'approved', // Keep approved so teknisi can work
+        ]);
+
+        // Send notification to teknisi
+        try {
+            \App\Models\Notification::create([
+                'user_id' => $teknisiId,
+                'type' => 'repair_rework',
+                'title' => 'Perbaikan Ulang Diperlukan',
+                'content' => "Supervisor meminta perbaikan ulang untuk APAR {$inspection->apar->serial_number}. Jadwal: " . $startAtLocal->format('d M Y H:i'),
+                'data' => json_encode([
+                    'repair_report_id' => $repairReport->id,
+                    'apar_id' => $inspection->apar_id,
+                    'schedule_id' => $schedule->id,
+                    'supervisor_notes' => $request->notes,
+                ]),
+                'status' => 'sent',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send rework notification: ' . $e->getMessage());
+        }
+
+        \Log::info('Repair rework requested', [
+            'repair_report_id' => $repairReport->id,
+            'new_schedule_id' => $schedule->id,
+            'teknisi_id' => $teknisiId,
+            'supervisor_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permintaan perbaikan ulang berhasil. Jadwal baru telah dibuat untuk teknisi.',
+            'data' => [
+                'repair_report' => $repairReport->fresh([
+                    'repairApproval.inspection.apar.aparType',
+                    'reviewer',
+                    'reporter',
+                ]),
+                'new_schedule' => $schedule,
+            ],
+        ]);
+    }
+
+    /**
+     * Reject a repair report (supervisor only)
+     * This marks the APAR as not fixable
+     */
+    public function reject(Request $request, RepairReport $repairReport)
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Only admin/supervisor can reject
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau supervisor yang dapat menolak laporan perbaikan',
+            ], 403);
+        }
+
+        // Check if report is pending review
+        if ($repairReport->status !== 'pending_review') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Laporan perbaikan ini tidak dalam status menunggu review',
+            ], 422);
+        }
+
+        $request->validate([
+            'notes' => 'required|string|min:10',
+        ], [
+            'notes.required' => 'Alasan penolakan wajib diisi',
+            'notes.min' => 'Alasan minimal 10 karakter',
+        ]);
+
+        // Reject the repair report
+        $repairReport->reject($user->id, $request->notes);
+
+        $repairApproval = $repairReport->repairApproval;
+        $inspection = $repairApproval->inspection;
+        $apar = $inspection->apar;
+
+        // Mark repair approval as rejected/completed
+        $repairApproval->update([
+            'status' => 'rejected',
+            'rejection_reason' => 'APAR tidak dapat diperbaiki (not fixable)',
+        ]);
+
+        // Update inspection
+        $inspection->update([
+            'repair_status' => 'rejected',
+            'repair_notes' => $request->notes,
+        ]);
+
+        // Set APAR as not fixable
+        $apar->update(['status' => 'not_fixable']);
+
+        \Log::info('Repair report rejected, APAR marked as not fixable', [
+            'repair_report_id' => $repairReport->id,
+            'apar_id' => $apar->id,
+            'supervisor_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Laporan perbaikan ditolak. APAR ditandai sebagai tidak dapat diperbaiki.',
+            'data' => $repairReport->fresh([
+                'repairApproval.inspection.apar.aparType',
+                'reviewer',
+                'reporter',
+            ]),
         ]);
     }
 }

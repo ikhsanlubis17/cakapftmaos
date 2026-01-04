@@ -98,6 +98,13 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
 
+    // Inspection Review routes (Supervisor only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/inspections/review/pending', [InspectionController::class, 'pendingReview']);
+        Route::post('/inspections/{inspection}/approve', [InspectionController::class, 'approveInspection']);
+        Route::post('/inspections/{inspection}/reject', [InspectionController::class, 'rejectInspection']);
+    });
+
     // Repair Approval routes
     Route::get('/repair-approvals', [RepairApprovalController::class, 'index']);
     Route::get('/repair-approvals/pending', [RepairApprovalController::class, 'pending']);
@@ -119,6 +126,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/repair-reports', [RepairReportController::class, 'store']);
     Route::put('/repair-reports/{repairReport}', [RepairReportController::class, 'update']);
     Route::delete('/repair-reports/{repairReport}', [RepairReportController::class, 'destroy']);
+
+    // Repair Report Review routes (Supervisor only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/repair-reports/review/pending', [RepairReportController::class, 'pendingReview']);
+        Route::post('/repair-reports/{repairReport}/approve', [RepairReportController::class, 'approve']);
+        Route::post('/repair-reports/{repairReport}/rework', [RepairReportController::class, 'requestRework']);
+        Route::post('/repair-reports/{repairReport}/reject', [RepairReportController::class, 'reject']);
+    });
 
     // User management routes (Admin only)
     Route::get('/users', [UserController::class, 'index']);

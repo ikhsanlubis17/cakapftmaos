@@ -164,6 +164,14 @@ class Apar extends Model
     }
 
     /**
+     * Check if APAR is not fixable.
+     */
+    public function isNotFixable(): bool
+    {
+        return $this->status === 'not_fixable';
+    }
+
+    /**
      * Get days until expiration.
      */
     public function daysUntilExpiration(): int

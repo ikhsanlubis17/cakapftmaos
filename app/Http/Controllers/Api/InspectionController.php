@@ -246,12 +246,186 @@ class InspectionController extends Controller
 
             return response()->json($result, $result['status_code']);
         } catch (\Exception $e) {
-            Log::error('Validation error: ' . $e->getMessage());
+            \Log::error('Validation error: ' . $e->getMessage());
             
             return response()->json([
                 'valid' => false,
                 'message' => 'Terjadi kesalahan saat memvalidasi jadwal inspeksi'
             ], 500);
         }
+    }
+
+    /**
+     * Get inspections pending supervisor review
+     */
+    public function pendingReview()
+    {
+        $inspections = Inspection::with([
+            'apar.aparType',
+            'user',
+            'inspectionDamages.damageCategory',
+        ])
+            ->where('inspection_status', 'pending_review')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $inspections,
+        ]);
+    }
+
+    /**
+     * Approve a teknisi inspection (supervisor only)
+     */
+    public function approveInspection(Request $request, Inspection $inspection)
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Only admin/supervisor can approve
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau supervisor yang dapat menyetujui inspeksi',
+            ], 403);
+        }
+
+        // Check if inspection is pending review
+        if ($inspection->inspection_status !== 'pending_review') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Inspeksi ini tidak dalam status menunggu review',
+            ], 422);
+        }
+
+        $request->validate([
+            'notes' => 'nullable|string',
+            'assigned_teknisi_id' => 'nullable|exists:users,id',
+            'schedule_date' => 'nullable|date|after_or_equal:today',
+            'schedule_time' => 'nullable|date_format:H:i',
+        ]);
+
+        // Approve the inspection
+        $inspection->approveInspection($user->id, $request->notes);
+
+        // If there's damage, create repair approval and optionally assign teknisi
+        if ($inspection->requires_repair) {
+            // Create repair approval
+            $repairApproval = \App\Models\RepairApproval::create([
+                'inspection_id' => $inspection->id,
+                'status' => 'approved', // Pre-approved by supervisor
+                'approved_by' => $user->id,
+                'supervisor_notes' => $request->notes ?? 'Disetujui oleh supervisor',
+                'approved_at' => now(),
+                'decision_made_at' => now(),
+            ]);
+
+            // Update inspection repair status
+            $inspection->update(['repair_status' => 'approved']);
+
+            // Update APAR status
+            $inspection->apar->update(['status' => 'needs_repair']);
+
+            // If teknisi is assigned, create repair schedule
+            if ($request->assigned_teknisi_id && $request->schedule_date && $request->schedule_time) {
+                // Check for schedule conflicts
+                $conflictCheck = $this->inspectionService->scheduleService->checkScheduleConflict(
+                    $request->assigned_teknisi_id,
+                    $request->schedule_date,
+                    $request->schedule_time
+                );
+
+                if ($conflictCheck['has_conflict']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $conflictCheck['message'],
+                        'conflicting_schedules' => $conflictCheck['conflicting_schedules'],
+                    ], 422);
+                }
+
+                // Create repair schedule
+                $appTimezone = config('app.timezone', 'UTC');
+                $startAtLocal = \Carbon\Carbon::parse($request->schedule_date . ' ' . $request->schedule_time, $appTimezone);
+                $endAtLocal = $startAtLocal->copy()->addHour();
+
+                $schedule = \App\Models\InspectionSchedule::create([
+                    'apar_id' => $inspection->apar_id,
+                    'assigned_user_id' => $request->assigned_teknisi_id,
+                    'start_at' => $startAtLocal,
+                    'end_at' => $endAtLocal,
+                    'frequency' => 'once',
+                    'is_active' => true,
+                    'notes' => 'Jadwal perbaikan dari inspeksi #' . $inspection->id,
+                ]);
+
+                // Update APAR status to under_repair
+                $inspection->apar->update(['status' => 'under_repair']);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inspeksi berhasil disetujui',
+            'data' => $inspection->fresh([
+                'apar.aparType',
+                'user',
+                'reviewer',
+                'repairApproval',
+            ]),
+        ]);
+    }
+
+    /**
+     * Reject a teknisi inspection (supervisor only)
+     */
+    public function rejectInspection(Request $request, Inspection $inspection)
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Only admin/supervisor can reject
+        if (!$user->isAdmin() && !$user->isSupervisor()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya admin atau supervisor yang dapat menolak inspeksi',
+            ], 403);
+        }
+
+        // Check if inspection is pending review
+        if ($inspection->inspection_status !== 'pending_review') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Inspeksi ini tidak dalam status menunggu review',
+            ], 422);
+        }
+
+        $request->validate([
+            'notes' => 'required|string|min:10',
+        ], [
+            'notes.required' => 'Alasan penolakan wajib diisi',
+            'notes.min' => 'Alasan penolakan minimal 10 karakter',
+        ]);
+
+        // Reject the inspection
+        $inspection->rejectInspection($user->id, $request->notes);
+
+        // Create re-inspection schedule for the teknisi
+        $reinspectionService = new \App\Services\ReinspectionService();
+        
+        // Create a mock RepairApproval for the rejection workflow
+        $mockApproval = new \App\Models\RepairApproval([
+            'rejection_reason' => 'Inspeksi ditolak oleh supervisor',
+            'supervisor_notes' => $request->notes,
+        ]);
+        
+        $reinspectionSchedule = $reinspectionService->createReinspectionSchedule($inspection, $mockApproval);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inspeksi ditolak. Jadwal inspeksi ulang telah dibuat.',
+            'data' => [
+                'inspection' => $inspection->fresh(['apar.aparType', 'user', 'reviewer']),
+                'reinspection_schedule' => $reinspectionSchedule,
+            ],
+        ]);
     }
 }

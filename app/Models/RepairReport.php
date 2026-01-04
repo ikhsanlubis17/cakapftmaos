@@ -19,12 +19,17 @@ class RepairReport extends Model
         'repair_lat',
         'repair_lng',
         'repair_completed_at',
+        'status',
+        'supervisor_notes',
+        'reviewed_by',
+        'reviewed_at',
     ];
 
     protected $casts = [
         'repair_lat' => 'decimal:8',
         'repair_lng' => 'decimal:8',
         'repair_completed_at' => 'datetime',
+        'reviewed_at' => 'datetime',
     ];
 
     /**
@@ -44,10 +49,89 @@ class RepairReport extends Model
     }
 
     /**
+     * Get the supervisor who reviewed the report.
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
      * Get the inspection through repair approval.
      */
     public function inspection(): BelongsTo
     {
         return $this->repairApproval->inspection;
+    }
+
+    /**
+     * Check if report is pending review.
+     */
+    public function isPendingReview(): bool
+    {
+        return $this->status === 'pending_review';
+    }
+
+    /**
+     * Check if report is approved.
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved';
+    }
+
+    /**
+     * Check if report needs rework.
+     */
+    public function needsRework(): bool
+    {
+        return $this->status === 'needs_rework';
+    }
+
+    /**
+     * Check if report is rejected (not fixable).
+     */
+    public function isRejected(): bool
+    {
+        return $this->status === 'rejected';
+    }
+
+    /**
+     * Approve the repair report.
+     */
+    public function approve(int $reviewerId, ?string $notes = null): void
+    {
+        $this->update([
+            'status' => 'approved',
+            'supervisor_notes' => $notes,
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Mark report as needs rework.
+     */
+    public function markNeedsRework(int $reviewerId, string $notes): void
+    {
+        $this->update([
+            'status' => 'needs_rework',
+            'supervisor_notes' => $notes,
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Reject the repair report (APAR not fixable).
+     */
+    public function reject(int $reviewerId, string $notes): void
+    {
+        $this->update([
+            'status' => 'rejected',
+            'supervisor_notes' => $notes,
+            'reviewed_by' => $reviewerId,
+            'reviewed_at' => now(),
+        ]);
     }
 }
