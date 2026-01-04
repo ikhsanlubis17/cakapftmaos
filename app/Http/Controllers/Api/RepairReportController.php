@@ -155,6 +155,8 @@ class RepairReportController extends Controller
         // Mark repair approval as completed
         $repairApproval->markCompleted();
 
+        $apar = $repairApproval->inspection->apar;
+
         if ($request->needs_reinspection) {
             // Trigger re-inspection workflow
             $reinspectionService = new ReinspectionService();
@@ -163,6 +165,9 @@ class RepairReportController extends Controller
                 $repairApproval,
                 $request->repair_description
             );
+            
+            // If reinspection is needed, keep APAR status as under_repair until reinspection confirms it's fixed
+            // The status will be updated after reinspection is completed
         } else {
             // Standard completion flow
             $repairApproval->inspection->update([
@@ -170,9 +175,14 @@ class RepairReportController extends Controller
                 'repair_notes' => $request->repair_description
             ]);
 
-            // Update APAR status back to active if condition was good
-            if ($repairApproval->inspection->condition === 'good') {
-                $repairApproval->inspection->apar->update(['status' => 'active']);
+            // Update APAR status back to active after repair is completed
+            // This indicates the repair was successful and APAR is ready to use
+            if ($apar->status === 'under_repair') {
+                $apar->update(['status' => 'active']);
+                \Log::info('APAR status updated to active after repair completion', [
+                    'apar_id' => $apar->id,
+                    'repair_approval_id' => $repairApproval->id,
+                ]);
             }
         }
 

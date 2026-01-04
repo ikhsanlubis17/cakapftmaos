@@ -132,19 +132,35 @@ class Apar extends Model
     }
 
     /**
-     * Check if APAR needs refill.
-     */
-    public function needsRefill(): bool
-    {
-        return $this->status === 'refill';
-    }
-
-    /**
      * Check if APAR is active.
      */
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * Check if APAR needs repair.
+     */
+    public function needsRepair(): bool
+    {
+        return $this->status === 'needs_repair';
+    }
+
+    /**
+     * Check if APAR is under repair.
+     */
+    public function isUnderRepair(): bool
+    {
+        return $this->status === 'under_repair';
+    }
+
+    /**
+     * Check if APAR is inactive.
+     */
+    public function isInactive(): bool
+    {
+        return $this->status === 'inactive';
     }
 
     /**

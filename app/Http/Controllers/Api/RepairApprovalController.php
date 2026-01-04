@@ -109,6 +109,17 @@ class RepairApprovalController extends Controller
             'repair_notes' => $request->supervisor_notes
         ]);
 
+        // Update APAR status to under_repair when repair is approved
+        // This indicates that technician can now start the repair work
+        $apar = $repairApproval->inspection->apar;
+        if ($apar->status === 'needs_repair') {
+            $apar->update(['status' => 'under_repair']);
+            \Log::info('APAR status updated to under_repair after repair approval', [
+                'apar_id' => $apar->id,
+                'repair_approval_id' => $repairApproval->id,
+            ]);
+        }
+
         // Send notification to technician
         try {
             $reinspectionService = new \App\Services\ReinspectionService();

@@ -405,6 +405,13 @@ class InspectionService
 
         if (isset($statusMap[$condition])) {
             $apar->update(['status' => $statusMap[$condition]]);
+        } elseif ($condition === 'good' && $apar->status === 'under_repair') {
+            // If reinspection shows condition is good and APAR was under repair,
+            // update status to active (repair was successful)
+            $apar->update(['status' => 'active']);
+            Log::info('APAR status updated to active after successful reinspection', [
+                'apar_id' => $apar->id,
+            ]);
         }
     }
 
