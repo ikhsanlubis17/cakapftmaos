@@ -35,22 +35,6 @@ class ReinspectionService
             $scheduleNotes .= "Instruksi Supervisor:\n{$approval->supervisor_notes}\n\n";
             $scheduleNotes .= "Mohon perhatikan catatan di atas saat melakukan inspeksi ulang.";
             
-            // Create the re-inspection schedule
-            $schedule = InspectionSchedule::create([
-                'apar_id' => $inspection->apar_id,
-                'assigned_user_id' => $inspection->user_id, // Assign to same technician
-                'scheduled_date' => $scheduledDate->format('Y-m-d'),
-                'scheduled_time' => $startTime,
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'frequency' => 'once', // One-time re-inspection
-                'notes' => $scheduleNotes,
-                'is_active' => true,
-                'is_completed' => false,
-                'is_completed' => false,
-                'created_by' => $approval->approved_by, // Supervisor who rejected
-            ]);
-            
             // Calculate start_at and end_at in UTC
             $appTimezone = config('app.timezone', 'UTC');
             $startAt = Carbon::createFromFormat('Y-m-d H:i:s', 
@@ -62,10 +46,17 @@ class ReinspectionService
                 $scheduledDate->format('Y-m-d') . ' ' . $endTime, 
                 $appTimezone
             )->setTimezone('UTC');
-            
-            $schedule->update([
+
+            // Create the re-inspection schedule
+            $schedule = InspectionSchedule::create([
+                'apar_id' => $inspection->apar_id,
+                'assigned_user_id' => $inspection->user_id, // Assign to same technician
                 'start_at' => $startAt,
                 'end_at' => $endAt,
+                'frequency' => 'once', // One-time re-inspection
+                'notes' => $scheduleNotes,
+                'is_active' => true,
+                'is_completed' => false,
             ]);
             
             Log::info('Re-inspection schedule created', [

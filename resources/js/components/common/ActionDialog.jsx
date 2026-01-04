@@ -27,6 +27,7 @@ const ActionDialog = ({
     inputLabel = 'Catatan',
     notesLabel = 'Catatan',
     inputPlaceholder = 'Masukkan catatan...',
+    minInputLength = 0,
     notesPlaceholder = 'Masukkan catatan...',
     initialInputValue = '',
     isLoading = false,
@@ -108,6 +109,8 @@ const ActionDialog = ({
         
         if ((requireInput || requireNotes) && !formData.notes.trim()) {
             newErrors.notes = 'Field ini wajib diisi';
+        } else if (minInputLength > 0 && formData.notes.trim().length < minInputLength) {
+            newErrors.notes = `Minimal ${minInputLength} karakter`;
         }
         
         if (requireSchedule) {
@@ -262,6 +265,11 @@ const ActionDialog = ({
                                     className={`w-full rounded-lg border ${errors.notes ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'} shadow-sm p-2 text-sm`}
                                 />
                                 {errors.notes && <p className="mt-1 text-xs text-red-600">{errors.notes}</p>}
+                                {minInputLength > 0 && (
+                                    <p className={`mt-1 text-xs ${formData.notes.trim().length >= minInputLength ? 'text-green-600' : 'text-gray-500'}`}>
+                                        {formData.notes.trim().length}/{minInputLength} karakter minimum
+                                    </p>
+                                )}
                             </div>
                         )}
                     </div>

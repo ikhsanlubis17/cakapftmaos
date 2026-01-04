@@ -21,14 +21,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 const RepairApprovalList = () => {
-    const [approvals, setApprovals] = useState([]);
     const [filter, setFilter] = useState("all");
-    const [stats, setStats] = useState({});
-    const [error, setError] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
     const [lastUpdate, setLastUpdate] = useState(null);
     const [isInitialized, setIsInitialized] = useState(false);
-    const [hasShownInitialAlert, setHasShownInitialAlert] = useState(false);
     const [actionDialog, setActionDialog] = useState({
         isOpen: false,
         type: 'approve',
@@ -46,8 +42,8 @@ const RepairApprovalList = () => {
         cluster: "ap1",
         onMessage: (data) => {
             console.log("Real-time update received:", data);
-            fetchApprovals(true);
-            fetchStats();
+            refetchApprovals();
+            refetchStats();
             showSuccess(
                 `Status perbaikan APAR ${data.apar_serial} telah berubah: ${data.message}`
             );
@@ -100,33 +96,33 @@ const RepairApprovalList = () => {
         }, AUTO_REFRESH_INTERVAL);
 
         return () => clearInterval(intervalId);
-    }, [refetchApprovals, refetchStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Only run on mount
 
     useEffect(() => {
-        setApprovals(approvalsData || []);
-        setStats(statsData || {});
         if (approvalsData && approvalsData.length) {
             setLastUpdate(new Date());
         }
-    }, [approvalsData, statsData]);
+    }, [approvalsData]);
 
     const prevApprovalsRef = useRef([]);
+    const hasShownInitialAlertRef = useRef(false);
     useEffect(() => {
         if (!isInitialized) return;
-        const prev = prevApprovalsRef.current || [];
         if (
             !isFetchingApprovals &&
             approvalsData &&
             approvalsData.length >= 0
         ) {
-            if (!hasShownInitialAlert && approvalsData.length > 0) {
+            if (!hasShownInitialAlertRef.current && approvalsData.length > 0) {
                 showSuccess(
                     `Berhasil memuat ${approvalsData.length} data persetujuan`
                 );
-                setHasShownInitialAlert(true);
+                hasShownInitialAlertRef.current = true;
             }
         }
         prevApprovalsRef.current = approvalsData;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [approvalsData, isFetchingApprovals, isInitialized]);
 
     const handleManualRefresh = async () => {
@@ -265,8 +261,9 @@ const RepairApprovalList = () => {
         });
     };
 
-    const handleDialogConfirm = (notes) => {
+    const handleDialogConfirm = (formData) => {
         const { type, approval } = actionDialog;
+        const notes = formData.notes || formData;
         if (type === 'approve') {
             handleApprove(approval, notes);
         } else {
@@ -348,7 +345,7 @@ const RepairApprovalList = () => {
         );
     }
 
-    if (error) {
+    if (approvalsError) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="text-center max-w-md">
@@ -358,7 +355,7 @@ const RepairApprovalList = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         Terjadi Kesalahan
                     </h3>
-                    <p className="text-sm text-gray-600 mb-6">{error}</p>
+                    <p className="text-sm text-gray-600 mb-6">{approvalsError?.message || 'Gagal memuat data'}</p>
                     <div className="flex gap-3 justify-center">
                         <button
                             onClick={refetchApprovals}
@@ -435,7 +432,7 @@ const RepairApprovalList = () => {
                             </div>
                             <div>
                                 <p className="text-2xl font-semibold text-gray-900">
-                                    {stats.pending || 0}
+                                    {statsData.pending || 0}
                                 </p>
                                 <p className="text-xs text-gray-600">
                                     Menunggu
@@ -451,7 +448,7 @@ const RepairApprovalList = () => {
                             </div>
                             <div>
                                 <p className="text-2xl font-semibold text-gray-900">
-                                    {stats.approved || 0}
+                                    {statsData.approved || 0}
                                 </p>
                                 <p className="text-xs text-gray-600">
                                     Disetujui
@@ -467,7 +464,7 @@ const RepairApprovalList = () => {
                             </div>
                             <div>
                                 <p className="text-2xl font-semibold text-gray-900">
-                                    {stats.rejected || 0}
+                                    {statsData.rejected || 0}
                                 </p>
                                 <p className="text-xs text-gray-600">Ditolak</p>
                             </div>
@@ -481,7 +478,7 @@ const RepairApprovalList = () => {
                             </div>
                             <div>
                                 <p className="text-2xl font-semibold text-gray-900">
-                                    {stats.completed || 0}
+                                    {statsData.completed || 0}
                                 </p>
                                 <p className="text-xs text-gray-600">Selesai</p>
                             </div>
@@ -518,14 +515,14 @@ const RepairApprovalList = () => {
                         <h3 className="text-sm font-semibold text-gray-900">
                             Daftar Persetujuan{" "}
                             <span className="text-gray-500">
-                                ({approvals.length})
+                                ({approvalsData.length})
                             </span>
                         </h3>
                     </div>
 
-                    {approvals.length > 0 ? (
+                    {approvalsData.length > 0 ? (
                         <div className="divide-y divide-gray-200">
-                            {approvals.map((approval) => (
+                            {approvalsData.map((approval) => (
                                 <div
                                     key={approval.id}
                                     className="p-6 hover:bg-gray-50 transition-colors"
@@ -797,9 +794,10 @@ const RepairApprovalList = () => {
                 type={actionDialog.type === 'approve' ? 'success' : 'error'}
                 confirmText={actionDialog.type === 'approve' ? 'Setujui' : 'Tolak'}
                 confirmButtonColor={actionDialog.type === 'approve' ? 'green' : 'red'}
-                requireInput={actionDialog.type === 'reject'}
-                inputLabel={actionDialog.type === 'approve' ? 'Catatan (Opsional)' : 'Alasan Penolakan'}
-                inputPlaceholder={actionDialog.type === 'approve' ? 'Tambahkan catatan...' : 'Masukkan alasan penolakan...'}
+                requireInput={true}
+                minInputLength={10}
+                inputLabel={actionDialog.type === 'approve' ? 'Catatan Persetujuan' : 'Alasan Penolakan'}
+                inputPlaceholder={actionDialog.type === 'approve' ? 'Jelaskan instruksi perbaikan atau catatan persetujuan (min. 10 karakter)...' : 'Masukkan alasan penolakan (min. 10 karakter)...'}
             />
         </div>
     );

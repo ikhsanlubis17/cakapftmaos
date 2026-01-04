@@ -20,14 +20,12 @@ import {
 } from '@heroicons/react/24/outline';
 
 const RepairApprovalDetail = () => {
-    const { id } = useParams();
+    const { id } = useParams({ strict: false });
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
     const { apiClient } = useAuth();
     const queryClient = useQueryClient();
 
-    const [approval, setApproval] = useState(null);
-    const [error, setError] = useState(null);
     const [notes, setNotes] = useState('');
     const [rejectionReason, setRejectionReason] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -35,7 +33,7 @@ const RepairApprovalDetail = () => {
     const [actionType, setActionType] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
 
-    const { data: approvalData, isLoading: loading, refetch } = useQuery({
+    const { data: approval, isLoading: loading, error: queryError, refetch } = useQuery({
         queryKey: ['repair-approval', id],
         queryFn: async () => {
             const response = await apiClient.get(`/api/repair-approvals/${id}`);
@@ -45,10 +43,6 @@ const RepairApprovalDetail = () => {
         enabled: !!id,
         throwOnError: false,
     });
-
-    useEffect(() => {
-        if (approvalData) setApproval(approvalData);
-    }, [approvalData]);
 
     const approveMutation = useMutation({
         mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { supervisor_notes: notes }),
@@ -188,7 +182,7 @@ const RepairApprovalDetail = () => {
         );
     }
 
-    if (error || !approval) {
+    if (queryError || !approval) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
                 <div className="text-center max-w-md mx-auto">
@@ -196,7 +190,7 @@ const RepairApprovalDetail = () => {
                         <ExclamationTriangleIcon className="h-10 w-10 text-red-600" />
                     </div>
                     <h3 className="text-xl font-medium text-gray-900 mb-3">Terjadi Kesalahan</h3>
-                    <p className="text-gray-600 mb-6 text-lg">{error || 'Data tidak ditemukan'}</p>
+                    <p className="text-gray-600 mb-6 text-lg">{queryError?.message || 'Data tidak ditemukan'}</p>
                     <div className="space-y-3">
                         <button
                             onClick={() => refetch()}
