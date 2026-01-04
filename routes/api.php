@@ -191,6 +191,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/settings', [SettingController::class, 'update']);
 
     // Report routes
+    Route::get('/reports/generate', [ReportController::class, 'generate']);
     Route::get('/reports/inspections', [ReportController::class, 'inspections']);
     Route::get('/reports/summary', [ReportController::class, 'summary']);
     Route::get('/reports/overdue', [ReportController::class, 'overdue']);

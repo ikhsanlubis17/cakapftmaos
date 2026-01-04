@@ -4,13 +4,12 @@ namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SummaryReportExport implements FromArray, WithHeadings, WithTitle, WithStyles
+class SummaryReportExport implements FromArray, WithHeadings, WithStyles, WithTitle
 {
     protected $data;
 
@@ -22,14 +21,15 @@ class SummaryReportExport implements FromArray, WithHeadings, WithTitle, WithSty
     public function array(): array
     {
         $stats = $this->data['stats'];
-        
+
         $rows = [
             ['Kategori', 'Jumlah', 'Keterangan'],
             ['Total APAR', $stats['total_apar'], 'Semua APAR dalam sistem'],
             ['APAR Aktif', $stats['active_apar'], 'APAR dalam kondisi baik'],
-            ['Perlu Refill', $stats['needs_refill'], 'APAR yang perlu diisi ulang'],
-            ['Kadaluarsa', $stats['expired'], 'APAR yang sudah kadaluarsa'],
-            ['Rusak', $stats['damaged'], 'APAR yang rusak'],
+            ['Perlu Perbaikan', $stats['needs_repair'], 'APAR yang perlu diperbaiki'],
+            ['Sedang Diperbaiki', $stats['under_repair'], 'APAR sedang dalam proses perbaikan'],
+            ['Tidak Dapat Diperbaiki', $stats['not_fixable'], 'APAR yang tidak dapat diperbaiki'],
+            ['Non-Aktif', $stats['inactive'], 'APAR yang tidak aktif'],
             ['', '', ''],
             ['Inspeksi Periode Ini', $stats['inspections_this_period'], 'Jumlah inspeksi dalam periode'],
             ['', '', ''],
@@ -41,9 +41,9 @@ class SummaryReportExport implements FromArray, WithHeadings, WithTitle, WithSty
         ];
 
         // Add dynamic APAR types
-        if (!empty($stats['apar_types'])) {
+        if (! empty($stats['apar_types'])) {
             foreach ($stats['apar_types'] as $typeName => $count) {
-                $rows[] = ['- ' . ucfirst($typeName), $count, 'APAR ' . strtolower($typeName)];
+                $rows[] = ['- '.ucfirst($typeName), $count, 'APAR '.strtolower($typeName)];
             }
         } else {
             $rows[] = ['- Tidak ada data', 0, 'Tidak ada jenis APAR terdaftar'];
@@ -88,7 +88,7 @@ class SummaryReportExport implements FromArray, WithHeadings, WithTitle, WithSty
         ]);
 
         $sheet->mergeCells('A2:C2');
-        $sheet->setCellValue('A2', 'Periode: ' . $this->data['period']);
+        $sheet->setCellValue('A2', 'Periode: '.$this->data['period']);
         $sheet->getStyle('A2')->applyFromArray([
             'font' => [
                 'size' => 12,
@@ -99,7 +99,7 @@ class SummaryReportExport implements FromArray, WithHeadings, WithTitle, WithSty
         ]);
 
         $sheet->mergeCells('A3:C3');
-        $sheet->setCellValue('A3', 'Dibuat pada: ' . $this->data['generated_at']);
+        $sheet->setCellValue('A3', 'Dibuat pada: '.$this->data['generated_at']);
         $sheet->getStyle('A3')->applyFromArray([
             'font' => [
                 'size' => 10,

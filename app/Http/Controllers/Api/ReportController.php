@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\AuditLogExport;
+use App\Exports\InspectionReportExport;
+use App\Exports\OverdueReportExport;
+use App\Exports\SummaryReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Apar;
 use App\Models\Inspection;
 use App\Models\InspectionLog;
 use App\Models\InspectionSchedule;
-use App\Models\User;
-use App\Exports\InspectionReportExport;
-use App\Exports\SummaryReportExport;
-use App\Exports\OverdueReportExport;
-use App\Exports\AuditLogExport;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -27,11 +26,105 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $range = $request->get('range', 'week');
-        
+
         // Get recent reports from storage
         $reports = $this->getRecentReports();
-        
+
         return response()->json($reports);
+    }
+
+    /**
+     * Get inspection report data
+     */
+    public function inspections(Request $request)
+    {
+        $startDate = $this->getStartDate($request->get('period', 'week'));
+        $endDate = now();
+
+        $inspections = Inspection::with(['apar.aparType', 'user'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'title' => 'Laporan Inspeksi APAR',
+                'period' => $startDate->format('d/m/Y').' - '.$endDate->format('d/m/Y'),
+                'total_inspections' => $inspections->count(),
+                'inspections' => $inspections,
+                'generated_at' => now()->format('d/m/Y H:i:s'),
+            ],
+        ]);
+    }
+
+    /**
+     * Get summary report data
+     */
+    public function summary(Request $request)
+    {
+        $startDate = $this->getStartDate($request->get('period', 'week'));
+        $endDate = now();
+
+        $stats = [
+            'total_apar' => Apar::count(),
+            'active_apar' => Apar::where('status', 'active')->count(),
+            'inactive' => Apar::where('status', 'inactive')->count(),
+            'needs_repair' => Apar::where('status', 'needs_repair')->count(),
+            'under_repair' => Apar::where('status', 'under_repair')->count(),
+            'not_fixable' => Apar::where('status', 'not_fixable')->count(),
+            'inspections_this_period' => Inspection::whereBetween('created_at', [$startDate, $endDate])->count(),
+            'location_types' => [
+                'statis' => Apar::where('location_type', 'statis')->count(),
+                'mobile' => Apar::where('location_type', 'mobile')->count(),
+            ],
+            'apar_types' => $this->getAparTypesStats(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'title' => 'Laporan Ringkasan APAR',
+                'period' => $startDate->format('d/m/Y').' - '.$endDate->format('d/m/Y'),
+                'stats' => $stats,
+                'generated_at' => now()->format('d/m/Y H:i:s'),
+            ],
+        ]);
+    }
+
+    /**
+     * Get overdue schedule report data
+     */
+    public function overdue(Request $request)
+    {
+        $nowUtc = Carbon::now('UTC');
+
+        $overdueSchedules = InspectionSchedule::with(['apar.aparType', 'assignedUser'])
+            ->where('is_active', true)
+            ->where('start_at', '<', $nowUtc)
+            ->orderBy('start_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'title' => 'Laporan Jadwal Terlambat',
+                'total_overdue' => $overdueSchedules->count(),
+                'overdue_schedules' => $overdueSchedules,
+                'generated_at' => Carbon::now(config('app.timezone', 'UTC'))->format('d/m/Y H:i:s'),
+            ],
+        ]);
+    }
+
+    /**
+     * Export report by type
+     */
+    public function export(Request $request, $type)
+    {
+        $period = $request->get('period', 'week');
+        $format = $request->get('format', 'pdf');
+
+        return $this->generate($request, $type, $format);
     }
 
     /**
@@ -42,12 +135,12 @@ class ReportController extends Controller
         $type = $type ?? $request->get('type');
         $period = $request->get('period', 'week');
         $format = $format ?? $request->get('format', 'pdf');
-        
+
         // Validate format
-        if (!in_array($format, ['pdf', 'excel'])) {
+        if (! in_array($format, ['pdf', 'excel'])) {
             return response()->json(['message' => 'Format tidak valid. Gunakan pdf atau excel.'], 400);
         }
-        
+
         $startDate = $this->getStartDate($period);
         $endDate = now();
 
@@ -65,8 +158,9 @@ class ReportController extends Controller
                     return response()->json(['message' => 'Tipe laporan tidak valid. Gunakan: inspection, summary, overdue, atau audit.'], 400);
             }
         } catch (\Exception $e) {
-            Log::error('Error generating report: ' . $e->getMessage());
-            return response()->json(['message' => 'Gagal generate laporan: ' . $e->getMessage()], 500);
+            Log::error('Error generating report: '.$e->getMessage());
+
+            return response()->json(['message' => 'Gagal generate laporan: '.$e->getMessage()], 500);
         }
     }
 
@@ -90,7 +184,7 @@ class ReportController extends Controller
 
         $data = [
             'title' => 'Laporan Inspeksi APAR',
-            'period' => $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y'),
+            'period' => $startDate->format('d/m/Y').' - '.$endDate->format('d/m/Y'),
             'total_inspections' => $inspections->count(),
             'inspections' => $inspections,
             'generated_at' => now()->format('d/m/Y H:i:s'),
@@ -99,11 +193,12 @@ class ReportController extends Controller
         $filename = "laporan-inspeksi-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}";
 
         if ($format === 'excel') {
-            return Excel::download(new InspectionReportExport($data), $filename . '.xlsx');
+            return Excel::download(new InspectionReportExport($data), $filename.'.xlsx');
         } else {
             $pdf = PDF::loadView('reports.inspection', $data);
             $pdf->setPaper('A4', 'portrait');
-            return $pdf->download($filename . '.pdf');
+
+            return $pdf->download($filename.'.pdf');
         }
     }
 
@@ -116,17 +211,17 @@ class ReportController extends Controller
         if (filter_var($photoUrl, FILTER_VALIDATE_URL)) {
             return $photoUrl;
         }
-        
+
         // If it's a relative path, make it absolute
         if (strpos($photoUrl, '/') === 0) {
             return url($photoUrl);
         }
-        
+
         // If it's stored in storage, get the public URL
         if (Storage::exists($photoUrl)) {
             return Storage::url($photoUrl);
         }
-        
+
         return $photoUrl;
     }
 
@@ -139,9 +234,10 @@ class ReportController extends Controller
             $stats = [
                 'total_apar' => Apar::count(),
                 'active_apar' => Apar::where('status', 'active')->count(),
-                'needs_refill' => Apar::where('status', 'refill')->count(),
-                'expired' => Apar::where('status', 'expired')->count(),
-                'damaged' => Apar::where('status', 'damaged')->count(),
+                'inactive' => Apar::where('status', 'inactive')->count(),
+                'needs_repair' => Apar::where('status', 'needs_repair')->count(),
+                'under_repair' => Apar::where('status', 'under_repair')->count(),
+                'not_fixable' => Apar::where('status', 'not_fixable')->count(),
                 'inspections_this_period' => Inspection::whereBetween('created_at', [$startDate, $endDate])->count(),
                 'location_types' => [
                     'statis' => Apar::where('location_type', 'statis')->count(),
@@ -152,7 +248,7 @@ class ReportController extends Controller
 
             $data = [
                 'title' => 'Laporan Ringkasan APAR',
-                'period' => $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y'),
+                'period' => $startDate->format('d/m/Y').' - '.$endDate->format('d/m/Y'),
                 'stats' => $stats,
                 'generated_at' => now()->format('d/m/Y H:i:s'),
             ];
@@ -160,14 +256,15 @@ class ReportController extends Controller
             $filename = "laporan-ringkasan-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}";
 
             if ($format === 'excel') {
-                return Excel::download(new SummaryReportExport($data), $filename . '.xlsx');
+                return Excel::download(new SummaryReportExport($data), $filename.'.xlsx');
             } else {
                 $pdf = PDF::loadView('reports.summary', $data);
                 $pdf->setPaper('A4', 'portrait');
-                return $pdf->download($filename . '.pdf');
+
+                return $pdf->download($filename.'.pdf');
             }
         } catch (\Exception $e) {
-            Log::error('Error generating summary report: ' . $e->getMessage());
+            Log::error('Error generating summary report: '.$e->getMessage());
             throw $e;
         }
     }
@@ -177,7 +274,7 @@ class ReportController extends Controller
      */
     private function generateOverdueReport($format)
     {
-    $nowUtc = Carbon::now('UTC');
+        $nowUtc = Carbon::now('UTC');
 
         $overdueSchedules = InspectionSchedule::with(['apar.aparType', 'assignedUser'])
             ->where('is_active', true)
@@ -192,14 +289,15 @@ class ReportController extends Controller
             'generated_at' => Carbon::now(config('app.timezone', 'UTC'))->format('d/m/Y H:i:s'),
         ];
 
-        $filename = "laporan-terlambat-" . $nowUtc->format('Y-m-d');
+        $filename = 'laporan-terlambat-'.$nowUtc->format('Y-m-d');
 
         if ($format === 'excel') {
-            return Excel::download(new OverdueReportExport($data), $filename . '.xlsx');
+            return Excel::download(new OverdueReportExport($data), $filename.'.xlsx');
         } else {
             $pdf = PDF::loadView('reports.overdue', $data);
             $pdf->setPaper('A4', 'portrait');
-            return $pdf->download($filename . '.pdf');
+
+            return $pdf->download($filename.'.pdf');
         }
     }
 
@@ -224,7 +322,7 @@ class ReportController extends Controller
 
         $data = [
             'title' => 'Laporan Audit Log APAR',
-            'period' => $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y'),
+            'period' => $startDate->format('d/m/Y').' - '.$endDate->format('d/m/Y'),
             'audit_logs' => $auditLogs,
             'stats' => $stats,
             'generated_at' => now()->format('d/m/Y H:i:s'),
@@ -233,11 +331,12 @@ class ReportController extends Controller
         $filename = "laporan-audit-{$startDate->format('Y-m-d')}-{$endDate->format('Y-m-d')}";
 
         if ($format === 'excel') {
-            return Excel::download(new AuditLogExport($data), $filename . '.xlsx');
+            return Excel::download(new AuditLogExport($data), $filename.'.xlsx');
         } else {
             $pdf = PDF::loadView('reports.audit', $data);
             $pdf->setPaper('A4', 'portrait');
-            return $pdf->download($filename . '.pdf');
+
+            return $pdf->download($filename.'.pdf');
         }
     }
 
@@ -287,7 +386,8 @@ class ReportController extends Controller
 
             return $aparTypes->toArray();
         } catch (\Exception $e) {
-            Log::warning('Could not get APAR types stats using new relationship: ' . $e->getMessage());
+            Log::warning('Could not get APAR types stats using new relationship: '.$e->getMessage());
+
             return [];
         }
     }
