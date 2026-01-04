@@ -89,19 +89,19 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                 {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
-                    <button 
-                        type="button" 
-                        onClick={stopCamera} 
+                    <button
+                        type="button"
+                        onClick={stopCamera}
                         className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
                         <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
-                    
-                    <button 
-                        type="button" 
-                        onClick={capturePhoto} 
-                        disabled={captureCountdown > 0} 
+
+                    <button
+                        type="button"
+                        onClick={capturePhoto}
+                        disabled={captureCountdown > 0}
                         className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
                         <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-600 hover:bg-red-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
@@ -126,9 +126,9 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                         Foto Tersimpan
                     </div>
                 </div>
-                <button 
-                    type="button" 
-                    onClick={() => setPhoto(null)} 
+                <button
+                    type="button"
+                    onClick={() => setPhoto(null)}
                     className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all font-medium text-sm sm:text-base shadow-sm"
                 >
                     <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -177,19 +177,19 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                 {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
-                    <button 
-                        type="button" 
-                        onClick={stopSelfieCamera} 
+                    <button
+                        type="button"
+                        onClick={stopSelfieCamera}
                         className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
                         <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
-                    
-                    <button 
-                        type="button" 
-                        onClick={captureSelfie} 
-                        disabled={captureCountdown > 0} 
+
+                    <button
+                        type="button"
+                        onClick={captureSelfie}
+                        disabled={captureCountdown > 0}
                         className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
                         <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-600 hover:bg-blue-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
@@ -214,9 +214,9 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                         Selfie Tersimpan
                     </div>
                 </div>
-                <button 
-                    type="button" 
-                    onClick={() => setSelfie(null)} 
+                <button
+                    type="button"
+                    onClick={() => setSelfie(null)}
                     className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all font-medium text-sm sm:text-base shadow-sm"
                 >
                     <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
@@ -227,7 +227,7 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
     </div>
 );
 
-const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowDamageForm, newDamage, setNewDamage, damageCategories, startDamageCamera, damageCameraActive, damageCameraLoading, damageVideoRef, damageCanvasRef, captureCountdown, showFlash, captureDamagePhoto, stopDamageCamera, addDamage }) => (
+const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowDamageForm, newDamage, setNewDamage, damageCategories, startDamageCamera, damageCameraActive, damageCameraLoading, damageVideoRef, damageCanvasRef, captureCountdown, showFlash, captureDamagePhoto, stopDamageCamera, addDamage, damagePhotoType }) => (
     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <label className="block text-xl font-bold text-gray-900 mb-6 flex items-center">
             🚨 Kategori Kerusakan
@@ -241,12 +241,11 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                             <div className="space-y-1">
                                 <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-bold">{damage.category_name}</span>
                                 <div className="flex items-center mt-1">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide ${
-                                        damage.severity === 'low' ? 'bg-green-100 text-green-800' : 
-                                        damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' : 
-                                        damage.severity === 'high' ? 'bg-orange-100 text-orange-800' : 
-                                        'bg-red-100 text-red-800'
-                                    }`}>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide ${damage.severity === 'low' ? 'bg-green-100 text-green-800' :
+                                        damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                            damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                                                'bg-red-100 text-red-800'
+                                        }`}>
                                         {damage.severity === 'low' ? 'Rendah' : damage.severity === 'medium' ? 'Sedang' : damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
                                     </span>
                                 </div>
@@ -258,23 +257,33 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
 
                         {damage.notes && <p className="text-sm text-gray-600 mb-4 bg-white/50 p-2 rounded-lg">{damage.notes}</p>}
 
-                        {damage.damage_photo && (
-                            <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
-                                <img src={URL.createObjectURL(damage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded text-xs font-medium">
-                                    Foto Kerusakan
+                        <div className="grid grid-cols-2 gap-2">
+                            {damage.damage_photo && (
+                                <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
+                                    <img src={URL.createObjectURL(damage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
+                                    <div className="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                        Kerusakan
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                            {damage.repair_photo && (
+                                <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
+                                    <img src={URL.createObjectURL(damage.repair_photo)} alt="Repair Photo" className="w-full h-full object-contain" />
+                                    <div className="absolute bottom-1 left-1 bg-green-600/80 backdrop-blur-sm text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                        Perbaikan
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
         )}
 
         {!showDamageForm ? (
-            <button 
-                type="button" 
-                onClick={() => setShowDamageForm(true)} 
+            <button
+                type="button"
+                onClick={() => setShowDamageForm(true)}
                 className="w-full py-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group"
             >
                 <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-red-100 transition-colors duration-300 mb-3">
@@ -296,16 +305,16 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan <span className="text-red-500">*</span></label>
-                            <select 
-                                value={newDamage.category_id} 
+                            <select
+                                value={newDamage.category_id}
                                 onChange={(e) => {
                                     const category = damageCategories.find(c => c.id === parseInt(e.target.value));
-                                    setNewDamage({ 
-                                        ...newDamage, 
+                                    setNewDamage({
+                                        ...newDamage,
                                         category_id: e.target.value,
                                         severity: category ? category.severity : 'medium'
                                     });
-                                }} 
+                                }}
                                 className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" required>
                                 <option value="">Pilih kategori kerusakan</option>
                                 {damageCategories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}
@@ -314,8 +323,8 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Keparahan</label>
-                            <select 
-                                value={newDamage.severity} 
+                            <select
+                                value={newDamage.severity}
                                 disabled
                                 className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-100 cursor-not-allowed text-gray-500"
                             >
@@ -331,69 +340,133 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                         <textarea value={newDamage.notes} onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })} rows={3} className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none bg-white" placeholder="Jelaskan detail kerusakan..." />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Foto Kerusakan <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {/* Damage Photo Section */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Foto Kerusakan <span className="text-red-500">*</span></label>
 
-                        {!newDamage.damage_photo && !damageCameraActive && (
-                            <button 
-                                type="button" 
-                                onClick={startDamageCamera} 
-                                disabled={damageCameraLoading} 
-                                className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group disabled:opacity-50"
-                            >
-                                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                    <CameraIcon className="h-6 w-6 text-red-600" />
-                                </div>
-                                <p className="font-medium text-gray-700 group-hover:text-red-700">Ambil Foto Kerusakan</p>
-                            </button>
-                        )}
-
-                        {damageCameraActive && !newDamage.damage_photo && (
-                            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
-                                <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                                <canvas ref={damageCanvasRef} className="hidden" />
-
-                                {captureCountdown > 0 && (
-                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                                        <div className="text-white text-6xl font-bold animate-ping">{captureCountdown}</div>
+                            {!newDamage.damage_photo && (!damageCameraActive || damagePhotoType !== 'damage') && (
+                                <button
+                                    type="button"
+                                    onClick={() => startDamageCamera('damage')}
+                                    disabled={damageCameraLoading}
+                                    className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group disabled:opacity-50"
+                                >
+                                    <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                        <CameraIcon className="h-6 w-6 text-red-600" />
                                     </div>
-                                )}
+                                    <p className="font-medium text-gray-700 group-hover:text-red-700">Ambil Foto Kerusakan</p>
+                                </button>
+                            )}
 
-                                {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
+                            {damageCameraActive && damagePhotoType === 'damage' && !newDamage.damage_photo && (
+                                <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
+                                    <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                                    <canvas ref={damageCanvasRef} className="hidden" />
 
-                                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4">
-                                    <button onClick={stopDamageCamera} className="p-3 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
-                                    <button onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="p-1 rounded-full border-2 border-white/30">
-                                        <div className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6 text-white" /></div>
+                                    {captureCountdown > 0 && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
+                                            <div className="text-white text-6xl font-bold animate-ping">{captureCountdown}</div>
+                                        </div>
+                                    )}
+
+                                    {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
+
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4">
+                                        <button onClick={stopDamageCamera} className="p-3 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
+                                        <button onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="p-1 rounded-full border-2 border-white/30">
+                                            <div className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6 text-white" /></div>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {newDamage.damage_photo && (
+                                <div className="space-y-3">
+                                    <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                                        <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
+                                        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                                            <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                                            Foto Kerusakan
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewDamage({ ...newDamage, damage_photo: null })}
+                                        className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-orange-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                                    >
+                                        <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                        Ulangi Foto
                                     </button>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {newDamage.damage_photo && (
-                            <div className="space-y-3">
-                                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
-                                    <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
-                                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-                                        Foto Kerusakan
+                        {/* Repair Photo Section */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Foto Perbaikan (Opsional)</label>
+
+                            {!newDamage.repair_photo && (!damageCameraActive || damagePhotoType !== 'repair') && (
+                                <button
+                                    type="button"
+                                    onClick={() => startDamageCamera('repair')}
+                                    disabled={damageCameraLoading}
+                                    className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-green-500 hover:bg-green-50 transition-all duration-300 group disabled:opacity-50"
+                                >
+                                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
+                                        <CameraIcon className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <p className="font-medium text-gray-700 group-hover:text-green-700">Ambil Foto Perbaikan</p>
+                                </button>
+                            )}
+
+                            {damageCameraActive && damagePhotoType === 'repair' && !newDamage.repair_photo && (
+                                <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
+                                    <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                                    <canvas ref={damageCanvasRef} className="hidden" />
+
+                                    {captureCountdown > 0 && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
+                                            <div className="text-white text-6xl font-bold animate-ping">{captureCountdown}</div>
+                                        </div>
+                                    )}
+
+                                    {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
+
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4">
+                                        <button onClick={stopDamageCamera} className="p-3 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
+                                        <button onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="p-1 rounded-full border-2 border-white/30">
+                                            <div className="h-12 w-12 rounded-full bg-green-600 hover:bg-green-500 border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6 text-white" /></div>
+                                        </button>
                                     </div>
                                 </div>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setNewDamage({ ...newDamage, damage_photo: null })} 
-                                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-orange-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-all font-medium text-sm sm:text-base shadow-sm"
-                                >
-                                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                    Ulangi Foto Kerusakan
-                                </button>
-                            </div>
-                        )}
+                            )}
+
+                            {newDamage.repair_photo && (
+                                <div className="space-y-3">
+                                    <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                                        <img src={URL.createObjectURL(newDamage.repair_photo)} alt="Repair Photo" className="w-full h-full object-contain" />
+                                        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-green-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                                            <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                                            Foto Perbaikan
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setNewDamage({ ...newDamage, repair_photo: null })}
+                                        className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-green-200 text-green-600 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                                    >
+                                        <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                                        Ulangi Foto
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex space-x-3 pt-4">
                         <button type="button" onClick={addDamage} className="flex-1 bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg hover:shadow-red-500/30">Simpan Kerusakan</button>
-                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null }); }} className="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-700">Batal</button>
+                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null, repair_photo: null }); }} className="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-700">Batal</button>
                     </div>
                 </div>
             </div>
@@ -444,11 +517,13 @@ const InspectionFormEnhanced = () => {
     // Damage categories state
     const [selectedDamages, setSelectedDamages] = useState([]);
     const [showDamageForm, setShowDamageForm] = useState(false);
+    const [damagePhotoType, setDamagePhotoType] = useState('damage'); // 'damage' or 'repair'
     const [newDamage, setNewDamage] = useState({
         category_id: '',
         notes: '',
         severity: 'medium',
-        damage_photo: null
+        damage_photo: null,
+        repair_photo: null
     });
 
     useEffect(() => {
@@ -515,7 +590,7 @@ const InspectionFormEnhanced = () => {
             const lon1 = currentLocation.lng;
             const lat2 = parseFloat(apar.latitude);
             const lon2 = parseFloat(apar.longitude);
-            
+
             const R = 6371e3; // Earth's radius in meters
             const φ1 = lat1 * Math.PI / 180;
             const φ2 = lat2 * Math.PI / 180;
@@ -531,7 +606,7 @@ const InspectionFormEnhanced = () => {
             // Ensure valid_radius is treated as number
             const validRadius = parseInt(apar.valid_radius) || 30;
             const valid = distance <= validRadius;
-            
+
             // Updates state to reflect validation result
             setLocationValid(valid);
             setLocationDistance(Math.round(distance));
@@ -559,7 +634,8 @@ const InspectionFormEnhanced = () => {
             category_id: '',
             notes: '',
             severity: 'medium',
-            damage_photo: null
+            damage_photo: null,
+            repair_photo: null
         });
         setShowDamageForm(false);
     };
@@ -568,9 +644,10 @@ const InspectionFormEnhanced = () => {
         setSelectedDamages(selectedDamages.filter(d => d.id !== damageId));
     };
 
-    const startDamageCamera = async () => {
+    const startDamageCamera = async (type = 'damage') => {
         try {
             setDamageCameraLoading(true);
+            setDamagePhotoType(type);
 
             if (damageVideoRef.current && damageVideoRef.current.srcObject) {
                 damageVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
@@ -633,7 +710,11 @@ const InspectionFormEnhanced = () => {
                         setTimeout(() => setShowFlash(false), 200);
 
                         canvas.toBlob((blob) => {
-                            setNewDamage(prevDamage => ({ ...prevDamage, damage_photo: blob }));
+                            if (damagePhotoType === 'repair') {
+                                setNewDamage(prevDamage => ({ ...prevDamage, repair_photo: blob }));
+                            } else {
+                                setNewDamage(prevDamage => ({ ...prevDamage, damage_photo: blob }));
+                            }
                             stopDamageCamera();
                         }, 'image/jpeg', 0.8);
 
@@ -665,7 +746,7 @@ const InspectionFormEnhanced = () => {
 
         setLocationLoading(true);
         if (highAccuracy) {
-             // Only clear error if starting fresh (high accuracy)
+            // Only clear error if starting fresh (high accuracy)
             setLocationError('');
             setLocationSkipped(false);
         }
@@ -675,7 +756,7 @@ const InspectionFormEnhanced = () => {
             if (navigator.permissions && navigator.permissions.query) {
                 const permissionStatus = await navigator.permissions.query({ name: 'geolocation' });
                 console.log('Geolocation permission state:', permissionStatus.state);
-                
+
                 if (permissionStatus.state === 'denied') {
                     setLocationLoading(false);
                     const errorMsg = 'Izin lokasi ditolak. Mohon cek pengaturan browser (ikon gembok/pengaturan situs) dan izinkan akses lokasi.';
@@ -692,7 +773,7 @@ const InspectionFormEnhanced = () => {
 
         const options = {
             enableHighAccuracy: highAccuracy,
-            timeout: 20000, 
+            timeout: 20000,
             maximumAge: 30000 // Allow cached positions up to 30 seconds
         };
 
@@ -704,7 +785,7 @@ const InspectionFormEnhanced = () => {
             };
             setCurrentLocation(location);
             setLocationError(''); // Clear any previous errors
-            
+
             console.log('📍 Location obtained successfully:', {
                 userLocation: location,
                 accuracy: position.coords.accuracy,
@@ -719,7 +800,7 @@ const InspectionFormEnhanced = () => {
                 );
                 const validRadius = apar.valid_radius || 30;
                 const valid = distance <= validRadius;
-                
+
                 // Comprehensive validation logging
                 console.log('🎯 Location Validation Details:', {
                     aparInfo: {
@@ -740,11 +821,11 @@ const InspectionFormEnhanced = () => {
                         difference: `${Math.round(distance - validRadius)}m ${valid ? 'within' : 'exceeds'} limit`
                     }
                 });
-                
+
                 setLocationValid(valid);
                 setLocationDistance(Math.round(distance));
                 setLocationValidRadius(validRadius);
-                
+
                 if (!valid) {
                     console.warn('⚠️ Location validation FAILED:', {
                         reason: 'Distance exceeds valid radius',
@@ -784,7 +865,7 @@ const InspectionFormEnhanced = () => {
                     console.error('Error checking permissions during error handling:', e);
                 }
             }
-            
+
             // If failed with high accuracy (and not a true permission denial), try low accuracy
             // 1 = PERMISSION_DENIED
             if (highAccuracy && (error.code !== 1 || isFalseDenial)) {
@@ -796,12 +877,12 @@ const InspectionFormEnhanced = () => {
             // Final error handling
             setLocationLoading(false);
             let errorMessage = 'Gagal mendapatkan lokasi.';
-            
+
             // GeolocationPositionError codes:
             // 1: PERMISSION_DENIED - User denied permission
             // 2: POSITION_UNAVAILABLE - Location unavailable
             // 3: TIMEOUT - Request timed out
-            switch(error.code) {
+            switch (error.code) {
                 case 1:
                     errorMessage = 'Izin lokasi ditolak. Mohon cek pengaturan browser (ikon gembok/pengaturan situs) dan izinkan akses lokasi.';
                     console.error('Permission denied - User must enable location in browser settings');
@@ -833,8 +914,8 @@ const InspectionFormEnhanced = () => {
         // Use getCurrentPosition instead of watchPosition for one-time fetch, 
         // as we have a retry mechanism now.
         navigator.geolocation.getCurrentPosition(
-            successHandler, 
-            errorHandler, 
+            successHandler,
+            errorHandler,
             options
         );
     };
@@ -847,7 +928,7 @@ const InspectionFormEnhanced = () => {
     };
 
     // ... (inside the render return)
-    
+
     // Find the location section in the JSX and add the retry button
     // It seems the location section is not explicitly separated in the provided code snippet, 
     // but I can see where `locationError` is used or where the location status is displayed.
@@ -1154,7 +1235,10 @@ const InspectionFormEnhanced = () => {
                 fd.append(`damage_categories[${index}][category_id]`, damage.category_id);
                 fd.append(`damage_categories[${index}][notes]`, damage.notes);
                 fd.append(`damage_categories[${index}][severity]`, damage.severity);
-                fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo,  `damage_${index}.jpg`);
+                fd.append(`damage_categories[${index}][damage_photo]`, damage.damage_photo, `damage_${index}.jpg`);
+                if (damage.repair_photo) {
+                    fd.append(`damage_categories[${index}][repair_photo]`, damage.repair_photo, `damage_repair_${index}.jpg`);
+                }
             });
         }
 
@@ -1210,24 +1294,25 @@ const InspectionFormEnhanced = () => {
                     </div>
 
                     {condition === 'damaged' && (
-                        <DamageSection 
-                            selectedDamages={selectedDamages} 
-                            removeDamage={removeDamage} 
-                            showDamageForm={showDamageForm} 
-                            setShowDamageForm={setShowDamageForm} 
-                            newDamage={newDamage} 
-                            setNewDamage={setNewDamage} 
-                            damageCategories={damageCategories.filter(cat => cat.type === apar?.apar_type?.name)} 
-                            startDamageCamera={startDamageCamera} 
-                            damageCameraActive={damageCameraActive} 
-                            damageCameraLoading={damageCameraLoading} 
-                            damageVideoRef={damageVideoRef} 
-                            damageCanvasRef={damageCanvasRef} 
-                            captureCountdown={captureCountdown} 
-                            showFlash={showFlash} 
-                            captureDamagePhoto={captureDamagePhoto} 
-                            stopDamageCamera={stopDamageCamera} 
-                            addDamage={addDamage} 
+                        <DamageSection
+                            selectedDamages={selectedDamages}
+                            removeDamage={removeDamage}
+                            showDamageForm={showDamageForm}
+                            setShowDamageForm={setShowDamageForm}
+                            newDamage={newDamage}
+                            setNewDamage={setNewDamage}
+                            damageCategories={damageCategories.filter(cat => cat.type === apar?.apar_type?.name)}
+                            startDamageCamera={startDamageCamera}
+                            damageCameraActive={damageCameraActive}
+                            damageCameraLoading={damageCameraLoading}
+                            damageVideoRef={damageVideoRef}
+                            damageCanvasRef={damageCanvasRef}
+                            captureCountdown={captureCountdown}
+                            showFlash={showFlash}
+                            captureDamagePhoto={captureDamagePhoto}
+                            stopDamageCamera={stopDamageCamera}
+                            addDamage={addDamage}
+                            damagePhotoType={damagePhotoType}
                         />
                     )}
 
@@ -1256,7 +1341,7 @@ const InspectionFormEnhanced = () => {
                                     <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
                                     <span>Koordinat: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</span>
                                 </div>
-                                
+
                                 {apar?.latitude && apar?.longitude && (
                                     <div className={`flex items-center p-3 rounded-lg ${locationValid ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
                                         {locationValid ? (
@@ -1315,7 +1400,7 @@ const InspectionFormEnhanced = () => {
                                 <MapPinIcon className="h-4 w-4 mr-2" />
                                 {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi'}
                             </button>
-                            
+
                             {!currentLocation && !locationLoading && (
                                 <button
                                     type="button"

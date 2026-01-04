@@ -300,11 +300,24 @@ class InspectionService
                 $damagePhotoConfig['max_height']
             );
 
+            $repairPhotoUrl = null;
+            if (isset($damageData['repair_photo']) && $damageData['repair_photo']) {
+                $repairPhotoPath = $this->imageService->compressImage(
+                    $damageData['repair_photo'],
+                    'inspections/repairs',
+                    $damagePhotoConfig['compression_quality'],
+                    $damagePhotoConfig['max_width'],
+                    $damagePhotoConfig['max_height']
+                );
+                $repairPhotoUrl = Storage::url($repairPhotoPath);
+            }
+
             InspectionDamage::create([
                 'inspection_id' => $inspectionId,
                 'damage_category_id' => $damageData['category_id'],
                 'notes' => $damageData['notes'] ?? null,
                 'damage_photo_url' => Storage::url($damagePhotoPath),
+                'repair_photo_url' => $repairPhotoUrl,
                 'severity' => $damageData['severity'],
             ]);
         }

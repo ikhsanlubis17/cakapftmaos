@@ -15,6 +15,7 @@ class InspectionDamage extends Model
         'damage_category_id',
         'notes',
         'damage_photo_url',
+        'repair_photo_url',
         'severity',
     ];
 
@@ -43,7 +44,7 @@ class InspectionDamage extends Model
      */
     public function getSeverityTextAttribute(): string
     {
-        return match($this->severity) {
+        return match ($this->severity) {
             'low' => 'Rendah',
             'medium' => 'Sedang',
             'high' => 'Tinggi',

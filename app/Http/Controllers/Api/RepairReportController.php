@@ -23,7 +23,7 @@ class RepairReportController extends Controller
 
         // Filter by repair approval status
         if ($request->has('status')) {
-            $query->whereHas('repairApproval', function($q) use ($request) {
+            $query->whereHas('repairApproval', function ($q) use ($request) {
                 $q->where('status', $request->status);
             });
         }
@@ -61,12 +61,14 @@ class RepairReportController extends Controller
         $validator = Validator::make($request->all(), [
             'repair_approval_id' => 'required|exists:repair_approvals,id',
             'repair_description' => 'required|string',
-            'before_photo' => 'required|image|max:5120', // Foto sebelum perbaikan
-            'after_photo' => 'required|image|max:5120', // Foto setelah perbaikan
+            'before_photo' => 'required|image|max:5120', // General before photo
+            'after_photo' => 'required|image|max:5120', // General after photo
             'repair_lat' => 'nullable|numeric|between:-90,90',
             'repair_lng' => 'nullable|numeric|between:-180,180',
             'repair_completed_at' => 'required|date',
             'needs_reinspection' => 'boolean',
+            'damage_photos' => 'nullable|array',
+            'damage_photos.*' => 'image|max:5120', // Photos for specific damages
         ]);
 
         if ($validator->fails()) {
@@ -79,7 +81,7 @@ class RepairReportController extends Controller
 
         // Check if repair approval exists and is approved
         $repairApproval = RepairApproval::findOrFail($request->repair_approval_id);
-        
+
         if ($repairApproval->status !== 'approved') {
             return response()->json([
                 'success' => false,
@@ -96,21 +98,45 @@ class RepairReportController extends Controller
         }
 
         $user = Auth::guard('api')->user();
-
-        // Store photos with compression
         $imageService = new ImageService();
+
+        // 1. Process specific damage repair photos if provided
+        if ($request->has('damage_photos')) {
+            $inspection = $repairApproval->inspection;
+            // Load damages to verify ownership
+            $inspection->load('inspectionDamages');
+
+            foreach ($request->file('damage_photos') as $damageId => $photo) {
+                // Verify this damage belongs to this inspection
+                $damage = $inspection->inspectionDamages->find($damageId);
+                if ($damage) {
+                    $path = $imageService->compressImage(
+                        $photo,
+                        'inspections/repairs',
+                        80,
+                        1920,
+                        1080
+                    );
+                    $damage->update([
+                        'repair_photo_url' => Storage::url($path)
+                    ]);
+                }
+            }
+        }
+
+        // 2. Store general photos with compression
         $beforePhotoPath = $imageService->compressImage(
-            $request->file('before_photo'), 
-            'repairs/before', 
-            80, 
-            1920, 
+            $request->file('before_photo'),
+            'repairs/before',
+            80,
+            1920,
             1080
         );
         $afterPhotoPath = $imageService->compressImage(
-            $request->file('after_photo'), 
-            'repairs/after', 
-            80, 
-            1920, 
+            $request->file('after_photo'),
+            'repairs/after',
+            80,
+            1920,
             1080
         );
 
@@ -194,10 +220,10 @@ class RepairReportController extends Controller
             }
 
             $beforePhotoPath = $imageService->compressImage(
-                $request->file('before_photo'), 
-                'repairs/before', 
-                80, 
-                1920, 
+                $request->file('before_photo'),
+                'repairs/before',
+                80,
+                1920,
                 1080
             );
             $updateData['before_photo_url'] = Storage::url($beforePhotoPath);
@@ -211,10 +237,10 @@ class RepairReportController extends Controller
             }
 
             $afterPhotoPath = $imageService->compressImage(
-                $request->file('after_photo'), 
-                'repairs/after', 
-                80, 
-                1920, 
+                $request->file('after_photo'),
+                'repairs/after',
+                80,
+                1920,
                 1080
             );
             $updateData['after_photo_url'] = Storage::url($afterPhotoPath);
