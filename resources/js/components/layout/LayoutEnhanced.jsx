@@ -41,8 +41,8 @@ const LayoutEnhanced = () => {
     const handleNavigationError = (event) => {
       // Suppress background.js extension errors
       if (event.filename && event.filename.includes('background.js')) {
-          event.preventDefault();
-          return;
+        event.preventDefault();
+        return;
       }
 
       const error = event.error || event;
@@ -187,6 +187,7 @@ const LayoutEnhanced = () => {
           // },
           { name: "Pengguna", href: "/users", icon: UserGroupIcon, description: "Kelola pengguna" },
           { name: "Jadwal", href: "/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
+          { name: "Scan QR & Inspeksi", href: "/scan", icon: QrCodeIcon, description: "Mulai inspeksi APAR" },
           {
             name: "Persetujuan Perbaikan",
             href: "/repair-approvals",
@@ -308,8 +309,8 @@ const LayoutEnhanced = () => {
                       setSidebarOpen(false)
                     }}
                     className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                   >
                     <Icon
@@ -353,8 +354,8 @@ const LayoutEnhanced = () => {
                     key={item.name}
                     onClick={() => handleNavigation(item.href, item.name)}
                     className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                   >
                     <Icon
@@ -481,10 +482,10 @@ const LayoutEnhanced = () => {
         </main>
       </div>
 
-      <ConfirmDialog 
+      <ConfirmDialog
         {...config}
-        isOpen={isOpen} 
-        onClose={config.onCancel || close} 
+        isOpen={isOpen}
+        onClose={config.onCancel || close}
         onConfirm={config.onConfirm}
       />
     </>

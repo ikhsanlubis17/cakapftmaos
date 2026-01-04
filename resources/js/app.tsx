@@ -160,17 +160,17 @@ const unauthorizedRoute = createRoute({
 // A helper function for role-based authorization
 const checkRoles =
     (allowedRoles: string[]) =>
-    ({ context }: { context: RouterContext }) => {
-        if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
-            throw redirect({ to: "/unauthorized" });
-        }
-    };
+        ({ context }: { context: RouterContext }) => {
+            if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
+                throw redirect({ to: "/unauthorized" });
+            }
+        };
 
 // APAR Routes (Admin only)
 const aparRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar",
-    beforeLoad: checkRoles(["admin"]),
+    beforeLoad: checkRoles(["admin", "supervisor"]),
     component: AparList,
 });
 const aparCreateRoute = createRoute({
@@ -182,7 +182,7 @@ const aparCreateRoute = createRoute({
 const aparDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "apar/$id",
-    beforeLoad: checkRoles(["admin"]),
+    beforeLoad: checkRoles(["admin", "supervisor"]),
     component: AparDetail,
 });
 const aparEditRoute = createRoute({
@@ -284,7 +284,7 @@ const newInspectionRoute = createRoute({
 const newInspectionFromQRRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "inspections/enhanced/$qrCode",
-    beforeLoad: checkRoles(["teknisi"]),
+    beforeLoad: checkRoles(["teknisi", "admin", "supervisor"]),
     component: InspectionFormEnhanced,
 });
 
@@ -305,7 +305,7 @@ const myInspectionsRoute = createRoute({
 const scanRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "scan",
-    beforeLoad: checkRoles(["teknisi"]),
+    beforeLoad: checkRoles(["teknisi", "admin", "supervisor"]),
     component: QRScanner,
 });
 

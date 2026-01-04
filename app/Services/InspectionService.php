@@ -39,7 +39,7 @@ class InspectionService
 
         $aparId = $apar->id;
         $appTimezone = config('app.timezone', 'Asia/Jakarta');
-        
+
         // Calculate day range in Application Timezone (Local)
         // We use strings to ensure the query matches the raw DB values (which are stored in Local time)
         // avoiding automatic UTC conversion by Laravel/PDO.
@@ -56,10 +56,20 @@ class InspectionService
             ->first();
 
         if (!$schedule) {
+            $user = User::find($userId);
+            if ($user && ($user->isAdmin() || $user->isSupervisor())) {
+                return [
+                    'valid' => true,
+                    'message' => 'Inspeksi darurat (tanpa jadwal) diizinkan untuk Admin/Supervisor',
+                    'schedule' => null,
+                    'status_code' => 200,
+                ];
+            }
+
             return [
                 'valid' => false,
                 'message' => 'Tidak ada jadwal aktif untuk APAR ini hari ini.',
-                'status_code' => 200, 
+                'status_code' => 200,
             ];
         }
 
@@ -71,7 +81,7 @@ class InspectionService
         if (!$isAssigned && !$canOverride) {
             $assignedUser = User::find($schedule->assigned_user_id);
             $assignedName = $assignedUser ? $assignedUser->name : 'Teknisi Lain';
-            
+
             return [
                 'valid' => false,
                 'message' => "Jadwal ini ditugaskan kepada {$assignedName}. Login sebagai user tersebut untuk melakukan inspeksi.",
@@ -118,7 +128,7 @@ class InspectionService
                 'location_type' => $apar->location_type,
                 'reason' => 'User skipped location or GPS unavailable'
             ]);
-            
+
             return [
                 'valid' => true, // Changed from false to true
                 'message' => 'Lokasi dilewati - inspeksi dilanjutkan tanpa validasi lokasi',
@@ -128,7 +138,7 @@ class InspectionService
 
         // Validate location if coordinates are provided
         $isValid = $apar->isWithinValidRadius($lat, $lng);
-        
+
         if (!$isValid) {
             $distance = $apar->distanceFrom($lat, $lng);
             return [
@@ -165,7 +175,7 @@ class InspectionService
 
         // Validate location
         $locationValidation = $this->validateLocation($apar, $data['lat'] ?? null, $data['lng'] ?? null);
-        
+
         if (!$locationValidation['valid']) {
             // Log validation failure
             $this->logInspectionAction(
@@ -191,7 +201,7 @@ class InspectionService
         // Store photos with compression
         $photoConfig = config('inspection.photo');
         $selfieConfig = config('inspection.selfie');
-        
+
         $photoPath = $this->imageService->compressImage(
             $data['photo'],
             'inspections/photos',
@@ -213,7 +223,7 @@ class InspectionService
 
         // Determine if repair is required
         $requiresRepair = $data['condition'] === 'damaged' ||
-                         (isset($data['damage_categories']) && count($data['damage_categories']) > 0);
+            (isset($data['damage_categories']) && count($data['damage_categories']) > 0);
 
         // Create inspection
         $inspection = Inspection::create([
@@ -419,8 +429,8 @@ class InspectionService
         $lngDelta = deg2rad($lng2 - $lng1);
 
         $a = sin($latDelta / 2) * sin($latDelta / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($lngDelta / 2) * sin($lngDelta / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lngDelta / 2) * sin($lngDelta / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 

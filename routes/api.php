@@ -56,16 +56,19 @@ Route::middleware('auth:api')->group(function () {
     // APAR routes (Accessible to all authenticated users)
     Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
 
-    // APAR routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
+    // APAR routes (Admin & Supervisor)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/apar', [AparController::class, 'index']);
         Route::get('/apar/{apar}', [AparController::class, 'show']);
-
+        Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
         Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
+    });
+
+    // APAR routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
         Route::post('/apar', [AparController::class, 'store']);
         Route::put('/apar/{apar}', [AparController::class, 'update']);
         Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
-        Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
         Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     });
 
@@ -100,13 +103,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/repair-approvals/pending', [RepairApprovalController::class, 'pending']);
     Route::get('/repair-approvals/stats', [RepairApprovalController::class, 'stats']);
     Route::get('/repair-approvals/{repairApproval}', [RepairApprovalController::class, 'show']);
-    
+
     // Supervisor-only actions
     Route::middleware(['role:supervisor'])->group(function () {
         Route::post('/repair-approvals/{repairApproval}/approve', [RepairApprovalController::class, 'approve']);
         Route::post('/repair-approvals/{repairApproval}/reject', [RepairApprovalController::class, 'reject']);
     });
-    
+
     Route::post('/repair-approvals/{repairApproval}/mark-completed', [RepairApprovalController::class, 'markCompleted']);
 
     // Repair Report routes
@@ -143,10 +146,14 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/schedules/my-schedules', [ScheduleController::class, 'mySchedules']);
     Route::get('/schedules/upcoming', [ScheduleController::class, 'upcoming']);
 
-    // Schedule routes - Admin only (CRUD operations)
-    Route::middleware(['role:admin'])->group(function () {
+    // Schedule routes - Admin & Supervisor
+    Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/schedules', [ScheduleController::class, 'index']);
         Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
+    });
+
+    // Schedule routes - Admin only (CRUD operations)
+    Route::middleware(['role:admin'])->group(function () {
         Route::post('/schedules', [ScheduleController::class, 'store']);
         Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
         Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
