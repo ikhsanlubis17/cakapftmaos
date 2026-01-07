@@ -792,8 +792,8 @@ const InspectionFormEnhanced = () => {
 
         const options = {
             enableHighAccuracy: highAccuracy,
-            timeout: 20000,
-            maximumAge: 30000 // Allow cached positions up to 30 seconds
+            timeout: 30000,
+            maximumAge: highAccuracy ? 0 : Infinity // Fresh for high accuracy, any cached for fallback
         };
 
         const successHandler = (position) => {
@@ -889,7 +889,9 @@ const InspectionFormEnhanced = () => {
             // 1 = PERMISSION_DENIED
             if (highAccuracy && (error.code !== 1 || isFalseDenial)) {
                 console.log('Retrying with low accuracy (Network-based)...');
-                getCurrentLocation(false);
+                setTimeout(() => {
+                    getCurrentLocation(false);
+                }, 1000);
                 return;
             }
 
@@ -901,7 +903,7 @@ const InspectionFormEnhanced = () => {
             // 1: PERMISSION_DENIED - User denied permission
             // 2: POSITION_UNAVAILABLE - Location unavailable
             // 3: TIMEOUT - Request timed out
-            switch (error.code) {
+             switch (error.code) {
                 case 1:
                     errorMessage = 'Izin lokasi ditolak. Mohon cek pengaturan browser (ikon gembok/pengaturan situs) dan izinkan akses lokasi.';
                     console.error('Permission denied - User must enable location in browser settings');
@@ -912,6 +914,9 @@ const InspectionFormEnhanced = () => {
                     if (isLocalhost) {
                         errorMessage = 'Lokasi tidak tersedia (development mode). Silakan gunakan tombol "Lanjutkan Tanpa Lokasi" di bawah untuk melanjutkan inspeksi.';
                         console.warn('Position unavailable on localhost - this is normal in development. User can skip location validation.');
+                        // Don't show toast error on localhost for this specific error to avoid UI clutter
+                        setLocationError(errorMessage);
+                        return; 
                     } else {
                         errorMessage = 'Sinyal lokasi tidak tersedia. Pastikan GPS/WiFi aktif, atau gunakan tombol "Lanjutkan Tanpa Lokasi" untuk melanjutkan.';
                         console.error('Position unavailable - GPS/WiFi signal issue');

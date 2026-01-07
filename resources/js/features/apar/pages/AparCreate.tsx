@@ -67,7 +67,9 @@ const AparCreate = () => {
                 // If high accuracy failed and it wasn't a permission issue, try low accuracy
                 if (highAccuracy && error.code !== error.PERMISSION_DENIED) {
                     console.warn('High accuracy location failed, retrying with low accuracy...');
-                    getCurrentLocation(false);
+                    setTimeout(() => {
+                        getCurrentLocation(false);
+                    }, 1000);
                     return;
                 }
 
@@ -77,7 +79,7 @@ const AparCreate = () => {
                         showError('Izin lokasi ditolak. Silakan izinkan akses lokasi di browser Anda.');
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        showError('Informasi lokasi tidak tersedia. Pastikan GPS aktif.');
+                        showError('Informasi lokasi tidak tersedia. Pastikan GPS/Wi-Fi aktif.');
                         break;
                     case error.TIMEOUT:
                         showError('Waktu tunggu untuk mendapatkan lokasi habis.');
@@ -89,8 +91,8 @@ const AparCreate = () => {
             },
             {
                 enableHighAccuracy: highAccuracy,
-                timeout: 10000,
-                maximumAge: 60000
+                timeout: 30000,
+                maximumAge: highAccuracy ? 0 : Infinity
             }
         );
     };

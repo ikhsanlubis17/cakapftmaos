@@ -118,7 +118,9 @@ const AparEdit = () => {
                     console.warn(
                         "High accuracy location failed, retrying with low accuracy..."
                     );
-                    getCurrentLocation(false);
+                    setTimeout(() => {
+                        getCurrentLocation(false);
+                    }, 1000);
                     return;
                 }
 
@@ -131,7 +133,7 @@ const AparEdit = () => {
                         break;
                     case error.POSITION_UNAVAILABLE:
                         showError(
-                            "Informasi lokasi tidak tersedia. Pastikan GPS aktif."
+                            "Informasi lokasi tidak tersedia. Pastikan GPS/Wi-Fi aktif."
                         );
                         break;
                     case error.TIMEOUT:
@@ -146,8 +148,8 @@ const AparEdit = () => {
             },
             {
                 enableHighAccuracy: highAccuracy,
-                timeout: 10000,
-                maximumAge: 60000,
+                timeout: 30000,
+                maximumAge: highAccuracy ? 0 : Infinity,
             }
         );
     };
