@@ -17,6 +17,11 @@ import {
     CameraIcon,
     WrenchScrewdriverIcon,
     ChatBubbleLeftRightIcon,
+    XMarkIcon,
+    ArrowsPointingOutIcon,
+    ShieldCheckIcon,
+    XCircleIcon as XCircleIconSolid,
+    CheckCircleIcon as CheckCircleIconSolid
 } from '@heroicons/react/24/outline';
 
 const RepairApprovalDetail = () => {
@@ -32,6 +37,10 @@ const RepairApprovalDetail = () => {
     const [showActionModal, setShowActionModal] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [validationErrors, setValidationErrors] = useState({});
+    
+    // Lightbox State
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
 
     const { data: approval, isLoading: loading, error: queryError, refetch } = useQuery({
         queryKey: ['repair-approval', id],
@@ -213,372 +222,342 @@ const RepairApprovalDetail = () => {
     const statusConfig = getStatusConfig(approval.status);
     const StatusIcon = statusConfig.icon;
 
+    const openLightbox = (photoUrl, caption) => {
+        if (!photoUrl) return;
+        setSelectedPhoto({ url: photoUrl, caption });
+        setLightboxOpen(true);
+    };
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
-                {/* Header */}
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={() => navigate({ to: '/repair-approvals' })}
-                        className="p-2 rounded-xl bg-white shadow-lg hover:shadow-xl transition-shadow duration-200 text-gray-600 hover:text-gray-900"
-                    >
-                        <ArrowLeftIcon className="h-6 w-6" />
-                    </button>
-                    <div className="flex-1">
-                        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Detail Persetujuan Perbaikan</h1>
-                        <p className="text-gray-600 text-lg">APAR {approval.inspection?.apar?.serial_number || 'N/A'}</p>
-                    </div>
-                </div>
-
-                {/* Status Banner */}
-                <div className={`rounded-2xl p-6 border ${statusConfig.color}`}>
-                    <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-white/50 rounded-xl">
-                            <StatusIcon className="h-8 w-8 text-current" />
-                        </div>
-                        <div className="flex-1">
-                            <h2 className="text-xl lg:text-2xl font-bold text-current mb-2">
-                                {statusConfig.text}
-                            </h2>
-                            <p className="text-current/80 text-lg">{statusConfig.description}</p>
+        <div className="min-h-screen bg-gray-50 pb-20">
+            {/* Top Navigation Bar */}
+            <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => window.history.back()}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-900"
+                        >
+                            <ArrowLeftIcon className="h-5 w-5" />
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-bold text-gray-900">Detail Persetujuan Perbaikan</h1>
+                            <p className="text-xs text-gray-500">APAR {approval.inspection?.apar?.serial_number || '-'}</p>
                         </div>
                     </div>
+                    {/* Status Badge in Header */}
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${
+                        approval.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        approval.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        approval.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
+                        <StatusIcon className="h-4 w-4" />
+                        <span className="capitalize">{
+                             approval.status === 'pending' ? 'Menunggu Review' :
+                             approval.status === 'approved' ? 'Disetujui' :
+                             approval.status === 'rejected' ? 'Ditolak' : 
+                             approval.status
+                        }</span>
+                    </div>
                 </div>
+            </div>
 
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-                    {/* Left Column - APAR Info */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    {/* Left Column: Main Content */}
                     <div className="lg:col-span-2 space-y-6">
+                        
                         {/* APAR Information Card */}
-                        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                            <div className="flex items-center space-x-4 mb-6">
-                                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                                    <FireIcon className="h-6 w-6 text-white" />
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-3">
+                                <FireIcon className="h-5 w-5 text-red-500" />
+                                <h3 className="font-semibold text-gray-900">Informasi APAR</h3>
+                            </div>
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Nomor Seri</p>
+                                    <p className="font-semibold text-gray-900 text-lg">{approval.inspection?.apar?.serial_number || '-'}</p>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Informasi APAR</h3>
-                                    <p className="text-gray-600">Detail lengkap APAR yang perlu diperbaiki</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Nomor Seri</label>
-                                        <p className="text-lg font-semibold text-gray-900">
-                                            {approval.inspection?.apar?.serial_number || 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Jenis APAR</label>
-                                        <p className="text-lg font-semibold text-gray-900">
-                                            {approval.inspection?.apar?.aparType?.name || 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Kapasitas</label>
-                                        <p className="text-lg font-semibold text-gray-900">
-                                            {approval.inspection?.apar?.capacity || 'N/A'} kg
-                                        </p>
+                                    <p className="text-sm text-gray-500 mb-1">Lokasi</p>
+                                    <div className="flex items-start gap-2">
+                                        <MapPinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                                        <p className="font-medium text-gray-900">{approval.inspection?.apar?.location_name || '-'}</p>
                                     </div>
                                 </div>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Lokasi</label>
-                                        <div className="flex items-center space-x-2">
-                                            <MapPinIcon className="h-5 w-5 text-gray-400" />
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {approval.inspection?.apar?.location_name || 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Tipe Lokasi</label>
-                                        <p className="text-lg font-semibold text-gray-900 capitalize">
-                                            {approval.inspection?.apar?.location_type || 'N/A'}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Status</label>
-                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getConditionConfig(approval.inspection?.condition).color}`}>
-                                            {getConditionConfig(approval.inspection?.condition).text}
-                                        </span>
-                                    </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Tipe APAR</p>
+                                    <p className="font-medium text-gray-900">{approval.inspection?.apar?.type || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Kapasitas</p>
+                                    <p className="font-medium text-gray-900">{approval.inspection?.apar?.capacity || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Inspection Details Card */}
-                        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                            <div className="flex items-center space-x-4 mb-6">
-                                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                                    <DocumentTextIcon className="h-6 w-6 text-white" />
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-3">
+                                <DocumentTextIcon className="h-5 w-5 text-blue-500" />
+                                <h3 className="font-semibold text-gray-900">Detail Inspeksi</h3>
+                            </div>
+                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Inspektor</p>
+                                    <div className="flex items-center gap-2">
+                                        <UserIcon className="h-4 w-4 text-gray-400" />
+                                        <p className="font-medium text-gray-900">{approval.inspection?.user?.name || '-'}</p>
+                                    </div>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Detail Inspeksi</h3>
-                                    <p className="text-gray-600">Informasi hasil inspeksi dan temuan</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Inspektor</label>
-                                        <div className="flex items-center space-x-2">
-                                            <UserIcon className="h-5 w-5 text-gray-400" />
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {approval.inspection?.user?.name || 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Tanggal Inspeksi</label>
-                                        <div className="flex items-center space-x-2">
-                                            <CalendarIcon className="h-5 w-5 text-gray-400" />
-                                            <p className="text-lg font-semibold text-gray-900">
-                                                {approval.inspection?.created_at
-                                                    ? new Date(approval.inspection.created_at).toLocaleDateString('id-ID', {
-                                                        weekday: 'long',
-                                                        year: 'numeric',
-                                                        month: 'long',
-                                                        day: 'numeric'
-                                                    })
-                                                    : 'N/A'
-                                                }
-                                            </p>
-                                        </div>
+                                    <p className="text-sm text-gray-500 mb-1">Tanggal Inspeksi</p>
+                                    <div className="flex items-center gap-2">
+                                        <CalendarIcon className="h-4 w-4 text-gray-400" />
+                                        <p className="font-medium text-gray-900">{
+                                            approval.inspection?.created_at 
+                                            ? new Date(approval.inspection.created_at).toLocaleDateString('id-ID', {
+                                                weekday: 'long', 
+                                                year: 'numeric', 
+                                                month: 'long', 
+                                                day: 'numeric'
+                                              })
+                                            : '-'
+                                        }</p>
                                     </div>
                                 </div>
-
-                                {approval.inspection?.notes && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500">Catatan Inspeksi</label>
-                                        <p className="text-lg text-gray-900 bg-gray-50 rounded-xl p-4 mt-2">
-                                            {approval.inspection.notes}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Damage Categories */}
-                                {/* Damage Categories with Photos */}
-                                {approval.inspection?.inspectionDamages && approval.inspection.inspectionDamages.length > 0 && (
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-500 mb-3 block">Detail Kerusakan</label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {approval.inspection.inspectionDamages.map((damage, index) => (
-                                                <div key={index} className="bg-red-50 border border-red-100 rounded-xl p-3 shadow-sm">
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className="font-bold text-red-800 text-sm">
-                                                            {damage.damageCategory?.name || 'Kategori tidak tersedia'}
-                                                        </span>
-                                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold uppercase ${damage.severity === 'low' ? 'bg-green-200 text-green-900' :
-                                                            damage.severity === 'medium' ? 'bg-yellow-200 text-yellow-900' :
-                                                                damage.severity === 'high' ? 'bg-orange-200 text-orange-900' :
-                                                                    'bg-red-600 text-white'
-                                                            }`}>
-                                                            {damage.severity}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="grid grid-cols-2 gap-2 mb-2">
-                                                        <div>
-                                                            <span className="text-[10px] uppercase font-bold text-red-600 mb-1 block">Kerusakan</span>
-                                                            {damage.damage_photo_url ? (
-                                                                <div className="aspect-video rounded-lg overflow-hidden bg-gray-200 border border-gray-300">
-                                                                    <img
-                                                                        src={damage.damage_photo_url}
-                                                                        alt="Foto Kerusakan"
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="aspect-video rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center text-gray-400 text-xs border border-gray-300">
-                                                                    No Photo
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {damage.repair_photo_url && (
-                                                            <div>
-                                                                <span className="text-[10px] uppercase font-bold text-green-600 mb-1 block">Perbaikan Awal</span>
-                                                                <div className="aspect-video rounded-lg overflow-hidden bg-gray-200 border border-green-200">
-                                                                    <img
-                                                                        src={damage.repair_photo_url}
-                                                                        alt="Foto Perbaikan"
-                                                                        className="w-full h-full object-cover"
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {damage.notes && (
-                                                        <p className="text-xs text-gray-600 bg-white p-2 rounded border border-red-100">
-                                                            "{damage.notes}"
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
 
-                        {/* Photos Card */}
-                        {approval.inspection?.photo_url && (
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                                <div className="flex items-center space-x-4 mb-6">
-                                    <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                                        <CameraIcon className="h-6 w-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Foto Inspeksi</h3>
-                                        <p className="text-gray-600">Bukti visual kondisi APAR</p>
-                                    </div>
-                                </div>
+                        {/* Damages List */}
+                        {approval.inspection?.inspection_damages && approval.inspection.inspection_damages.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+                                    Daftar Kerusakan
+                                </h3>
+                                
+                                {approval.inspection.inspection_damages.map((damage, index) => (
+                                    <div key={index} className="bg-white rounded-2xl shadow-sm border border-red-100 p-5 flex flex-col md:flex-row gap-5">
+                                        {/* Photos Side */}
+                                        <div className="flex gap-3 md:w-1/3">
+                                            {damage.damage_photo_url ? (
+                                                <div 
+                                                    className="relative aspect-square w-full rounded-xl overflow-hidden cursor-pointer group bg-gray-100 border border-gray-200"
+                                                    onClick={() => openLightbox(damage.damage_photo_url, `Kerusakan: ${damage.damage_category?.name}`)}
+                                                >
+                                                    <img src={damage.damage_photo_url} alt="Rusak" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                                        <ArrowsPointingOutIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all" />
+                                                    </div>
+                                                    <div className="absolute bottom-2 left-2 bg-red-600/90 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-sm">
+                                                        Rusak
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="aspect-square w-full rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                                                    No Photo
+                                                </div>
+                                            )}
+                                            
+                                            {damage.repair_photo_url && (
+                                                <div 
+                                                    className="relative aspect-square w-full rounded-xl overflow-hidden cursor-pointer group bg-gray-100 border border-green-200"
+                                                    onClick={() => openLightbox(damage.repair_photo_url, `Perbaikan: ${damage.damage_category?.name}`)}
+                                                >
+                                                    <img src={damage.repair_photo_url} alt="Perbaikan" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                                        <ArrowsPointingOutIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all" />
+                                                    </div>
+                                                    <div className="absolute bottom-2 left-2 bg-green-600/90 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded shadow-sm backdrop-blur-sm">
+                                                        Diperbaiki
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {approval.inspection.photo_url && (
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 mb-2 block">Foto APAR</label>
-                                            <img
-                                                src={approval.inspection.photo_url}
-                                                alt="Foto APAR"
-                                                className="w-full h-48 object-cover rounded-xl border border-gray-200"
-                                            />
+                                        {/* Info Side */}
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h4 className="font-bold text-gray-900">{damage.damage_category?.name || 'Uncategorized'}</h4>
+                                                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${
+                                                    damage.severity === 'high' ? 'bg-red-100 text-red-800' :
+                                                    damage.severity === 'medium' ? 'bg-orange-100 text-orange-800' :
+                                                    'bg-green-100 text-green-800'
+                                                }`}>
+                                                    {damage.severity}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-3 rounded-xl border border-gray-100">
+                                                {damage.notes || 'Tidak ada catatan tambahan.'}
+                                            </p>
                                         </div>
-                                    )}
-                                    {approval.inspection.selfie_url && (
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500 mb-2 block">Foto Selfie</label>
-                                            <img
-                                                src={approval.inspection.selfie_url}
-                                                alt="Foto Selfie"
-                                                className="w-full h-48 object-cover rounded-xl border border-gray-200"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
                         )}
+
+                        {/* Photo Gallery (Grid) */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-3">
+                                <CameraIcon className="h-5 w-5 text-purple-500" />
+                                <h3 className="font-semibold text-gray-900">Galeri Inspeksi</h3>
+                            </div>
+                            <div className="p-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {/* Main APAR Photo */}
+                                    {approval.inspection.photo_url && (
+                                        <div 
+                                            className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group border border-gray-200"
+                                            onClick={() => openLightbox(approval.inspection.photo_url, 'Foto Kondisi APAR')}
+                                        >
+                                            <img src={approval.inspection.photo_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                                <ArrowsPointingOutIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all" />
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-6">
+                                                <p className="text-white text-xs font-medium">Foto APAR</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Selfie */}
+                                    {approval.inspection.selfie_url && (
+                                        <div 
+                                            className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group border border-gray-200"
+                                            onClick={() => openLightbox(approval.inspection.selfie_url, 'Foto Selfie')}
+                                        >
+                                            <img src={approval.inspection.selfie_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                                <ArrowsPointingOutIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all" />
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3 pt-6">
+                                                <p className="text-white text-xs font-medium">Foto Selfie</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Damage Photos Summary */}
+                                     {approval.inspection?.inspection_damages?.map((damage, idx) => (
+                                        damage.damage_photo_url && (
+                                            <div 
+                                                key={`dmg-${idx}`}
+                                                className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group border border-red-200 w-full"
+                                                onClick={() => openLightbox(damage.damage_photo_url, `Kerusakan: ${damage.damage_category?.name}`)}
+                                            >
+                                                <img src={damage.damage_photo_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                                                    <ArrowsPointingOutIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all" />
+                                                </div>
+                                                 <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                                                        RUSAK
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    {/* Right Column - Actions & Status */}
-                    <div className="space-y-6">
-                        {/* Action Card */}
-                        {approval.status === 'pending' && (
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                                <div className="flex items-center space-x-4 mb-6">
-                                    <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                                        <WrenchScrewdriverIcon className="h-6 w-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Tindakan</h3>
-                                        <p className="text-gray-600">Setujui atau tolak perbaikan</p>
-                                    </div>
+                    {/* Right Column: Sidebar */}
+                    <div className="lg:col-span-1 space-y-6">
+                        
+                        {/* Timeline / Status History */}
+                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                                <ClockIcon className="h-5 w-5 text-gray-400" />
+                                Riwayat Status
+                            </h3>
+                            <div className="relative pl-4 border-l-2 border-gray-100 space-y-8">
+                                {/* Current Status */}
+                                <div className="relative">
+                                    <div className={`absolute -left-[21px] h-3 w-3 rounded-full ring-4 ring-white ${
+                                        approval.status === 'pending' ? 'bg-yellow-400' :
+                                        approval.status === 'approved' ? 'bg-green-500' :
+                                        approval.status === 'rejected' ? 'bg-red-500' : 'bg-gray-400'
+                                    }`}></div>
+                                    <p className="text-sm font-semibold text-gray-900 capitalize">
+                                        {approval.status === 'pending' ? 'Menunggu Persetujuan' : 
+                                         approval.status === 'approved' ? 'Disetujui' : 
+                                         approval.status === 'rejected' ? 'Ditolak' : approval.status}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">Sekarang</p>
                                 </div>
 
-                                <div className="space-y-4">
+                                {/* Created At */}
+                                <div className="relative">
+                                    <div className="absolute -left-[21px] h-3 w-3 rounded-full bg-blue-500 ring-4 ring-white"></div>
+                                    <p className="text-sm font-medium text-gray-900">Inspeksi Selesai</p>
+                                    <div className="text-xs text-gray-500 mt-1 gap-1 flex flex-col">
+                                        <span>{approval.inspection?.user?.name}</span>
+                                        <span>{
+                                            approval.inspection?.created_at 
+                                            ? new Date(approval.inspection.created_at).toLocaleDateString()
+                                            : '-'
+                                        }</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Approver Info (if decided) */}
+                        {approval.approver && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <ShieldCheckIcon className="h-5 w-5 text-gray-400" />
+                                    Reviewer
+                                </h3>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
+                                        {approval.approver.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">{approval.approver.name}</p>
+                                        <p className="text-xs text-gray-500 capitalize">{approval.approver.role}</p>
+                                    </div>
+                                </div>
+                                {approval.notes && (
+                                    <div className="mt-4 p-3 bg-gray-50 rounded-xl text-sm text-gray-600 italic border border-gray-100">
+                                        "{approval.notes}"
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Action Card (Only if Pending) */}
+                        {approval.status === 'pending' && (
+                             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
+                                <h3 className="font-bold text-gray-900 mb-4">Tindakan Diperlukan</h3>
+                                <p className="text-sm text-gray-500 mb-6">Sebagai Supervisor, tinjau hasil inspeksi ini dan berikan keputusan.</p>
+                                
+                                <div className="space-y-3">
                                     <button
                                         onClick={() => {
                                             setActionType('approve');
                                             setShowActionModal(true);
                                         }}
-                                        className="w-full bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                                        className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
                                     >
-                                        <CheckCircleIcon className="h-5 w-5" />
-                                        <span>Setujui Perbaikan</span>
+                                        <CheckCircleIconSolid className="h-5 w-5" />
+                                        Setujui Perbaikan
                                     </button>
                                     <button
                                         onClick={() => {
                                             setActionType('reject');
                                             setShowActionModal(true);
                                         }}
-                                        className="w-full bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium flex items-center justify-center space-x-2"
+                                        className="w-full py-3 px-4 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
                                     >
-                                        <XCircleIcon className="h-5 w-5" />
-                                        <span>Tolak Perbaikan</span>
+                                        <XCircleIconSolid className="h-5 w-5" />
+                                        Tolak
                                     </button>
                                 </div>
-                            </div>
-                        )}
-
-                        {/* Status Timeline Card */}
-                        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                            <div className="flex items-center space-x-4 mb-6">
-                                <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                                    <ClockIcon className="h-6 w-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Timeline</h3>
-                                    <p className="text-gray-600">Riwayat status persetujuan</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-start space-x-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-900">Inspeksi Dilakukan</p>
-                                        <p className="text-sm text-gray-600">
-                                            {approval.inspection?.created_at
-                                                ? new Date(approval.inspection.created_at).toLocaleDateString('id-ID')
-                                                : 'N/A'
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-start space-x-3">
-                                    <div className={`w-3 h-3 rounded-full mt-2 ${['approved', 'rejected', 'completed'].includes(approval.status)
-                                        ? 'bg-blue-500'
-                                        : 'bg-gray-300'
-                                        }`}></div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-gray-900">Persetujuan</p>
-                                        <p className="text-sm text-gray-600">
-                                            {approval.status === 'pending' ? 'Menunggu' :
-                                                approval.status === 'approved' ? 'Disetujui' :
-                                                    approval.status === 'rejected' ? 'Ditolak' : 'N/A'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {approval.status === 'completed' && (
-                                    <div className="flex items-start space-x-3">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900">Perbaikan Selesai</p>
-                                            <p className="text-sm text-gray-600">
-                                                {approval.updated_at
-                                                    ? new Date(approval.updated_at).toLocaleDateString('id-ID')
-                                                    : 'N/A'
-                                                }
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Admin Notes Card */}
-                        {approval.admin_notes && (
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                                <div className="flex items-center space-x-4 mb-6">
-                                    <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-yellow-500 to-yellow-600 flex items-center justify-center shadow-lg">
-                                        <ChatBubbleLeftRightIcon className="h-6 w-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-gray-900">Catatan Admin</h3>
-                                        <p className="text-gray-600">Pesan dari administrator</p>
-                                    </div>
-                                </div>
-
-                                <p className="text-gray-900 bg-yellow-50 rounded-xl p-4 border border-yellow-200">
-                                    {approval.admin_notes}
-                                </p>
                             </div>
                         )}
                     </div>
@@ -587,136 +566,120 @@ const RepairApprovalDetail = () => {
 
             {/* Action Modal */}
             {showActionModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-xl font-bold text-gray-900 mb-4">
-                            {actionType === 'approve' ? '✅ Setujui Perbaikan' : '❌ Tolak Perbaikan'}
-                        </h3>
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowActionModal(false)}></div>
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                        <div className="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
+                                        actionType === 'approve' ? 'bg-green-100' : 'bg-red-100'
+                                    }`}>
+                                        {actionType === 'approve' ? (
+                                            <CheckCircleIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
+                                        ) : (
+                                            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" aria-hidden="true" />
+                                        )}
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                            {actionType === 'approve' ? 'Konfirmasi Persetujuan' : 'Tolak Permintaan'}
+                                        </h3>
+                                        <div className="mt-2">
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                {actionType === 'approve' 
+                                                    ? 'Anda yakin ingin menyetujui permintaan perbaikan ini?' 
+                                                    : 'Mohon berikan alasan penolakan untuk permintaan ini.'}
+                                            </p>
+                                            
+                                            {actionType === 'reject' && (
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Alasan Penolakan</label>
+                                                    <select
+                                                        value={rejectionReason}
+                                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                                        className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                                                    >
+                                                        <option value="">Pilih alasan...</option>
+                                                        <option value="Data tidak lengkap">Data tidak lengkap</option>
+                                                        <option value="Foto buram">Foto buram</option>
+                                                        <option value="Lainnya">Lainnya</option>
+                                                    </select>
+                                                </div>
+                                            )}
 
-                        {/* Warning for Rejection */}
-                        {actionType === 'reject' && (
-                            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <div className="flex items-start space-x-3">
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-medium text-yellow-800">Perhatian</p>
-                                        <p className="text-sm text-yellow-700 mt-1">
-                                            Penolakan akan otomatis membuat jadwal inspeksi ulang untuk teknisi dalam 2 hari ke depan.
-                                        </p>
+                                            <textarea
+                                                rows={4}
+                                                className={`shadow-sm block w-full focus:ring-red-500 focus:border-red-500 sm:text-sm border ${
+                                                    validationErrors.supervisor_notes ? 'border-red-300' : 'border-gray-300'
+                                                } rounded-xl p-3`}
+                                                placeholder={actionType === 'approve' ? "Catatan tambahan (opsional)..." : "Wajib isi alasan penolakan..."}
+                                                value={notes}
+                                                onChange={(e) => setNotes(e.target.value)}
+                                            />
+                                            {validationErrors.supervisor_notes && (
+                                                <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
+                                                    <XCircleIcon className="h-4 w-4" />
+                                                    <span>{validationErrors.supervisor_notes[0]}</span>
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Rejection Reason Dropdown (only for reject) */}
-                        {actionType === 'reject' && (
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Alasan Penolakan *
-                                </label>
-                                <select
-                                    value={rejectionReason}
-                                    onChange={(e) => {
-                                        setRejectionReason(e.target.value);
-                                        setValidationErrors(prev => ({ ...prev, rejection_reason: null }));
-                                    }}
-                                    className={`w-full border-2 ${validationErrors.rejection_reason
-                                        ? 'border-red-500'
-                                        : 'border-gray-300'
-                                        } rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500`}
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+                                <button
+                                    type="button"
+                                    onClick={handleAction}
+                                    disabled={submitting}
+                                    className={`w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm ${
+                                        actionType === 'approve' 
+                                            ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500' 
+                                            : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                                    } ${submitting ? 'opacity-75 cursor-not-allowed' : ''}`}
                                 >
-                                    <option value="">Pilih alasan penolakan...</option>
-                                    <option value="Data inspeksi tidak lengkap">Data inspeksi tidak lengkap</option>
-                                    <option value="Foto tidak jelas">Foto tidak jelas</option>
-                                    <option value="Kerusakan tidak sesuai kategori">Kerusakan tidak sesuai kategori</option>
-                                    <option value="Perlu inspeksi ulang dengan detail lebih lengkap">Perlu inspeksi ulang dengan detail lebih lengkap</option>
-                                    <option value="Lainnya">Lainnya (jelaskan di catatan)</option>
-                                </select>
-                                {validationErrors.rejection_reason && (
-                                    <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
-                                        <XCircleIcon className="h-4 w-4" />
-                                        <span>{validationErrors.rejection_reason[0]}</span>
-                                    </p>
-                                )}
+                                    {submitting ? 'Memproses...' : (actionType === 'approve' ? 'Ya, Setujui' : 'Tolak')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                    onClick={() => {
+                                        setShowActionModal(false);
+                                        setValidationErrors({});
+                                    }}
+                                >
+                                    Batal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Lightbox Modal */}
+            {lightboxOpen && selectedPhoto && (
+                <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 transition-all" onClick={() => setLightboxOpen(false)}>
+                    <div className="relative w-full max-w-6xl h-full flex flex-col items-center justify-center">
+                        <button
+                            onClick={() => setLightboxOpen(false)}
+                            className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full backdrop-blur-md transition-all z-50"
+                        >
+                            <XMarkIcon className="h-8 w-8" />
+                        </button>
+                        
+                        <img
+                            src={selectedPhoto.url}
+                            alt={selectedPhoto.caption || 'Full size'}
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                        
+                        {selectedPhoto.caption && (
+                            <div className="absolute bottom-8 bg-black/50 backdrop-blur-md px-6 py-3 rounded-full border border-white/10">
+                                <p className="text-white text-lg font-medium">{selectedPhoto.caption}</p>
                             </div>
                         )}
-
-                        {/* Supervisor Notes */}
-                        <div className="mb-6">
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Catatan Supervisor *
-                                </label>
-                                <span className={`text-sm font-medium ${notes.length >= 10 ? 'text-green-600' : 'text-red-600'
-                                    }`}>
-                                    {notes.length}/10 minimum
-                                </span>
-                            </div>
-                            <textarea
-                                value={notes}
-                                onChange={(e) => {
-                                    setNotes(e.target.value);
-                                    setValidationErrors(prev => ({ ...prev, supervisor_notes: null }));
-                                }}
-                                rows={5}
-                                className={`w-full border-2 ${validationErrors.supervisor_notes
-                                    ? 'border-red-500'
-                                    : notes.length >= 10
-                                        ? 'border-green-500'
-                                        : 'border-gray-300'
-                                    } rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none`}
-                                placeholder={actionType === 'approve'
-                                    ? 'Jelaskan alasan persetujuan, prioritas perbaikan, atau instruksi khusus untuk teknisi...'
-                                    : 'Jelaskan secara detail alasan penolakan dan instruksi untuk inspeksi ulang...'
-                                }
-                            />
-                            {validationErrors.supervisor_notes && (
-                                <p className="text-sm text-red-600 mt-1 flex items-center space-x-1">
-                                    <XCircleIcon className="h-4 w-4" />
-                                    <span>{validationErrors.supervisor_notes[0]}</span>
-                                </p>
-                            )}
-                            {!validationErrors.supervisor_notes && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {actionType === 'approve'
-                                        ? 'Catatan ini akan dilihat oleh teknisi. Jelaskan prioritas atau instruksi khusus.'
-                                        : 'Catatan ini akan menjadi instruksi untuk inspeksi ulang. Jelaskan apa yang perlu diperbaiki.'}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex space-x-3">
-                            <button
-                                onClick={() => {
-                                    setShowActionModal(false);
-                                    setNotes('');
-                                    setRejectionReason('');
-                                    setActionType(null);
-                                    setValidationErrors({});
-                                }}
-                                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                onClick={handleAction}
-                                disabled={submitting}
-                                className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${actionType === 'approve'
-                                    ? 'bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    : 'bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                                    }`}
-                            >
-                                {submitting ? (
-                                    <div className="flex items-center justify-center space-x-2">
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        <span>Memproses...</span>
-                                    </div>
-                                ) : (
-                                    actionType === 'approve' ? '✓ Setujui' : '✗ Tolak'
-                                )}
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

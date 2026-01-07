@@ -326,7 +326,7 @@ const repairApprovalsRoute = createRoute({
 const repairApprovalDetailRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "view/$id",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["supervisor"]),
     component: RepairApprovalDetail,
 });
 
