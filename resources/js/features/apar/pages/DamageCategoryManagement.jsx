@@ -541,9 +541,11 @@ const DamageCategoryManagement = () => {
                 )}
 
                 {/* Categories Grouped by Type */}
-                {Object.keys(groupedCategories).length > 0 ? (
+                {(availableTypes.length > 0 || Object.keys(groupedCategories).length > 0) ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Object.entries(groupedCategories).map(([type, typeCategories]) => (
+                        {[...new Set([...availableTypes, ...Object.keys(groupedCategories)])].sort().map((type) => {
+                            const typeCategories = groupedCategories[type] || [];
+                            return (
                             <div
                                 key={type}
                                 className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
@@ -677,7 +679,9 @@ const DamageCategoryManagement = () => {
                                     {typeCategories.length} item checklist
                                 </div>
                             </div>
-                        ))}
+                        );
+                        })}
+
                     </div>
                 ) : (
                     <div className="bg-white border border-gray-200 rounded-xl p-16 text-center">

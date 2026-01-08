@@ -93,7 +93,7 @@ const InspectionForm: React.FC = () => {
                                 <div className="bg-gray-50 p-3 rounded-lg">
                                     <div className="text-gray-600">Tipe</div>
                                     <div className="font-medium text-gray-900 capitalize">
-                                        {apar?.aparType?.name || 'N/A'}
+                                        {apar?.apar_type?.name || 'N/A'}
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 p-3 rounded-lg">

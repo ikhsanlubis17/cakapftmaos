@@ -152,6 +152,11 @@ const profileRoute = createRoute({
 const unauthorizedRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "unauthorized",
+    validateSearch: (search: Record<string, unknown>): { requiredRoles?: string } => {
+        return {
+            requiredRoles: typeof search.requiredRoles === 'string' ? search.requiredRoles : undefined,
+        };
+    },
     component: Unauthorized,
 });
 
@@ -160,7 +165,12 @@ const checkRoles =
     (allowedRoles: string[]) =>
     ({ context }: { context: RouterContext }) => {
         if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
-            throw redirect({ to: "/unauthorized" });
+            throw redirect({ 
+                to: "/unauthorized",
+                search: {
+                    requiredRoles: allowedRoles.join(",")
+                }
+            });
         }
     };
 
@@ -333,6 +343,7 @@ const repairApprovalDetailRoute = createRoute({
 const myRepairsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "my-repairs",
+    beforeLoad: checkRoles(["teknisi"]),
     component: MyRepairApprovals,
 });
 
@@ -340,6 +351,7 @@ const myRepairsRoute = createRoute({
 const repairReportFormRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "repair-report/$approvalId",
+    beforeLoad: checkRoles(["teknisi"]),
     component: RepairReportForm,
 });
 

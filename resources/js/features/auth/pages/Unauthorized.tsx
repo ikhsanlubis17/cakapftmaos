@@ -1,10 +1,30 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
 
 const Unauthorized = () => {
   const navigate = useNavigate();
+  const search = useSearch({ strict: false });
   const { user } = useAuth();
+
+  const requiredRolesRaw = (search as any).requiredRoles as string | undefined;
+  
+  const getRoleName = (role: string) => {
+    switch (role.trim()) {
+      case 'admin': return 'Administrator';
+      case 'supervisor': return 'Supervisor';
+      case 'teknisi': return 'Teknisi';
+      default: return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+  };
+
+  const getMessage = () => {
+    if (!requiredRolesRaw) return 'Halaman ini hanya dapat diakses oleh Administrator.';
+    
+    const roles = requiredRolesRaw.split(',').map(getRoleName);
+    if (roles.length === 1) return `Halaman ini hanya dapat diakses oleh ${roles[0]}.`;
+    return `Halaman ini hanya dapat diakses oleh ${roles.join(' atau ')}.`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -26,7 +46,7 @@ const Unauthorized = () => {
             <span className="font-semibold">Role Anda:</span> {user?.role || 'Unknown'}
           </p>
           <p className="text-sm text-yellow-700 mt-1">
-            Halaman ini hanya dapat diakses oleh Administrator.
+            {getMessage()}
           </p>
         </div>
         

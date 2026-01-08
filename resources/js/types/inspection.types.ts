@@ -9,8 +9,8 @@ export interface Apar {
     valid_radius?: number;
     qr_code: string;
     status: string;
-    aparType?: AparType;
-    tankTruck?: TankTruck;
+    apar_type?: AparType;
+    tank_truck?: TankTruck;
 }
 
 export interface AparType {

@@ -18,109 +18,122 @@ export const AparSelector: React.FC<AparSelectorProps> = ({
     isLoading,
 }) => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50">
-            <div className="max-w-4xl mx-auto p-4 space-y-6">
+        <div className="min-h-screen bg-gray-50/50 pb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                 {/* Header */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-                    <div className="flex items-center space-x-4">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                            <FireIcon className="h-7 w-7 text-white" />
-                        </div>
+                <div className="pt-8">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                Pilih APAR untuk Inspeksi
+                            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                                Inspeksi APAR
                             </h1>
-                            <p className="text-gray-600">
-                                Pilih APAR yang akan diinspeksi atau scan QR Code
+                            <p className="mt-1 text-sm text-gray-500">
+                                Pilih unit APAR untuk memulai inspeksi baru
                             </p>
                         </div>
-                    </div>
-                </div>
-
-                {/* Search Bar */}
-                <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                        
+                        {/* Search Bar */}
+                        <div className="w-full md:w-96">
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => onSearchChange(e.target.value)}
+                                    placeholder="Cari serial number, lokasi..."
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all duration-200 sm:text-sm shadow-sm"
+                                />
+                            </div>
                         </div>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                            placeholder="Cari berdasarkan nomor seri, lokasi, atau jenis APAR..."
-                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg"
-                        />
                     </div>
                 </div>
 
                 {/* APAR List */}
                 {isLoading ? (
-                    <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Memuat daftar APAR...</p>
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-4"></div>
+                        <p className="text-gray-500 text-sm animate-pulse">Memuat data APAR...</p>
                     </div>
                 ) : aparList.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {aparList.map((apar) => (
                             <div
                                 key={apar.id}
                                 onClick={() => onAparSelect(apar)}
-                                className="p-4 border-2 border-gray-200 rounded-xl hover:border-red-300 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                                className="group relative bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-red-200 transition-all duration-200 cursor-pointer overflow-hidden"
                             >
-                                <div className="flex items-center space-x-3 mb-3">
-                                    <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
-                                        <FireIcon className="h-5 w-5 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900">
-                                            APAR {apar.serial_number}
-                                        </h3>
-                                        <p className="text-sm text-gray-500">
-                                            {apar.aparType?.name || 'Tidak ada jenis'}
-                                        </p>
+                                <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="bg-red-50 text-red-600 p-1.5 rounded-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                                            <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                                        </svg>
                                     </div>
                                 </div>
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <p>
-                                        <strong>Lokasi:</strong> {apar.location_name || 'Tidak ada lokasi'}
-                                    </p>
-                                    <p>
-                                        <strong>Status:</strong>
-                                        <span
-                                            className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+
+                                <div className="p-5">
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="h-10 w-10 rounded-lg bg-gray-50 flex items-center justify-center group-hover:bg-red-50 transition-colors duration-200">
+                                                <FireIcon className="h-5 w-5 text-gray-400 group-hover:text-red-500 transition-colors duration-200" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
+                                                    {apar.serial_number}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 mt-0.5">
+                                                    {apar.apar_type?.name || 'Tanpa Jenis'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-gray-500">Lokasi</span>
+                                            <span className="font-medium text-gray-900 truncate max-w-[60%] text-right" title={apar.location_name}>
+                                                {apar.location_name || '-'}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="pt-3 border-t border-gray-50 flex items-center justify-between">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
                                                 apar.status === 'active'
-                                                    ? 'bg-green-100 text-green-800'
+                                                    ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
                                                     : apar.status === 'needs_repair'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : apar.status === 'inactive'
-                                                    ? 'bg-red-100 text-red-800'
+                                                    ? 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20'
                                                     : apar.status === 'under_repair'
-                                                    ? 'bg-blue-100 text-blue-800'
-                                                    : 'bg-gray-100 text-gray-800'
-                                            }`}
-                                        >
-                                            {apar.status === 'active'
-                                                ? 'Aktif'
-                                                : apar.status === 'needs_repair'
-                                                ? 'Perlu Perbaikan'
-                                                : apar.status === 'inactive'
-                                                ? 'Nonaktif'
-                                                : apar.status === 'under_repair'
-                                                ? 'Sedang Perbaikan'
-                                                : 'Tidak Diketahui'}
-                                        </span>
-                                    </p>
+                                                    ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                                                    : apar.status === 'inactive'
+                                                    ? 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
+                                                    : 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/20'
+                                            }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                                    apar.status === 'active' ? 'bg-green-600' :
+                                                    apar.status === 'needs_repair' ? 'bg-yellow-600' :
+                                                    apar.status === 'under_repair' ? 'bg-blue-600' :
+                                                    apar.status === 'inactive' ? 'bg-red-600' : 'bg-gray-500'
+                                                }`}></span>
+                                                {apar.status === 'active' ? 'Aktif' :
+                                                 apar.status === 'needs_repair' ? 'Perlu Perbaikan' :
+                                                 apar.status === 'under_repair' ? 'Sedang Perbaikan' :
+                                                 apar.status === 'inactive' ? 'Nonaktif' : 'Lainnya'}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-8">
-                        <FireIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600 text-lg">
-                            {searchTerm
-                                ? 'Tidak ada APAR yang sesuai dengan pencarian'
-                                : 'Belum ada APAR tersedia'}
+                    <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+                        <div className="h-12 w-12 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+                            <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-900">Tidak ada data ditemukan</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                            {searchTerm ? `Hasil pencarian untuk "${searchTerm}" tidak ditemukan` : 'Belum ada data APAR tersedia'}
                         </p>
                     </div>
                 )}

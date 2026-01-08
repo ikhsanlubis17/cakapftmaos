@@ -579,7 +579,7 @@ const InspectionFormEnhanced = () => {
                 return (
                     apar.serial_number?.toLowerCase().includes(searchLower) ||
                     apar.location_name?.toLowerCase().includes(searchLower) ||
-                    apar.aparType?.name?.toLowerCase().includes(searchLower)
+                    apar.apar_type?.name?.toLowerCase().includes(searchLower)
                 );
             });
             setFilteredAparList(filtered);

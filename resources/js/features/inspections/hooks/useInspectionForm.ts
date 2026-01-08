@@ -139,7 +139,7 @@ export const useInspectionForm = (qrCode?: string) => {
                 (apar) =>
                     apar.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     apar.location_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    apar.aparType?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                    apar.apar_type?.name?.toLowerCase().includes(searchTerm.toLowerCase())
             );
             setFilteredAparList(filtered);
         } else {

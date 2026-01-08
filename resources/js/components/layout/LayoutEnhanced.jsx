@@ -187,7 +187,7 @@ const LayoutEnhanced = () => {
           // },
           { name: "Pengguna", href: "/users", icon: UserGroupIcon, description: "Kelola pengguna" },
           { name: "Jadwal", href: "/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
-          { name: "Scan QR & Inspeksi", href: "/scan", icon: QrCodeIcon, description: "Mulai inspeksi APAR" },
+
           {
             name: "Persetujuan Perbaikan",
             href: "/repair-approvals",

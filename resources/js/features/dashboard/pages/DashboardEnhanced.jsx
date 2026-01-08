@@ -1518,22 +1518,7 @@ const DashboardEnhanced = () => {
                                 </Link>
                             )}
 
-                            <Link
-                                to="/my-repairs"
-                                className="flex items-center gap-3 lg:gap-4 p-3 lg:p-4 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-all duration-200 group hover:shadow-sm"
-                            >
-                                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200 flex-shrink-0">
-                                    <DocumentTextIcon className="h-5 w-5 text-blue-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 mb-1 text-sm lg:text-base leading-tight">
-                                        Perbaikan Saya
-                                    </p>
-                                    <p className="text-xs lg:text-sm text-gray-600 leading-tight">
-                                        Pantau status perbaikan yang diajukan
-                                    </p>
-                                </div>
-                            </Link>
+                            {/* Link Perbaikan Saya dihapus untuk Admin dan Supervisor */}
                         </div>
                     </div>
 
