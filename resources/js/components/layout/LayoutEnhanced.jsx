@@ -107,6 +107,8 @@ const LayoutEnhanced = () => {
         return "Teknisi"
       case "supervisor":
         return "Supervisor"
+      case "checker":
+        return "Checker"
       default:
         return role
     }
@@ -159,6 +161,23 @@ const LayoutEnhanced = () => {
             href: "/reports",
             icon: ChartBarIcon,
             description: "Laporan dan monitoring audit",
+          },
+        ]
+
+      case "checker":
+        return [
+          { name: "Dashboard", href: "/", icon: HomeIcon, description: "Overview" },
+          {
+            name: "Review Inspeksi",
+            href: "/inspections/review",
+            icon: ClipboardDocumentListIcon,
+            description: "Review hasil inspeksi",
+          },
+          {
+            name: "Riwayat Persetujuan",
+            href: "/inspections/history",
+            icon: CheckCircleIcon,
+            description: "Riwayat inspeksi yang direview",
           },
         ]
 

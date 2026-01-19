@@ -29,6 +29,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Login from "./features/auth/pages/Login";
 import Welcome from "./features/auth/pages/Welcome";
 import Profile from "./features/auth/pages/Profile";
+import InspectionHistoryPage from "./features/repairs/pages/InspectionHistoryPage";
 
 // ... (existing imports)
 
@@ -296,12 +297,14 @@ const newInspectionFromQRRoute = createRoute({
     component: InspectionFormEnhanced,
 });
 
-// const inspectionsDetailRoute = createRoute({
-//     getParentRoute: () => authenticatedRoute,
-//     path: 'inspections/$id',
-//     beforeLoad: checkRoles(['admin', 'supervisor']),
-//     component: InspectionFormEnhanced,
-// });
+import InspectionDetail from "./features/inspections/pages/InspectionDetail";
+
+const inspectionsDetailRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: 'inspections/$id',
+    beforeLoad: checkRoles(['admin', 'supervisor', 'checker']), // Added checker
+    component: InspectionDetail,
+});
 
 const myInspectionsRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
@@ -359,8 +362,15 @@ const repairReportFormRoute = createRoute({
 const inspectionReviewRoute = createRoute({
     getParentRoute: () => authenticatedRoute,
     path: "inspections/review",
-    beforeLoad: checkRoles(["admin", "supervisor"]),
+    beforeLoad: checkRoles(["checker"]),
     component: InspectionReviewPage,
+});
+
+const inspectionHistoryRoute = createRoute({
+    getParentRoute: () => authenticatedRoute,
+    path: "inspections/history",
+    beforeLoad: checkRoles(["checker"]),
+    component: InspectionHistoryPage,
 });
 
 // Repair Report Review Route (Supervisor only)
@@ -411,6 +421,7 @@ const routeTree = rootRoute.addChildren([
         schedulesRoute,
         mySchedulesRoute,
         inspectionsRoute,
+        inspectionsDetailRoute, // Added here
         newInspectionRoute,
         newInspectionFromQRRoute,
         myInspectionsRoute,
@@ -420,6 +431,7 @@ const routeTree = rootRoute.addChildren([
         myRepairsRoute,
         repairReportFormRoute,
         inspectionReviewRoute,
+        inspectionHistoryRoute,
         repairReportReviewRoute,
         reportsRoute,
         settingsRoute,

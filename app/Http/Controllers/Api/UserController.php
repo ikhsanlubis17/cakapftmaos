@@ -31,7 +31,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
-            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi'])],
+            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi', 'checker'])],
             'is_active' => 'boolean',
             'admin_password' => 'required|string', // Validation for admin password
         ]);
@@ -90,7 +90,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
-            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi'])],
+            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi', 'checker'])],
             'is_active' => 'boolean',
         ]);
 

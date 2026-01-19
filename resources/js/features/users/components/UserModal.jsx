@@ -89,6 +89,7 @@ const UserModal = ({
                             className="input-modern"
                         >
                             <option value="teknisi">Teknisi</option>
+                            <option value="checker">Checker</option>
                             <option value="supervisor">Supervisor</option>
                             <option value="admin">Administrator</option>
                         </select>

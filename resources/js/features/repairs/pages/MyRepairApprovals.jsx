@@ -17,6 +17,7 @@ import {
     ArrowPathIcon,
     SignalIcon,
     FunnelIcon,
+    CalendarIcon,
 } from '@heroicons/react/24/outline';
 
 const MyRepairApprovals = () => {
@@ -58,7 +59,14 @@ const MyRepairApprovals = () => {
             const url = filter === 'all' ? '/api/repair-approvals' : `/api/repair-approvals?status=${filter}`;
             const res = await apiClient.get(url);
             const all = res.data?.data || [];
-            return all.filter(approval => approval.inspection?.user?.id === user?.id);
+            return all.filter(approval => {
+                 // If assigned_technician_id exists, only show to that technician
+                 if (approval.assigned_technician_id) {
+                     return approval.assigned_technician_id === user?.id;
+                 }
+                 // Fallback for legacy data: show to inspector
+                 return approval.inspection?.user?.id === user?.id;
+             });
         },
         staleTime: 10000,
         refetchOnWindowFocus: false,
@@ -218,6 +226,13 @@ const MyRepairApprovals = () => {
                                             <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
                                             <span>{new Date(approval.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                                         </div>
+                                        {/* Show Schedule if available */}
+                                        {approval.scheduled_at && (
+                                            <div className="flex items-center text-sm text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
+                                                <CalendarIcon className="h-4 w-4 mr-2" />
+                                                <span className="font-medium">Jadwal: {new Date(approval.scheduled_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Damage Tags */}
@@ -239,13 +254,20 @@ const MyRepairApprovals = () => {
                                     {/* Action Button */}
                                     <div className="pt-2">
                                         {approval.status === 'approved' ? (
-                                            <button
-                                                onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
-                                                className="w-full flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
-                                            >
-                                                <WrenchScrewdriverIcon className="h-4 w-4 mr-2" />
-                                                Lakukan Perbaikan
-                                            </button>
+                                            approval.scheduled_at ? (
+                                                <button
+                                                    onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
+                                                    className="w-full flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
+                                                >
+                                                    <WrenchScrewdriverIcon className="h-4 w-4 mr-2" />
+                                                    Lakukan Perbaikan
+                                                </button>
+                                            ) : (
+                                                <div className="w-full flex items-center justify-center px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl font-medium">
+                                                    <ClockIcon className="h-4 w-4 mr-2" />
+                                                    Menunggu Penjadwalan
+                                                </div>
+                                            )
                                         ) : (
                                             <button
                                                 onClick={() => navigate({ to: `/repair-approvals/${approval.id}` })}
@@ -267,4 +289,3 @@ const MyRepairApprovals = () => {
 };
 
 export default MyRepairApprovals;
-

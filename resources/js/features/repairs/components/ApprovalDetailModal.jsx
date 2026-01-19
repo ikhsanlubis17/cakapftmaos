@@ -12,13 +12,59 @@ import {
     DocumentTextIcon,
     CameraIcon,
     UserCircleIcon,
+    CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import ApprovalStatusBadge from './ApprovalStatusBadge';
 import ApprovalTimeline from './ApprovalTimeline';
 
 const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState('overview');
     const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [isScheduling, setIsScheduling] = useState(false);
+    const [scheduleData, setScheduleData] = useState({
+        date: '',
+        technician_id: '',
+        notes: ''
+    });
+
+    const { apiClient } = useAuth();
+    const { showSuccess, showError } = useToast();
+    const queryClient = useQueryClient();
+
+    // Fetch technicians
+    const { data: technicians = [] } = useQuery({
+        queryKey: ['users', 'technician'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users?role=technician');
+            return res.data?.data || [];
+        },
+        enabled: isOpen && isScheduling
+    });
+
+    const scheduleMutation = useMutation({
+        mutationFn: (data) => apiClient.post(`/api/repair-approvals/${approval.id}/schedule`, {
+            scheduled_at: data.date,
+            assigned_technician_id: data.technician_id,
+            schedule_notes: data.notes
+        }),
+        onSuccess: () => {
+            showSuccess('Perbaikan berhasil dijadwalkan');
+            setIsScheduling(false);
+            queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
+            onClose(); // Close modal or refresh it? Close is safer.
+        },
+        onError: (err) => {
+            showError(err?.response?.data?.message || 'Gagal menjadwalkan perbaikan');
+        }
+    });
+
+    const handleScheduleSubmit = (e) => {
+        e.preventDefault();
+        scheduleMutation.mutate(scheduleData);
+    };
 
     if (!isOpen || !approval) return null;
 
@@ -101,8 +147,91 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                 {/* Status Badge */}
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-semibold text-gray-900">Status Persetujuan</h3>
-                                    <ApprovalStatusBadge status={approval.status} size="lg" />
+                                    <div className="flex items-center gap-2">
+                                        <ApprovalStatusBadge status={approval.status} size="lg" />
+                                        {approval.status === 'approved' && !approval.scheduled_at && !isScheduling && (
+                                            <button
+                                                onClick={() => setIsScheduling(true)}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                                            >
+                                                <CalendarDaysIcon className="h-4 w-4" />
+                                                Jadwalkan Perbaikan
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
+
+                                {/* Scheduling Form */}
+                                {isScheduling && (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 animation-fade-in">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                                                <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
+                                                Jadwalkan Perbaikan
+                                            </h4>
+                                            <button 
+                                                onClick={() => setIsScheduling(false)}
+                                                className="text-gray-500 hover:text-gray-700"
+                                            >
+                                                <XMarkIcon className="h-5 w-5" />
+                                            </button>
+                                        </div>
+                                        <form onSubmit={handleScheduleSubmit} className="space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Tanggal & Waktu
+                                                    </label>
+                                                    <input
+                                                        type="datetime-local"
+                                                        required
+                                                        min={new Date().toISOString().slice(0, 16)}
+                                                        className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                                        value={scheduleData.date}
+                                                        onChange={(e) => setScheduleData({...scheduleData, date: e.target.value})}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Pilih Teknisi
+                                                    </label>
+                                                    <select
+                                                        required
+                                                        className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                                        value={scheduleData.technician_id}
+                                                        onChange={(e) => setScheduleData({...scheduleData, technician_id: e.target.value})}
+                                                    >
+                                                        <option value="">Pilih Teknisi...</option>
+                                                        {technicians.map(tech => (
+                                                            <option key={tech.id} value={tech.id}>{tech.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Catatan Penjadwalan (Opsional)
+                                                </label>
+                                                <textarea
+                                                    className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                                    rows="2"
+                                                    value={scheduleData.notes}
+                                                    onChange={(e) => setScheduleData({...scheduleData, notes: e.target.value})}
+                                                    placeholder="Instruksi khusus untuk teknisi..."
+                                                ></textarea>
+                                            </div>
+                                            <div className="flex justify-end pt-2">
+                                                <button
+                                                    type="submit"
+                                                    disabled={scheduleMutation.isPending}
+                                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                                >
+                                                    {scheduleMutation.isPending ? 'Menyimpan...' : 'Simpan Jadwal'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
 
                                 {/* APAR Information */}
                                 <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
@@ -183,7 +312,19 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                     <h4 className="font-semibold text-gray-900 mb-4">Informasi Teknisi</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Nama Teknisi</p>
+                                            <p className="text-sm text-gray-600 mb-1">Ditugaskan Kepada</p>
+                                            <p className="font-medium text-gray-900">
+                                                {approval.assigned_technician?.name || approval.assignedTechnician?.name || '-'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1">Jadwal Perbaikan</p>
+                                            <p className="font-medium text-gray-900">
+                                                {formatDate(approval.scheduled_at)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-600 mb-1">Inspektor Awal</p>
                                             <p className="font-medium text-gray-900">
                                                 {approval.inspection?.user?.name || '-'}
                                             </p>
@@ -222,11 +363,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                 <h3 className="text-lg font-semibold text-gray-900">Progress Timeline</h3>
                                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                                     <ApprovalTimeline
-                                        status={approval.status}
-                                        createdAt={approval.inspection?.created_at}
-                                        approvedAt={approval.approved_at}
-                                        rejectedAt={approval.decision_made_at}
-                                        completedAt={approval.completed_at}
+                                        approval={approval}
                                     />
                                 </div>
 
@@ -288,6 +425,27 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                         {activeTab === 'notes' && (
                             <div className="space-y-6">
                                 <h3 className="text-lg font-semibold text-gray-900">Catatan & Keputusan</h3>
+
+                                {/* Checker Notes */}
+                                {approval.inspection?.checker_notes && (
+                                    <div className="bg-purple-50 rounded-xl p-5 border border-purple-200">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <ChatBubbleLeftRightIcon className="h-5 w-5 text-purple-600 mt-0.5" />
+                                            <h4 className="font-semibold text-gray-900">Catatan Checker</h4>
+                                        </div>
+                                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                            {approval.inspection.checker_notes}
+                                        </p>
+                                        <div className="mt-3 pt-3 border-t border-purple-200">
+                                            <p className="text-sm text-gray-600">
+                                                Oleh: <span className="font-medium">{approval.inspection.checker?.name || 'Checker'}</span>
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {formatDate(approval.inspection.checker_reviewed_at)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Supervisor Notes */}
                                 {approval.supervisor_notes && (

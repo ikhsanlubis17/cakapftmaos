@@ -19,6 +19,7 @@ import {
     CalendarIcon,
     DocumentTextIcon,
 } from "@heroicons/react/24/outline";
+import ApprovalTimeline from "@/components/common/ApprovalTimeline";
 
 const RepairApprovalList = () => {
     const [filter, setFilter] = useState("all");
@@ -639,23 +640,46 @@ const RepairApprovalList = () => {
                                                 </div>
                                             )}
 
+                                            {/* Timeline */}
+                                            <div className="pt-2">
+                                                <div className="border-t border-gray-100 pt-2">
+                                                    <ApprovalTimeline inspection={approval.inspection} approval={approval} />
+                                                </div>
+                                            </div>
+
                                             {/* Action Buttons */}
                                             {approval.status === "pending" && (
-                                                <div className="flex flex-wrap gap-2 pt-2">
-                                                    <button
-                                                        onClick={() => openApproveDialog(approval)}
-                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
-                                                    >
-                                                        <CheckCircleIcon className="h-4 w-4" />
-                                                        Setujui
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openRejectDialog(approval)}
-                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
-                                                    >
-                                                        <XCircleIcon className="h-4 w-4" />
-                                                        Tolak
-                                                    </button>
+                                                <div className="pt-2">
+                                                    {['approved_by_checker', 'pending_review'].includes(approval.inspection?.inspection_status) ? (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button
+                                                                onClick={() => openApproveDialog(approval)}
+                                                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+                                                            >
+                                                                <CheckCircleIcon className="h-4 w-4" />
+                                                                Setujui
+                                                            </button>
+                                                            <button
+                                                                onClick={() => openRejectDialog(approval)}
+                                                                className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
+                                                            >
+                                                                <XCircleIcon className="h-4 w-4" />
+                                                                Tolak
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+                                                            <ClockIcon className="h-5 w-5 text-amber-600" />
+                                                            <div>
+                                                                <p className="text-sm font-medium text-amber-800">
+                                                                    Menunggu Review Checker
+                                                                </p>
+                                                                <p className="text-xs text-amber-700">
+                                                                    Supervisor hanya dapat menyetujui setelah Checker melakukan review.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 

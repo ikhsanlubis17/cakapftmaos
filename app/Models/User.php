@@ -129,4 +129,12 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->role === 'supervisor';
     }
+
+    /**
+     * Check if user is checker.
+     */
+    public function isChecker(): bool
+    {
+        return $this->role === 'checker';
+    }
 }

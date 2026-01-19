@@ -331,6 +331,52 @@ const RepairApprovalDetail = () => {
                             </div>
                         </div>
 
+                        {/* Checker Review Details Card */}
+                        {approval.inspection && (approval.inspection.checker_reviewed_at || approval.inspection.checker_notes) && (
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-3">
+                                    <ShieldCheckIcon className="h-5 w-5 text-purple-500" />
+                                    <h3 className="font-semibold text-gray-900">Review Checker</h3>
+                                </div>
+                                <div className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Checker</p>
+                                            <div className="flex items-center gap-2">
+                                                <UserIcon className="h-4 w-4 text-gray-400" />
+                                                <p className="font-medium text-gray-900">{approval.inspection.checker?.name || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 mb-1">Tanggal Review</p>
+                                            <div className="flex items-center gap-2">
+                                                <CalendarIcon className="h-4 w-4 text-gray-400" />
+                                                <p className="font-medium text-gray-900">
+                                                    {approval.inspection.checker_reviewed_at
+                                                        ? new Date(approval.inspection.checker_reviewed_at).toLocaleDateString('id-ID', {
+                                                            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                                                        })
+                                                        : '-'
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {approval.inspection.checker_notes && (
+                                        <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                                            <p className="text-xs font-semibold text-purple-800 mb-2 uppercase tracking-wide">
+                                                Catatan Checker
+                                            </p>
+                                            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">
+                                                {approval.inspection.checker_notes}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Damages List */}
                         {approval.inspection?.inspection_damages && approval.inspection.inspection_damages.length > 0 && (
                             <div className="space-y-4">
@@ -534,30 +580,50 @@ const RepairApprovalDetail = () => {
                         {approval.status === 'pending' && (
                              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sticky top-24">
                                 <h3 className="font-bold text-gray-900 mb-4">Tindakan Diperlukan</h3>
-                                <p className="text-sm text-gray-500 mb-6">Sebagai Supervisor, tinjau hasil inspeksi ini dan berikan keputusan.</p>
                                 
-                                <div className="space-y-3">
-                                    <button
-                                        onClick={() => {
-                                            setActionType('approve');
-                                            setShowActionModal(true);
-                                        }}
-                                        className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <CheckCircleIconSolid className="h-5 w-5" />
-                                        Setujui Perbaikan
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setActionType('reject');
-                                            setShowActionModal(true);
-                                        }}
-                                        className="w-full py-3 px-4 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-                                    >
-                                        <XCircleIconSolid className="h-5 w-5" />
-                                        Tolak
-                                    </button>
-                                </div>
+                                {['approved_by_checker', 'pending_review'].includes(approval.inspection?.inspection_status) ? (
+                                    <>
+                                        <p className="text-sm text-gray-500 mb-6">Sebagai Supervisor, tinjau hasil inspeksi ini dan berikan keputusan.</p>
+                                        
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={() => {
+                                                    setActionType('approve');
+                                                    setShowActionModal(true);
+                                                }}
+                                                className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <CheckCircleIconSolid className="h-5 w-5" />
+                                                Setujui Perbaikan
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setActionType('reject');
+                                                    setShowActionModal(true);
+                                                }}
+                                                className="w-full py-3 px-4 bg-white border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <XCircleIconSolid className="h-5 w-5" />
+                                                Tolak
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col gap-3">
+                                        <div className="flex items-start gap-3">
+                                            <ClockIcon className="h-6 w-6 text-amber-600 flex-shrink-0" />
+                                            <div>
+                                                <h4 className="font-semibold text-amber-800 text-sm">Menunggu Review Checker</h4>
+                                                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                                                    Anda belum dapat menyetujui atau menolak perbaikan ini karena hasil inspeksi belum direview dan disetujui oleh Checker.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-amber-600/80 italic border-t border-amber-200/50 pt-2">
+                                            *Tombol aksi akan muncul setelah Checker menyetujui.
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

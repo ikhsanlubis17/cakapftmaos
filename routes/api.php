@@ -98,11 +98,12 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
 
-    // Inspection Review routes (Supervisor only)
-    Route::middleware(['role:admin,supervisor'])->group(function () {
+    // Inspection Review routes (Checker only)
+    Route::middleware(['role:checker'])->group(function () {
         Route::get('/inspections/review/pending', [InspectionController::class, 'pendingReview']);
         Route::post('/inspections/{inspection}/approve', [InspectionController::class, 'approveInspection']);
         Route::post('/inspections/{inspection}/reject', [InspectionController::class, 'rejectInspection']);
+        Route::get('/inspections/review/history', [InspectionController::class, 'history']);
     });
 
     // Repair Approval routes
@@ -118,6 +119,11 @@ Route::middleware('auth:api')->group(function () {
     });
 
     Route::post('/repair-approvals/{repairApproval}/mark-completed', [RepairApprovalController::class, 'markCompleted']);
+
+    // Admin-only actions
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('/repair-approvals/{repairApproval}/schedule', [RepairApprovalController::class, 'schedule']);
+    });
 
     // Repair Report routes
     Route::get('/repair-reports', [RepairReportController::class, 'index']);

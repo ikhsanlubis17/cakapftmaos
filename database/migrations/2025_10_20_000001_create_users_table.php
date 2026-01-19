@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             // final role enum (without transient 'operator')
-            $table->enum('role', ['admin', 'teknisi', 'supervisor'])->default('teknisi');
+            $table->enum('role', ['admin', 'teknisi', 'supervisor', 'checker'])->default('teknisi');
             $table->boolean('is_active')->default(true);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

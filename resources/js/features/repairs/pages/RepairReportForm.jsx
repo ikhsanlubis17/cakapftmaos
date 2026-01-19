@@ -305,6 +305,12 @@ const RepairReportForm = () => {
                                 <span className="text-gray-400">•</span>
                                 <p className="text-gray-600">{approval.inspection?.apar?.location_name}</p>
                             </div>
+                           {approval.scheduled_at && (
+                                <div className="flex items-center space-x-2 mt-1 text-sm text-blue-700 bg-blue-50 px-2 py-1 rounded w-fit">
+                                    <CalendarIcon className="h-4 w-4" />
+                                    <span>Jadwal: {new Date(approval.scheduled_at).toLocaleString('id-ID', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -23,12 +23,16 @@ class RepairApproval extends Model
         'approved_at',
         'decision_made_at',
         'completed_at',
+        'scheduled_at',
+        'assigned_technician_id',
+        'schedule_notes',
     ];
 
     protected $casts = [
         'approved_at' => 'datetime',
         'decision_made_at' => 'datetime',
         'completed_at' => 'datetime',
+        'scheduled_at' => 'datetime',
     ];
 
     /**
@@ -45,6 +49,14 @@ class RepairApproval extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+    
+    /**
+     * Get the assigned technician.
+     */
+    public function assignedTechnician(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_technician_id');
     }
 
     /**
@@ -152,5 +164,16 @@ class RepairApproval extends Model
     public function getDecisionTime(): ?string
     {
         return $this->decision_made_at ? $this->decision_made_at->diffForHumans() : null;
+    }
+    /**
+     * Mark repair as scheduled.
+     */
+    public function markScheduled($scheduledAt, int $technicianId, ?string $notes = null): void
+    {
+        $this->update([
+            'scheduled_at' => $scheduledAt,
+            'assigned_technician_id' => $technicianId,
+            'schedule_notes' => $notes,
+        ]);
     }
 }

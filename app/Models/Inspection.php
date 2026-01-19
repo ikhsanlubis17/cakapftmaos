@@ -42,6 +42,9 @@ class Inspection extends Model
         'reinspection_count',
         'parent_inspection_id',
         'reinspection_reason',
+        'checker_id',
+        'checker_notes',
+        'checker_reviewed_at',
     ];
 
     /**
@@ -200,6 +203,14 @@ class Inspection extends Model
     }
 
     /**
+     * Get the checker who reviewed the inspection.
+     */
+    public function checker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checker_id');
+    }
+
+    /**
      * Approve the inspection (by supervisor).
      */
     public function approveInspection(int $reviewerId, ?string $notes = null): void
@@ -222,6 +233,32 @@ class Inspection extends Model
             'reviewed_by' => $reviewerId,
             'reviewed_at' => now(),
             'review_notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Approve the inspection (by checker).
+     */
+    public function approveByChecker(int $checkerId, ?string $notes = null): void
+    {
+        $this->update([
+            'inspection_status' => 'approved_by_checker',
+            'checker_id' => $checkerId,
+            'checker_reviewed_at' => now(),
+            'checker_notes' => $notes,
+        ]);
+    }
+
+    /**
+     * Reject the inspection (by checker).
+     */
+    public function rejectByChecker(int $checkerId, string $notes): void
+    {
+        $this->update([
+            'inspection_status' => 'rejected_by_checker',
+            'checker_id' => $checkerId,
+            'checker_reviewed_at' => now(),
+            'checker_notes' => $notes,
         ]);
     }
 

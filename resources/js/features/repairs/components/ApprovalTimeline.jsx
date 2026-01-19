@@ -1,46 +1,65 @@
 import React from 'react';
 import { CheckCircleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/solid';
 
-const ApprovalTimeline = ({ status, approvedAt, rejectedAt, completedAt, createdAt }) => {
+const ApprovalTimeline = ({ approval }) => {
+    if (!approval || !approval.inspection) return null;
+
+    const { inspection } = approval;
+
+    // Helper to determine status based on inspection and approval state
     const steps = [
         {
             id: 'inspection',
-            name: 'Inspeksi',
-            description: 'Inspeksi dilakukan',
+            name: 'Inspeksi & Pelaporan',
+            description: 'Inspeksi Selesai',
             completed: true,
-            date: createdAt,
+            date: inspection.created_at,
         },
         {
-            id: 'pending',
-            name: 'Menunggu',
-            description: 'Menunggu persetujuan',
-            completed: status !== 'pending',
-            date: createdAt,
+            id: 'checker',
+            name: 'Review Checker',
+            description: 'Verifikasi Checker',
+            completed: !!inspection.checker_reviewed_at,
+            rejected: inspection.inspection_status?.includes('rejected_by_checker'),
+            date: inspection.checker_reviewed_at,
+        },
+        {
+            id: 'supervisor',
+            name: 'Review Supervisor',
+            description: 'Keputusan Supervisor',
+            completed: !!approval.decision_made_at || !!approval.approved_at || approval.status !== 'pending',
+            rejected: approval.status === 'rejected' && !inspection.inspection_status?.includes('rejected_by_checker'), // Only mark rejected if it was supervisor who rejected
+            date: approval.decision_made_at || approval.approved_at,
         },
         {
             id: 'decision',
-            name: status === 'rejected' ? 'Ditolak' : 'Disetujui',
-            description: status === 'rejected' ? 'Perbaikan ditolak' : 'Perbaikan disetujui',
-            completed: status === 'approved' || status === 'rejected' || status === 'completed',
-            rejected: status === 'rejected',
-            date: approvedAt || rejectedAt,
+            name: 'Disetujui',
+            description: 'Izin Perbaikan',
+            completed: approval.status === 'approved',
+            rejected: approval.status === 'rejected' || inspection.inspection_status?.includes('rejected_by_checker'), // Rejected at any prior point affects this milestone? Actually if rejected, this step is "reached but failed".
+            // Let's stick to "completed" = green. If rejected, it stays incomplete or we mark this step specifically?
+            // User requested "Disetujui" as a step. If rejected, we probably shouldn't show "Disetujui" as completed.
+            // But if rejected, the flow stops. Visuals should reflect rejection.
+            // If rejected, let's mark this step as "Ditolak" visually if it reached here.
+            date: approval.approved_at || (approval.status === 'rejected' ? approval.decision_made_at : null),
+            customLabel: approval.status === 'rejected' || inspection.inspection_status?.includes('rejected_by_checker') ? 'Ditolak' : 'Disetujui'
         },
         {
             id: 'repair',
             name: 'Perbaikan',
-            description: 'Proses perbaikan',
-            completed: status === 'completed',
+            description: 'Proses Perbaikan',
+            completed: inspection.repair_status === 'completed',
+            skip: approval.status !== 'approved', // Skip/Hide if not approved (optional, or just grey out)
             date: null,
-            skip: status === 'rejected',
         },
         {
             id: 'completed',
             name: 'Selesai',
-            description: 'Perbaikan selesai',
-            completed: status === 'completed',
-            date: completedAt,
-            skip: status === 'rejected',
-        },
+            description: 'Verifikasi Akhir',
+            completed: inspection.repair_status === 'completed',
+            skip: approval.status !== 'approved',
+            date: inspection.repair_status === 'completed' ? inspection.updated_at : null,
+        }
     ];
 
     const formatDate = (dateString) => {
@@ -111,7 +130,7 @@ const ApprovalTimeline = ({ status, approvedAt, rejectedAt, completedAt, created
                                                 : 'text-gray-500'
                                         }`}
                                     >
-                                        {step.name}
+                                        {step.customLabel || step.name}
                                     </span>
                                     {step.date && (
                                         <span className="block text-xs text-gray-400 mt-0.5">

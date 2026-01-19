@@ -231,9 +231,16 @@ class InspectionService
         $user = User::find($userId);
         $isAdminOrSupervisor = $user && ($user->isAdmin() || $user->isSupervisor());
 
-        // Teknisi inspections need supervisor review
+        // Teknisi inspections need checker review first
         // Admin/supervisor inspections are auto-approved
-        $inspectionStatus = $isAdminOrSupervisor ? 'approved' : 'pending_review';
+        // Checker inspections are treated as pending supervisor review (skip checker stage)
+        if ($isAdminOrSupervisor) {
+            $inspectionStatus = 'approved';
+        } elseif ($user && $user->isChecker()) {
+            $inspectionStatus = 'approved_by_checker';
+        } else {
+            $inspectionStatus = 'pending_checker';
+        }
 
         // For teknisi, repair_status stays 'none' until supervisor reviews and approves the inspection
         // For admin/supervisor with damage, they directly assign repair (no RepairApproval needed)
