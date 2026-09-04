@@ -1,7 +1,7 @@
 <x-mail::message>
 # Halo, {{ $user->name }}!
 
-Admin telah mendaftarkan akun Anda di sistem CAKAP FT Maos.
+Admin telah mendaftarkan akun Anda di sistem {{ setting('site_name', config('app.name', 'CAKAP FT MAOS')) }}.
 Untuk dapat menggunakan akun ini, silakan lakukan aktivasi dengan menekan tombol di bawah ini.
 
 <x-mail::button :url="$url">

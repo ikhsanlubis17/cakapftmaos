@@ -4,10 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>CAKAP FT MAOS - Sistem Monitoring APAR</title>
+@php
+    $publicSettings = \App\Models\Setting::getPublicSettings();
+    $siteName = $publicSettings['site_name'] ?? config('app.name', 'CAKAP FT MAOS');
+    $siteTagline = $publicSettings['site_tagline'] ?? 'Sistem Monitoring APAR';
+    $siteLogo = $publicSettings['site_logo'] ?? '/images/logo2.svg';
+@endphp
+    <title>{{ $siteName }} - {{ $siteTagline }}</title>
 
-    <link rel="icon" href="/images/logo2.svg" type="image/svg+xml">
+    <link rel="icon" href="{{ $siteLogo }}" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        window.APP_CONFIG = @json($publicSettings);
+    </script>
 
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/css/vendor-fixes.css', 'resources/css/exception-fixes.css', 'resources/js/app.tsx'])

@@ -27,67 +27,62 @@ use App\Http\Controllers\Api\RepairReportController;
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/activate', [AuthController::class, 'activate']);
-
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::post('/refresh', [AuthController::class, 'refresh']);
-
-// Test route
-Route::get('/test', function () {
-    return response()->json(['message' => 'API is working!']);
-});
+Route::get('/public-settings', [SettingController::class, 'publicSettings']);
 
 // QR Code route (handles auth internally)
 Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
 
-// Dev routes for dashboard (temporary) - outside auth middleware for testing
-Route::prefix('dev')->group(function () {
-    Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
-});
 
+// Authenticated Routes
 Route::middleware('auth:api')->group(function () {
-    // User info
+    // User profile
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/user/profile', [AuthController::class, 'updateProfile']);
 
-
-    // Dashboard - Semua route dashboard harus dilindungi
+    // Dashboard statistics
     Route::get('/stats', [DashboardController::class, 'getStats']);
 
-    // APAR routes (Accessible to all authenticated users)
+    // APAR routes (Accessible to all authenticated users for scanning)
     Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
 
-    // APAR routes (Admin & Supervisor)
-    Route::middleware(['role:admin,supervisor'])->group(function () {
+    // APAR routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/apar', [AparController::class, 'index']);
         Route::get('/apar/{apar}', [AparController::class, 'show']);
         Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
         Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
-    });
-
-    // APAR routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
         Route::post('/apar', [AparController::class, 'store']);
         Route::put('/apar/{apar}', [AparController::class, 'update']);
         Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
         Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     });
 
-    // APAR Type routes (Admin only)
+    // APAR Type routes - Read access for all authenticated users (needed for dropdowns)
     Route::get('/apar-types', [AparTypeController::class, 'index']);
     Route::get('/apar-types/{aparType}', [AparTypeController::class, 'show']);
-    Route::post('/apar-types', [AparTypeController::class, 'store']);
-    Route::put('/apar-types/{aparType}', [AparTypeController::class, 'update']);
-    Route::delete('/apar-types/{aparType}', [AparTypeController::class, 'destroy']);
 
-    // Damage Category routes (Admin only)
+    // APAR Type routes - Admin write operations
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('/apar-types', [AparTypeController::class, 'store']);
+        Route::put('/apar-types/{aparType}', [AparTypeController::class, 'update']);
+        Route::delete('/apar-types/{aparType}', [AparTypeController::class, 'destroy']);
+    });
+
+    // Damage Category routes - Read access for all authenticated users (needed during inspections)
     Route::get('/damage-categories', [DamageCategoryController::class, 'index']);
     Route::get('/damage-categories/types', [DamageCategoryController::class, 'getTypes']);
     Route::get('/damage-categories/active', [DamageCategoryController::class, 'active']);
     Route::get('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'show']);
-    Route::post('/damage-categories', [DamageCategoryController::class, 'store']);
-    Route::put('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'update']);
-    Route::delete('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'destroy']);
-    Route::patch('/damage-categories/{damageCategory}/toggle-status', [DamageCategoryController::class, 'toggleStatus']);
+
+    // Damage Category routes - Admin write operations
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('/damage-categories', [DamageCategoryController::class, 'store']);
+        Route::put('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'update']);
+        Route::delete('/damage-categories/{damageCategory}', [DamageCategoryController::class, 'destroy']);
+        Route::patch('/damage-categories/{damageCategory}/toggle-status', [DamageCategoryController::class, 'toggleStatus']);
+    });
 
     // Inspection routes
     Route::get('/inspections', [InspectionController::class, 'index']);
@@ -98,7 +93,7 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
 
-    // Inspection Review routes (Supervisor only)
+    // Inspection Review routes (Supervisor & Admin)
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/inspections/review/pending', [InspectionController::class, 'pendingReview']);
         Route::post('/inspections/{inspection}/approve', [InspectionController::class, 'approveInspection']);
@@ -111,7 +106,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/repair-approvals/stats', [RepairApprovalController::class, 'stats']);
     Route::get('/repair-approvals/{repairApproval}', [RepairApprovalController::class, 'show']);
 
-    // Supervisor-only actions
+    // Supervisor-only repair approval actions
     Route::middleware(['role:supervisor'])->group(function () {
         Route::post('/repair-approvals/{repairApproval}/approve', [RepairApprovalController::class, 'approve']);
         Route::post('/repair-approvals/{repairApproval}/reject', [RepairApprovalController::class, 'reject']);
@@ -136,14 +131,16 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // User management routes (Admin only)
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{user}', [UserController::class, 'show']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::put('/users/{user}', [UserController::class, 'update']);
-    Route::delete('/users/{user}', [UserController::class, 'destroy']);
-    Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
-    Route::post('/users/{user}/unblock', [UserController::class, 'unblock']);
-    Route::post('/users/{user}/resend-activation', [UserController::class, 'resendActivation']);
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{user}', [UserController::class, 'show']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{user}', [UserController::class, 'update']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+        Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus']);
+        Route::post('/users/{user}/unblock', [UserController::class, 'unblock']);
+        Route::post('/users/{user}/resend-activation', [UserController::class, 'resendActivation']);
+    });
 
     // Tank Truck routes (Admin only)
     Route::middleware(['role:admin'])->group(function () {
@@ -156,12 +153,11 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/tank-trucks/{tankTruck}/remove-apar', [TankTruckController::class, 'removeApar']);
     });
 
-
     // Schedule routes - Read-only endpoints accessible to all authenticated users
     Route::get('/schedules/my-schedules', [ScheduleController::class, 'mySchedules']);
     Route::get('/schedules/upcoming', [ScheduleController::class, 'upcoming']);
 
-    // Schedule routes - Admin & Supervisor
+    // Schedule routes - Admin & Supervisor read
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/schedules', [ScheduleController::class, 'index']);
         Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
@@ -176,8 +172,6 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/schedules/{schedule}/send-reminder', [ScheduleController::class, 'sendReminder']);
     });
 
-
-
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::get('/notifications/unread', [NotificationController::class, 'unread']);
@@ -187,8 +181,10 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
     // Settings routes (Admin only)
-    Route::get('/settings', [SettingController::class, 'index']);
-    Route::put('/settings', [SettingController::class, 'update']);
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/settings', [SettingController::class, 'index']);
+        Route::put('/settings', [SettingController::class, 'update']);
+    });
 
     // Report routes
     Route::get('/reports/generate', [ReportController::class, 'generate']);
@@ -198,10 +194,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/reports/export/{type}', [ReportController::class, 'export']);
 
     // Audit Log routes (Admin only)
-    Route::get('/audit-logs', [AuditLogController::class, 'index']);
-    Route::get('/audit-logs/stats', [AuditLogController::class, 'stats']);
-    Route::get('/audit-logs/anomalies', [AuditLogController::class, 'anomalies']);
-    Route::get('/audit-logs/cleanup-stats', [AuditLogController::class, 'cleanupStats']);
-    Route::post('/audit-logs/cleanup', [AuditLogController::class, 'cleanup']);
-    Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index']);
+        Route::get('/audit-logs/stats', [AuditLogController::class, 'stats']);
+        Route::get('/audit-logs/anomalies', [AuditLogController::class, 'anomalies']);
+        Route::get('/audit-logs/cleanup-stats', [AuditLogController::class, 'cleanupStats']);
+        Route::post('/audit-logs/cleanup', [AuditLogController::class, 'cleanup']);
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+    });
 });

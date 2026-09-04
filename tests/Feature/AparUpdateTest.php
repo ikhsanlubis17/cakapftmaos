@@ -16,7 +16,7 @@ class AparUpdateTest extends TestCase
     public function test_can_update_apar_status_to_active()
     {
         $this->withoutExceptionHandling();
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $aparType = AparType::create(['name' => 'Foam', 'is_active' => true]);
         $apar = Apar::factory()->create([
             'status' => 'active',
@@ -44,7 +44,7 @@ class AparUpdateTest extends TestCase
 
     public function test_can_update_apar_status_to_damaged()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $aparType = AparType::create(['name' => 'Powder', 'is_active' => true]);
         $apar = Apar::factory()->create([
             'status' => 'active',
@@ -63,8 +63,6 @@ class AparUpdateTest extends TestCase
             'status' => 'needs_repair', // Was damaged, now needs_repair
         ]);
 
-        $response->dump();
-
         $response->assertStatus(200);
         $this->assertDatabaseHas('apars', [
             'id' => $apar->id,
@@ -74,7 +72,7 @@ class AparUpdateTest extends TestCase
 
     public function test_cannot_update_apar_with_invalid_status()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $aparType = AparType::create(['name' => 'CO2', 'is_active' => true]);
         $apar = Apar::factory()->create([
             'status' => 'active',
@@ -99,7 +97,7 @@ class AparUpdateTest extends TestCase
 
     public function test_cannot_update_apar_with_old_frontend_value()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $aparType = AparType::create(['name' => 'Water', 'is_active' => true]);
         $apar = Apar::factory()->create([
             'status' => 'active',

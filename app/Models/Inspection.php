@@ -60,6 +60,8 @@ class Inspection extends Model
             'photo_required' => 'boolean',
             'selfie_required' => 'boolean',
             'reviewed_at' => 'datetime',
+            'condition' => \App\Enums\InspectionCondition::class,
+            'inspection_status' => \App\Enums\InspectionStatus::class,
         ];
     }
 
@@ -132,7 +134,7 @@ class Inspection extends Model
      */
     public function isConditionGood(): bool
     {
-        return $this->condition === 'good';
+        return $this->condition === \App\Enums\InspectionCondition::Good || $this->condition === 'good';
     }
 
     /**
@@ -140,7 +142,7 @@ class Inspection extends Model
      */
     public function needsRefill(): bool
     {
-        return $this->condition === 'needs_refill';
+        return $this->condition === \App\Enums\InspectionCondition::NeedsRefill || $this->condition === 'needs_refill';
     }
 
     /**
@@ -148,7 +150,7 @@ class Inspection extends Model
      */
     public function isExpired(): bool
     {
-        return $this->condition === 'expired';
+        return $this->condition === \App\Enums\InspectionCondition::Expired || $this->condition === 'expired';
     }
 
     /**
@@ -156,7 +158,7 @@ class Inspection extends Model
      */
     public function isDamaged(): bool
     {
-        return $this->condition === 'damaged';
+        return $this->condition === \App\Enums\InspectionCondition::Damaged || $this->condition === 'damaged';
     }
 
     /**
@@ -172,7 +174,7 @@ class Inspection extends Model
      */
     public function isPendingReview(): bool
     {
-        return $this->inspection_status === 'pending_review';
+        return $this->inspection_status === \App\Enums\InspectionStatus::PendingReview || $this->inspection_status === 'pending_review';
     }
 
     /**
@@ -180,7 +182,7 @@ class Inspection extends Model
      */
     public function isInspectionApproved(): bool
     {
-        return $this->inspection_status === 'approved';
+        return $this->inspection_status === \App\Enums\InspectionStatus::Approved || $this->inspection_status === 'approved';
     }
 
     /**
@@ -188,7 +190,7 @@ class Inspection extends Model
      */
     public function isInspectionRejected(): bool
     {
-        return $this->inspection_status === 'rejected';
+        return $this->inspection_status === \App\Enums\InspectionStatus::Rejected || $this->inspection_status === 'rejected';
     }
 
     /**

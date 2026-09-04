@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { Outlet, useNavigate, useLocation } from "@tanstack/react-router"
 import { useAuth } from "../../contexts/AuthContext"
 import { useToast } from "../../contexts/ToastContext"
+import { useSiteSettings } from "../../contexts/SiteSettingsContext"
 import { useConfirmDialog } from "../../hooks/useConfirmDialog"
 import ConfirmDialog from "../common/ConfirmDialog"
 import {
@@ -31,6 +32,7 @@ const LayoutEnhanced = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [navigationError, setNavigationError] = useState(null)
   const { user, logout } = useAuth()
+  const { settings } = useSiteSettings()
   const { showSuccess, showError } = useToast()
   const { isOpen, config, confirm, close } = useConfirmDialog()
   const location = useLocation()
@@ -282,10 +284,10 @@ const LayoutEnhanced = () => {
           <div className="flex h-16 items-center justify-between px-6 border-b border-gray-100">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <img src="/images/logo2.svg" alt="CAKAP FT MAOS Logo" className="h-10 w-10" />
+                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-10 w-10" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">CAKAP FT MAOS</h1>
+                <h1 className="text-xl font-bold text-gray-900">{settings.site_name}</h1>
               </div>
             </div>
             <button
@@ -336,10 +338,10 @@ const LayoutEnhanced = () => {
           <div className="flex h-16 items-center px-6 border-b border-gray-100">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <img src="/images/logo2.svg" alt="CAKAP FT MAOS Logo" className="h-10 w-10" />
+                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-10 w-10" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">CAKAP FT MAOS</h1>
+                <h1 className="text-xl font-bold text-gray-900">{settings.site_name}</h1>
               </div>
             </div>
           </div>

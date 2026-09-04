@@ -6,7 +6,7 @@ interface InterceptorSetup {
     onAuthError: () => void;
 }
 
-export const createApiClient = (baseURL = 'http://localhost:8000') => {
+export const createApiClient = (baseURL = (import.meta as any).env?.VITE_API_BASE_URL || '') => {
     return axios.create({
         baseURL,
         headers: {

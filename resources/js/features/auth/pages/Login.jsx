@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { AxiosError } from 'axios';
 
@@ -10,6 +11,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const { login, isLoading } = useAuth();
     const { showSuccess, showError } = useToast();
+    const { settings } = useSiteSettings();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -33,19 +35,19 @@ const Login = () => {
                 <div className="text-center">
                     <div className="mx-auto h-20 w-20 flex items-center justify-center rounded-full bg-white shadow-lg mb-6">
                         <img
-                            src="/images/logo2.svg"
-                            alt="CAKAP FT MAOS Logo"
+                            src={settings.site_logo}
+                            alt={`${settings.site_name} Logo`}
                             className="h-12 w-12"
                         />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                        CAKAP FT MAOS
+                        {settings.site_name}
                     </h2>
                     <p className="text-lg text-gray-600 mb-1">
-                        Sistem Monitoring APAR
+                        {settings.site_tagline}
                     </p>
                     <p className="text-sm text-gray-500">
-                        Alat Pemadam Api Ringan
+                        {settings.organization_name}
                     </p>
                 </div>
 
@@ -192,7 +194,7 @@ const Login = () => {
                     {/* Additional Info */}
                     <div className="mt-6 text-center">
                         <p className="text-xs text-gray-500">
-                            Sistem Monitoring APAR - Pertamina
+                            {settings.site_tagline} - {settings.organization_name}
                         </p>
                     </div>
                 </div>
@@ -200,7 +202,7 @@ const Login = () => {
                 {/* Footer */}
                 <div className="text-center">
                     <p className="text-xs text-gray-500">
-                        © 2025 CAKAP FT MAOS. Sistem Monitoring APAR.
+                        © {new Date().getFullYear()} {settings.site_name}. {settings.footer_copyright}
                     </p>
                 </div>
             </div>

@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 use App\Models\Apar;
 use App\Models\TankTruck;
 use App\Models\InspectionLog;
+use App\Http\Requests\Apar\StoreAparRequest;
+use App\Http\Requests\Apar\UpdateAparRequest;
+use App\Services\DeviceDetectorService;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -48,40 +51,28 @@ class AparController extends Controller
     /**
      * Store a newly created APAR
      */
-    public function store(Request $request)
+    public function store(StoreAparRequest $request)
     {
-        $request->validate([
-            'serial_number' => 'required|unique:apars,serial_number',
-            'location_type' => 'required|in:statis,mobile',
-            'location_name' => 'required|string',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'valid_radius' => 'nullable|integer|min:1',
-            'apar_type_id' => 'required|exists:apar_types,id',
-            'capacity' => 'required|integer|min:1',
-            'manufactured_date' => 'nullable|date',
-            'expired_at' => 'nullable|date',
-            'tank_truck_id' => 'nullable|exists:tank_trucks,id',
-            'notes' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Generate QR code
         $qrCode = 'APAR-' . Str::random(10);
-        
+        $defaultRadius = (int) setting('gps_radius_validation', 50);
+
         $apar = Apar::create([
-            'serial_number' => $request->serial_number,
+            'serial_number' => $validated['serial_number'],
             'qr_code' => $qrCode,
-            'location_type' => $request->location_type,
-            'location_name' => $request->location_name,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-            'valid_radius' => $request->valid_radius ?? 30,
-            'apar_type_id' => $request->apar_type_id,
-            'capacity' => $request->capacity,
-            'manufactured_date' => $request->manufactured_date,
-            'expired_at' => $request->expired_at,
-            'tank_truck_id' => $request->tank_truck_id,
-            'notes' => $request->notes,
+            'location_type' => $validated['location_type'],
+            'location_name' => $validated['location_name'],
+            'latitude' => $validated['latitude'] ?? null,
+            'longitude' => $validated['longitude'] ?? null,
+            'valid_radius' => $validated['valid_radius'] ?? $defaultRadius,
+            'apar_type_id' => $validated['apar_type_id'],
+            'capacity' => $validated['capacity'],
+            'manufactured_date' => $validated['manufactured_date'] ?? null,
+            'expired_at' => $validated['expired_at'] ?? null,
+            'tank_truck_id' => $validated['tank_truck_id'] ?? null,
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return response()->json([
@@ -116,7 +107,7 @@ class AparController extends Controller
             'action' => 'scan_qr',
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'device_info' => $this->getDeviceInfo(),
+            'device_info' => DeviceDetectorService::getDeviceInfo(),
             'is_successful' => true,
             'details' => 'QR code scanned successfully',
         ]);
@@ -127,26 +118,10 @@ class AparController extends Controller
     /**
      * Update the specified APAR
      */
-    public function update(Request $request, Apar $apar)
+    public function update(UpdateAparRequest $request, Apar $apar)
     {
-        $validatedData = $request->validate([
-            'serial_number' => 'required|unique:apars,serial_number,' . $apar->id,
-            'location_type' => 'required|in:statis,mobile',
-            'location_name' => 'required|string',
-            'latitude' => 'nullable|numeric|between:-90,90',
-            'longitude' => 'nullable|numeric|between:-180,180',
-            'valid_radius' => 'nullable|integer|min:1',
-            'apar_type_id' => 'required|exists:apar_types,id',
-            'capacity' => 'required|integer|min:1',
-            'manufactured_date' => 'nullable|date',
-            'expired_at' => 'nullable|date',
-            'status' => 'required|in:active,inactive,needs_repair,under_repair',
-            'tank_truck_id' => 'nullable|exists:tank_trucks,id',
-            'notes' => 'nullable|string',
-        ]);
-
         try {
-            $apar->update($validatedData);
+            $apar->update($request->validated());
 
             return response()->json([
                 'message' => 'APAR berhasil diperbarui',
@@ -158,41 +133,6 @@ class AparController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Get device information for logging
-     */
-    private function getDeviceInfo()
-    {
-        $userAgent = request()->userAgent();
-        $browser = 'Unknown';
-        $platform = 'Unknown';
-
-        if (strpos($userAgent, 'Firefox') !== false) {
-            $browser = 'Firefox';
-        } elseif (strpos($userAgent, 'Chrome') !== false) {
-            $browser = 'Chrome';
-        } elseif (strpos($userAgent, 'Safari') !== false) {
-            $browser = 'Safari';
-        } elseif (strpos($userAgent, 'Opera') !== false) {
-            $browser = 'Opera';
-        } elseif (strpos($userAgent, 'MSIE') !== false) {
-            $browser = 'Internet Explorer';
-        }
-
-        if (strpos($userAgent, 'Mac') !== false) {
-            $platform = 'Mac';
-        } elseif (strpos($userAgent, 'Windows') !== false) {
-            $platform = 'Windows';
-        } elseif (strpos($userAgent, 'Linux') !== false) {
-            $platform = 'Linux';
-        }
-
-        return [
-            'browser' => $browser,
-            'platform' => $platform,
-        ];
     }
 
     /**

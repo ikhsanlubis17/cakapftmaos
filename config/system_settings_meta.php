@@ -176,54 +176,88 @@ return [
             'validation' => 'required|integer|min:5|max:60',
         ],
 
+        // General Website & Branding Settings
+        'site_name' => [
+            'default' => 'CAKAP FT MAOS',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Nama Website / Sistem',
+            'description' => 'Nama website atau sistem yang tampil di header dan judul',
+            'help_text' => 'Nama sistem aplikasi',
+            'validation' => 'required|string|max:100',
+        ],
+        'site_tagline' => [
+            'default' => 'Sistem Monitoring APAR',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Tagline Website',
+            'description' => 'Tagline atau sub-judul website',
+            'help_text' => 'Tagline pendukung nama aplikasi',
+            'validation' => 'nullable|string|max:150',
+        ],
+        'site_description' => [
+            'default' => 'Solusi digital untuk inspeksi APAR yang akurat, real-time, dan anti-manipulasi di Fuel Terminal Maos.',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Deskripsi Singkat',
+            'description' => 'Deskripsi pengenalan sistem di halaman depan',
+            'help_text' => 'Deskripsi untuk metadata dan landing page',
+            'validation' => 'nullable|string|max:500',
+        ],
+        'site_logo' => [
+            'default' => '/images/logo2.svg',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Path Logo',
+            'description' => 'Path logo aplikasi',
+            'help_text' => 'URL / path logo aplikasi',
+            'validation' => 'required|string|max:255',
+        ],
+        'organization_name' => [
+            'default' => 'Fuel Terminal Maos',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Nama Organisasi / Unit',
+            'description' => 'Nama unit kerja atau terminal operasional',
+            'help_text' => 'Nama instansi pengelola',
+            'validation' => 'nullable|string|max:100',
+        ],
+        'contact_email' => [
+            'default' => 'cakap@pertamina.com',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Email Kontak',
+            'description' => 'Email bantuan teknis / pengelola',
+            'help_text' => 'Email kontak resmi',
+            'validation' => 'nullable|email|max:100',
+        ],
+        'contact_phone' => [
+            'default' => '+62 282 123456',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Nomor Telepon Kontak',
+            'description' => 'Nomor telepon / hotline bantuan',
+            'help_text' => 'Nomor telepon kontak',
+            'validation' => 'nullable|string|max:30',
+        ],
+        'contact_address' => [
+            'default' => 'Jl. Stasiun No. 1, Maos, Cilacap, Jawa Tengah',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Alamat Operasional',
+            'description' => 'Alamat fisik Fuel Terminal',
+            'help_text' => 'Alamat kantor / terminal',
+            'validation' => 'nullable|string|max:255',
+        ],
+        'footer_copyright' => [
+            'default' => '© 2025 CAKAP FT MAOS. All rights reserved.',
+            'type' => 'string',
+            'group' => 'general',
+            'label' => 'Teks Hak Cipta Footer',
+            'description' => 'Teks hak cipta pada footer',
+            'help_text' => 'Copyright notice footer',
+            'validation' => 'nullable|string|max:150',
+        ],
+
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Helper Methods
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Get default values for all settings
-     */
-    'defaults' => function () {
-        $settings = config('system_settings_meta.settings');
-        $defaults = [];
-        
-        foreach ($settings as $key => $meta) {
-            $defaults[$key] = $meta['default'];
-        }
-        
-        return $defaults;
-    },
-
-    /**
-     * Get validation rules for all settings
-     */
-    'validation_rules' => function () {
-        $settings = config('system_settings_meta.settings');
-        $rules = [];
-        
-        foreach ($settings as $key => $meta) {
-            $rules[$key] = $meta['validation'];
-        }
-        
-        return $rules;
-    },
-
-    /**
-     * Get settings keys only
-     */
-    'keys' => function () {
-        return array_keys(config('system_settings_meta.settings'));
-    },
-
-    /**
-     * Get settings by group
-     */
-    'by_group' => function (string $group) {
-        $settings = config('system_settings_meta.settings');
-        return array_filter($settings, fn($meta) => $meta['group'] === $group);
-    },
 ];

@@ -101,6 +101,28 @@ class Setting extends Model
     }
 
     /**
+     * Get safe public settings (branding, contact, public metadata)
+     */
+    public static function getPublicSettings(): array
+    {
+        $defaults = \App\Services\SystemSettingsMeta::defaults();
+        $all = self::getAllSettings();
+        $merged = array_merge($defaults, $all);
+
+        return [
+            'site_name' => $merged['site_name'] ?? 'CAKAP FT MAOS',
+            'site_tagline' => $merged['site_tagline'] ?? 'Sistem Monitoring APAR',
+            'site_description' => $merged['site_description'] ?? 'Solusi digital untuk inspeksi APAR yang akurat, real-time, dan anti-manipulasi di Fuel Terminal Maos.',
+            'site_logo' => $merged['site_logo'] ?? '/images/logo2.svg',
+            'organization_name' => $merged['organization_name'] ?? 'Fuel Terminal Maos',
+            'contact_email' => $merged['contact_email'] ?? 'cakap@pertamina.com',
+            'contact_phone' => $merged['contact_phone'] ?? '+62 282 123456',
+            'contact_address' => $merged['contact_address'] ?? 'Jl. Stasiun No. 1, Maos, Cilacap, Jawa Tengah',
+            'footer_copyright' => $merged['footer_copyright'] ?? '© 2025 CAKAP FT MAOS. All rights reserved.',
+        ];
+    }
+
+    /**
      * Convert value based on type
      */
     private static function convertValue($value, string $type)

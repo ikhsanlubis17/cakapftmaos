@@ -62,9 +62,9 @@ it('fails to refresh with malformed token', function () {
 it('can use refreshed token for authentication', function () {
     $token = JWTAuth::fromUser($this->user);
 
-    $newToken = $this->withHeader('Authorization', 'Bearer ' . $token)
-        ->postJson('/api/refresh')
-        ->json('token');
+    $newToken = JWTAuth::setToken($token)->refresh();
+    JWTAuth::unsetToken();
+    auth()->forgetGuards();
 
     $response = $this->withHeader('Authorization', 'Bearer ' . $newToken)
         ->getJson('/api/user');

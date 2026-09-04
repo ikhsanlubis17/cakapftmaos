@@ -22,14 +22,16 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-README.md
 TODO.md
 docs
 
 # Playwright
 node_modules/
+/screenshots/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+_ide_helper*.php
+.php-cs-fixer.cache

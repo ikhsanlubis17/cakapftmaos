@@ -149,7 +149,7 @@ class InspectionController extends Controller
                 return response()->json([
                     'valid' => false,
                     'message' => $validationResult['message'],
-                ], $validationResult['status_code']);
+                ], 422);
             }
         }
 

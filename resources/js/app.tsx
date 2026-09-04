@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-router";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Import CSS
@@ -417,12 +418,14 @@ const routeTree = rootRoute.addChildren([
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
-            {/* AuthProvider depends on QueryClientProvider */}
-            <AuthProvider>
-                <ToastProvider>
-                    <RouterSetup />
-                </ToastProvider>
-            </AuthProvider>
+            <SiteSettingsProvider>
+                {/* AuthProvider depends on QueryClientProvider */}
+                <AuthProvider>
+                    <ToastProvider>
+                        <RouterSetup />
+                    </ToastProvider>
+                </AuthProvider>
+            </SiteSettingsProvider>
 
             <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>

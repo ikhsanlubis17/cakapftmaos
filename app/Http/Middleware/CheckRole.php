@@ -25,12 +25,14 @@ class CheckRole
             ], 401);
         }
 
-        if (!in_array($user->role, $roles)) {
+        $userRole = $user->role instanceof \BackedEnum ? $user->role->value : (string)$user->role;
+
+        if (!in_array($userRole, $roles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Forbidden. You do not have permission to perform this action.',
                 'required_role' => implode(' or ', $roles),
-                'your_role' => $user->role
+                'your_role' => $userRole
             ], 403);
         }
 
