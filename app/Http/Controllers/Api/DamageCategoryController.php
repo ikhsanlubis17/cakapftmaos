@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DamageCategory;
+use App\Http\Requests\DamageCategory\StoreDamageCategoryRequest;
+use App\Http\Requests\DamageCategory\UpdateDamageCategoryRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -55,24 +57,9 @@ class DamageCategoryController extends Controller
     /**
      * Store a newly created damage category.
      */
-    public function store(Request $request)
+    public function store(StoreDamageCategoryRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:damage_categories',
-            'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
-            'description' => 'nullable|string',
-            'severity' => 'required|in:low,medium,high',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $category = DamageCategory::create($request->only(['name', 'type', 'description', 'severity']));
+        $category = DamageCategory::create($request->validated());
 
         return response()->json([
             'success' => true,
@@ -95,25 +82,9 @@ class DamageCategoryController extends Controller
     /**
      * Update the specified damage category.
      */
-    public function update(Request $request, DamageCategory $damageCategory)
+    public function update(UpdateDamageCategoryRequest $request, DamageCategory $damageCategory)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255|unique:damage_categories,name,' . $damageCategory->id,
-            'type' => ['required', 'string', Rule::in(DamageCategory::getTypes())],
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'severity' => 'required|in:low,medium,high',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $damageCategory->update($request->only(['name', 'type', 'description', 'is_active', 'severity']));
+        $damageCategory->update($request->validated());
 
         return response()->json([
             'success' => true,

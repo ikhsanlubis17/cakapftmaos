@@ -266,7 +266,7 @@
     @endif
 
     <div class="footer">
-        <p>Dokumen ini dibuat secara otomatis oleh sistem CAKAP FT MAOS</p>
+        <p>Dokumen ini dibuat secara otomatis oleh sistem {{ setting('site_name', config('app.name', 'CAKAP FT MAOS')) }}</p>
         <p>Untuk informasi lebih lanjut, hubungi administrator sistem</p>
         <p style="margin-top: 5px; font-size: 8px;">Generated at: {{ $generated_at }}</p>
     </div>

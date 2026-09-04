@@ -48,6 +48,7 @@ class Apar extends Model
             'longitude' => 'decimal:8',
             'valid_radius' => 'integer',
             'capacity' => 'integer',
+            'status' => \App\Enums\AparStatus::class,
         ];
     }
 
@@ -84,19 +85,27 @@ class Apar extends Model
     }
 
     /**
-     * Get the inspection schedule for the APAR.
+     * Get the inspection schedules for the APAR.
      */
-    public function inspectionSchedule(): HasMany
+    public function inspectionSchedules(): HasMany
     {
         return $this->hasMany(InspectionSchedule::class);
     }
 
     /**
+     * Alias for backward compatibility
+     */
+    public function inspectionSchedule(): HasMany
+    {
+        return $this->inspectionSchedules();
+    }
+
+    /**
      * Get the latest inspection for the APAR.
      */
-    public function latestInspection(): BelongsTo
+    public function latestInspection(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->belongsTo(Inspection::class)->latest();
+        return $this->hasOne(Inspection::class)->latestOfMany();
     }
 
     /**
@@ -136,7 +145,7 @@ class Apar extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === \App\Enums\AparStatus::Active || $this->status === 'active';
     }
 
     /**
@@ -144,7 +153,7 @@ class Apar extends Model
      */
     public function needsRepair(): bool
     {
-        return $this->status === 'needs_repair';
+        return $this->status === \App\Enums\AparStatus::NeedsRepair || $this->status === 'needs_repair';
     }
 
     /**
@@ -152,7 +161,7 @@ class Apar extends Model
      */
     public function isUnderRepair(): bool
     {
-        return $this->status === 'under_repair';
+        return $this->status === \App\Enums\AparStatus::UnderRepair || $this->status === 'under_repair';
     }
 
     /**
@@ -160,7 +169,7 @@ class Apar extends Model
      */
     public function isInactive(): bool
     {
-        return $this->status === 'inactive';
+        return $this->status === \App\Enums\AparStatus::Inactive || $this->status === 'inactive';
     }
 
     /**
@@ -168,7 +177,7 @@ class Apar extends Model
      */
     public function isNotFixable(): bool
     {
-        return $this->status === 'not_fixable';
+        return $this->status === \App\Enums\AparStatus::NotFixable || $this->status === 'not_fixable';
     }
 
     /**

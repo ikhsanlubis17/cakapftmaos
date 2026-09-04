@@ -37,6 +37,17 @@ beforeEach(function () {
         'severity' => 'medium',
         'description' => 'Karat pada tabung',
     ]);
+
+    // Create an active schedule for today so teknisi is authorized
+    \App\Models\InspectionSchedule::create([
+        'apar_id' => $this->apar->id,
+        'assigned_user_id' => $this->user->id,
+        'start_at' => now()->startOfDay(),
+        'end_at' => now()->endOfDay(),
+        'frequency' => 'weekly',
+        'is_active' => true,
+        'is_completed' => false,
+    ]);
 });
 
 
@@ -51,7 +62,7 @@ it('allows submission with condition good and no damage categories', function ()
             'selfie' => UploadedFile::fake()->image('selfie.jpg'),
         ]);
 
-    $response->assertStatus(200);
+    $response->assertStatus(201);
 });
 
 it('validation fails when condition is damaged but damage_categories is missing', function () {
@@ -106,5 +117,5 @@ it('allows submission when condition is damaged and damage_categories is provide
         ]);
 
     // Assuming the response structure or success message
-    $response->assertStatus(200);
+    $response->assertStatus(201);
 });

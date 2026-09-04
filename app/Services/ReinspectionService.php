@@ -271,9 +271,9 @@ class ReinspectionService
                 'start_at' => $startAt,
                 'end_at' => $endAt,
                 'frequency' => 'once',
+                'priority' => 'high',
                 'notes' => $scheduleNotes,
                 'is_active' => true,
-                'is_completed' => false,
                 'is_completed' => false,
                 'created_by' => $inspection->user_id, // Created by technician via system
             ]);

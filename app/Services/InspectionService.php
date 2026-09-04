@@ -498,45 +498,18 @@ class InspectionService
             'lng' => $lng,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
-            'device_info' => $this->getDeviceInfo(),
+            'device_info' => DeviceDetectorService::getDeviceInfo(),
             'is_successful' => $isSuccessful,
             'details' => $details,
         ]);
     }
 
     /**
-     * Get device information for logging
+     * Get device information for logging (delegated to DeviceDetectorService)
      */
     protected function getDeviceInfo(): array
     {
-        $userAgent = request()->userAgent();
-        $browser = 'Unknown';
-        $platform = 'Unknown';
-
-        if (strpos($userAgent, 'Firefox') !== false) {
-            $browser = 'Firefox';
-        } elseif (strpos($userAgent, 'Chrome') !== false) {
-            $browser = 'Chrome';
-        } elseif (strpos($userAgent, 'Safari') !== false) {
-            $browser = 'Safari';
-        } elseif (strpos($userAgent, 'Opera') !== false) {
-            $browser = 'Opera';
-        } elseif (strpos($userAgent, 'MSIE') !== false) {
-            $browser = 'Internet Explorer';
-        }
-
-        if (strpos($userAgent, 'Mac') !== false) {
-            $platform = 'Mac';
-        } elseif (strpos($userAgent, 'Windows') !== false) {
-            $platform = 'Windows';
-        } elseif (strpos($userAgent, 'Linux') !== false) {
-            $platform = 'Linux';
-        }
-
-        return [
-            'browser' => $browser,
-            'platform' => $platform,
-        ];
+        return DeviceDetectorService::getDeviceInfo();
     }
 
     /**

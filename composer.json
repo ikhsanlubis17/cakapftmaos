@@ -11,12 +11,10 @@
     "require": {
         "php": "^8.4",
         "ext-gd": "*",
-        "ext-imagick": "*",
         "ext-zip": "*",
         "ext-ctype": "*",
         "ext-dom": "*",
         "ext-fileinfo": "*",
-        "ext-gd": "*",
         "ext-intl": "*",
         "ext-iconv": "*",
         "ext-libxml": "*",
@@ -100,6 +98,9 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "platform": {
+            "ext-imagick": "3.7.0"
         }
     },
     "minimum-stability": "stable",

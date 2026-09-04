@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TankTruck;
 use App\Models\Apar;
+use App\Http\Requests\TankTruck\StoreTankTruckRequest;
+use App\Http\Requests\TankTruck\UpdateTankTruckRequest;
 
 class TankTruckController extends Controller
 {
@@ -29,17 +31,9 @@ class TankTruckController extends Controller
     /**
      * Store a newly created tank truck
      */
-    public function store(Request $request)
+    public function store(StoreTankTruckRequest $request)
     {
-        $request->validate([
-            'plate_number' => 'required|string|unique:tank_trucks,plate_number',
-            'driver_name' => 'required|string',
-            'driver_phone' => 'nullable|string',
-            'description' => 'nullable|string',
-            'status' => 'required|in:active,inactive,maintenance',
-        ]);
-
-        $tankTruck = TankTruck::create($request->all());
+        $tankTruck = TankTruck::create($request->validated());
 
         return response()->json([
             'message' => 'Mobil tangki berhasil ditambahkan',
@@ -58,17 +52,9 @@ class TankTruckController extends Controller
     /**
      * Update the specified tank truck
      */
-    public function update(Request $request, TankTruck $tankTruck)
+    public function update(UpdateTankTruckRequest $request, TankTruck $tankTruck)
     {
-        $request->validate([
-            'plate_number' => 'required|string|unique:tank_trucks,plate_number,' . $tankTruck->id,
-            'driver_name' => 'required|string',
-            'driver_phone' => 'nullable|string',
-            'description' => 'nullable|string',
-            'status' => 'required|in:active,inactive,maintenance',
-        ]);
-
-        $tankTruck->update($request->all());
+        $tankTruck->update($request->validated());
 
         return response()->json([
             'message' => 'Mobil tangki berhasil diperbarui',

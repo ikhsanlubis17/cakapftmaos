@@ -4,9 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\UserActivationMail;
 
 class UserController extends Controller
 {
@@ -25,45 +31,38 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'nullable|string|max:20',
-            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi'])],
-            'is_active' => 'boolean',
-            'admin_password' => 'required|string', // Validation for admin password
-        ]);
+        $validated = $request->validated();
 
         // Validate admin password
-        $admin = \Illuminate\Support\Facades\Auth::user();
-        if (!Hash::check($request->admin_password, $admin->password)) {
+        $admin = Auth::user();
+        if (!Hash::check($validated['admin_password'], $admin->password)) {
             return response()->json([
                 'message' => 'Password admin salah. Silakan coba lagi.',
                 'errors' => ['admin_password' => ['Password admin salah.']]
             ], 422);
         }
 
-        $activationToken = \Illuminate\Support\Str::uuid();
-        $dummyPassword = \Illuminate\Support\Str::random(32); // Secure random password
+        $activationToken = Str::uuid();
+        $dummyPassword = Str::random(32);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
             'password' => Hash::make($dummyPassword),
-            'phone' => $request->phone,
-            'role' => $request->role,
-            'is_active' => false, // Default to inactive until verified
+            'phone' => $validated['phone'] ?? null,
+            'role' => $validated['role'],
+            'is_active' => false,
             'activation_token' => $activationToken,
             'activation_expires_at' => now()->addHours(24),
         ]);
         
         // Send Activation Email
         try {
-            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\UserActivationMail($user));
+            Mail::to($user->email)->send(new UserActivationMail($user));
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to send activation email: ' . $e->getMessage());
+            Log::error('Failed to send activation email: ' . $e->getMessage());
         }
 
         return response()->json([
@@ -83,27 +82,20 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:8',
-            'phone' => 'nullable|string|max:20',
-            'role' => ['required', Rule::in(['admin', 'supervisor', 'teknisi'])],
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $updateData = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'role' => $request->role,
-            'is_active' => $request->is_active ?? true,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'role' => $validated['role'],
+            'is_active' => $validated['is_active'] ?? true,
         ];
 
-        if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->password);
+        if (!empty($validated['password'])) {
+            $updateData['password'] = Hash::make($validated['password']);
         }
 
         $user->update($updateData);

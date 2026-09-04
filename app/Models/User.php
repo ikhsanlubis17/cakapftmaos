@@ -111,7 +111,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === \App\Enums\UserRole::Admin || $this->role === 'admin';
     }
 
     /**
@@ -119,7 +119,7 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isTeknisi(): bool
     {
-        return $this->role === 'teknisi';
+        return $this->role === \App\Enums\UserRole::Teknisi || $this->role === 'teknisi';
     }
 
     /**
@@ -127,6 +127,6 @@ class User extends Authenticatable implements JWTSubject
      */
     public function isSupervisor(): bool
     {
-        return $this->role === 'supervisor';
+        return $this->role === \App\Enums\UserRole::Supervisor || $this->role === 'supervisor';
     }
 }

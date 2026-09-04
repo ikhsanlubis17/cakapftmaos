@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AparType;
+use App\Http\Requests\AparType\StoreAparTypeRequest;
+use App\Http\Requests\AparType\UpdateAparTypeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 
 class AparTypeController extends Controller
 {
@@ -34,32 +35,16 @@ class AparTypeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreAparTypeRequest $request): JsonResponse
     {
         try {
-            $request->validate([
-                'name' => 'required|string|max:255|unique:apar_types,name',
-                'description' => 'nullable|string|max:500',
-                'is_active' => 'boolean'
-            ]);
-
-            $aparType = AparType::create([
-                'name' => $request->name,
-                'description' => $request->description,
-                'is_active' => $request->get('is_active', true)
-            ]);
+            $aparType = AparType::create($request->validated());
 
             return response()->json([
                 'success' => true,
                 'data' => $aparType,
                 'message' => 'Jenis APAR berhasil ditambahkan'
             ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -73,49 +58,26 @@ class AparTypeController extends Controller
      */
     public function show(AparType $aparType): JsonResponse
     {
-        try {
-            return response()->json([
-                'success' => true,
-                'data' => $aparType,
-                'message' => 'Jenis APAR berhasil diambil'
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Jenis APAR tidak ditemukan'
-            ], 404);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $aparType,
+            'message' => 'Jenis APAR berhasil diambil'
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, AparType $aparType): JsonResponse
+    public function update(UpdateAparTypeRequest $request, AparType $aparType): JsonResponse
     {
         try {
-            $request->validate([
-                'name' => 'required|string|max:255|unique:apar_types,name,' . $aparType->id,
-                'description' => 'nullable|string|max:500',
-                'is_active' => 'boolean'
-            ]);
-
-            $aparType->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'is_active' => $request->get('is_active', true)
-            ]);
+            $aparType->update($request->validated());
 
             return response()->json([
                 'success' => true,
                 'data' => $aparType,
                 'message' => 'Jenis APAR berhasil diperbarui'
             ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

@@ -31,14 +31,8 @@ if (! function_exists('getAparStatusLabel')) {
      */
     function getAparStatusLabel(string $status): string
     {
-        return match ($status) {
-            'active' => 'Aktif',
-            'inactive' => 'Non-Aktif',
-            'needs_repair' => 'Perlu Perbaikan',
-            'under_repair' => 'Sedang Diperbaiki',
-            'not_fixable' => 'Tidak Dapat Diperbaiki',
-            default => ucfirst(str_replace('_', ' ', $status)),
-        };
+        $enum = \App\Enums\AparStatus::tryFrom($status);
+        return $enum ? $enum->label() : ucfirst(str_replace('_', ' ', $status));
     }
 }
 
@@ -48,14 +42,8 @@ if (! function_exists('getAparStatusClass')) {
      */
     function getAparStatusClass(string $status): string
     {
-        return match ($status) {
-            'active' => 'status-active',
-            'inactive' => 'status-inactive',
-            'needs_repair' => 'status-needs-repair',
-            'under_repair' => 'status-under-repair',
-            'not_fixable' => 'status-not-fixable',
-            default => 'status-inactive',
-        };
+        $enum = \App\Enums\AparStatus::tryFrom($status);
+        return $enum ? $enum->badgeClass() : 'status-inactive';
     }
 }
 
@@ -65,15 +53,8 @@ if (! function_exists('getFrequencyLabel')) {
      */
     function getFrequencyLabel(string $frequency): string
     {
-        return match ($frequency) {
-            'daily' => 'Harian',
-            'weekly' => 'Mingguan',
-            'monthly' => 'Bulanan',
-            'quarterly' => 'Triwulanan',
-            'yearly' => 'Tahunan',
-            'once' => 'Sekali',
-            default => ucfirst($frequency),
-        };
+        $enum = \App\Enums\ScheduleFrequency::tryFrom($frequency);
+        return $enum ? $enum->label() : ucfirst($frequency);
     }
 }
 

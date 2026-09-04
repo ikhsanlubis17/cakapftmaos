@@ -4,11 +4,20 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\SystemSettingsMeta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
 class SettingController extends Controller
 {
+    /**
+     * Display public system settings (branding, contact, public metadata).
+     */
+    public function publicSettings()
+    {
+        return response()->json(Setting::getPublicSettings());
+    }
+
     /**
      * Display system settings.
      */
@@ -19,8 +28,7 @@ class SettingController extends Controller
 
         // If no settings in database, return defaults from config
         if (empty($settings)) {
-            $defaultsFunc = config('system_settings_meta.defaults');
-            $settings = $defaultsFunc();
+            $settings = SystemSettingsMeta::defaults();
         }
 
         return response()->json($settings);
@@ -31,16 +39,14 @@ class SettingController extends Controller
      */
     public function update(Request $request)
     {
-        // Get validation rules from config
-        $rulesFunc = config('system_settings_meta.validation_rules');
-        $validationRules = $rulesFunc();
+        // Get validation rules from SystemSettingsMeta
+        $validationRules = SystemSettingsMeta::validationRules();
 
         // Validate request
         $validated = $request->validate($validationRules);
 
-        // Get allowed keys from config
-        $keysFunc = config('system_settings_meta.keys');
-        $allowedKeys = $keysFunc();
+        // Get allowed keys from SystemSettingsMeta
+        $allowedKeys = SystemSettingsMeta::keys();
 
         // Extract only allowed settings
         $settings = $request->only($allowedKeys);
