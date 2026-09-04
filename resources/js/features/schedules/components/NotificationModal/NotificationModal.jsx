@@ -13,20 +13,20 @@ const NotificationModal = ({ isOpen, onClose, onSelectType, sending }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-50">
+            <div className="bg-white rounded-[6px] shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
                 {/* Modal Header */}
-                <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/50">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center">
-                                <BellIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-[#041562] text-white rounded-[6px] flex items-center justify-center">
+                                <BellIcon className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="text-base sm:text-lg font-bold text-gray-900">
+                                <h3 className="text-base sm:text-lg font-bold text-slate-900">
                                     Pilih Jenis Notifikasi
                                 </h3>
-                                <p className="text-xs sm:text-sm text-gray-600">
+                                <p className="text-xs sm:text-sm text-slate-500">
                                     Pilih jenis notifikasi yang akan dikirim
                                 </p>
                             </div>
@@ -34,31 +34,31 @@ const NotificationModal = ({ isOpen, onClose, onSelectType, sending }) => {
                         <button
                             onClick={onClose}
                             disabled={sending}
-                            className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                            className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-[6px] transition-colors duration-200"
                         >
-                            <XCircleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                            <XCircleIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* Modal Body */}
                 <div className="p-4 sm:p-6">
-                    <div className="space-y-3 sm:space-y-4">
+                    <div className="space-y-3">
                         <button
                             onClick={() => onSelectType("today")}
                             disabled={sending}
-                            className="w-full p-3 sm:p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-green-600 hover:to-green-700 focus:ring-2 focus:ring-green-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full p-3.5 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50"
                         >
-                            <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <CalendarIcon className="w-5 h-5" />
                             <span>Jadwal Sedang Berlangsung</span>
                         </button>
 
                         <button
                             onClick={() => onSelectType("all")}
                             disabled={sending}
-                            className="w-full p-3 sm:p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full p-3.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50"
                         >
-                            <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                            <BellIcon className="w-5 h-5 text-[#11468F]" />
                             <span>Semua Jadwal Aktif</span>
                         </button>
                     </div>

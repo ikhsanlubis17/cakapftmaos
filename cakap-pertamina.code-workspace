@@ -12,5 +12,11 @@
             "esbenp.prettier-vscode",
             "ms-vscode.vscode-json"
         ]
+    },
+    "settings": {
+        "css.lint.unknownAtRules": "ignore",
+        "files.associations": {
+            "*.css": "tailwindcss"
+        }
     }
 }

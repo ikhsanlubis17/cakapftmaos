@@ -26,19 +26,19 @@ const Header = ({ apar }) => {
     }
     
     return (
-        <div className="bg-gradient-to-r from-red-500 to-red-600 shadow-xl rounded-2xl p-4 sm:p-6 border border-red-400">
+        <div className="bg-[#041562] shadow-sm rounded-[6px] p-4 sm:p-6 border-b-4 border-[#11468F]">
             <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="flex-shrink-0">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                        <FireIcon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-[6px] bg-white/10 flex items-center justify-center shadow-sm text-white">
+                        <FireIcon className="h-6 w-6 sm:h-7 sm:w-7" />
                     </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1">Inspeksi APAR</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1 tracking-tight">Inspeksi APAR</h1>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
-                        <p className="text-sm sm:text-lg font-semibold text-white/90 truncate">{apar.serial_number || 'N/A'}</p>
-                        <span className="hidden sm:inline text-white/60">•</span>
-                        <p className="text-xs sm:text-base text-white/80 truncate">{apar.location_name || 'N/A'}</p>
+                        <p className="text-sm sm:text-lg font-bold text-white truncate">{apar.serial_number || 'N/A'}</p>
+                        <span className="hidden sm:inline text-slate-400">•</span>
+                        <p className="text-xs sm:text-base text-slate-200 truncate">{apar.location_name || 'N/A'}</p>
                     </div>
                 </div>
             </div>
@@ -47,12 +47,12 @@ const Header = ({ apar }) => {
 };
 
 const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, capturePhoto, stopCamera, videoRef, canvasRef, captureCountdown, showFlash, setPhoto }) => (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
-        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-red-100 flex items-center justify-center mr-3">
-                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
+        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
+                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <span>Foto APAR <span className="text-red-500">*</span></span>
+            <span>Foto APAR <span className="text-[#DA1212]">*</span></span>
         </label>
 
         {!photo && !cameraActive && (
@@ -60,18 +60,18 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                 type="button"
                 onClick={startCamera}
                 disabled={cameraLoading}
-                className="w-full aspect-[3/4] bg-white border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full aspect-[3/4] bg-slate-50 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/60 transition-all duration-300 group shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-red-600" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-[6px] bg-white border border-slate-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 text-[#041562] shadow-xs">
+                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
-                <p className="mt-4 text-base sm:text-lg font-semibold text-gray-700 group-hover:text-red-700">Ambil Foto APAR</p>
-                <p className="mt-1 text-xs sm:text-sm text-gray-500 px-4 text-center">Pastikan APAR terlihat jelas dalam frame</p>
+                <p className="mt-4 text-base sm:text-lg font-bold text-slate-800 group-hover:text-[#041562]">Ambil Foto APAR</p>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 px-4 text-center">Pastikan APAR terlihat jelas dalam frame</p>
             </button>
         )}
 
         {cameraActive && !photo && (
-            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4]">
+            <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4]">
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                 <canvas ref={canvasRef} className="hidden" />
 
@@ -84,8 +84,8 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                         <div className="border-r border-b border-white/50"></div>
                         <div className="border-r border-b border-white/50"></div>
                         <div className="border-b border-white/50"></div>
-                        <div className="border-r border-white/50"></div>
-                        <div className="border-r border-white/50"></div>
+                        <div className="border-r border-b border-white/50"></div>
+                        <div className="border-r border-b border-white/50"></div>
                         <div></div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                     <button
                         type="button"
                         onClick={stopCamera}
-                        className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
+                        className="p-3 sm:p-4 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
                         <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -114,14 +114,13 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                         disabled={captureCountdown > 0}
                         className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-red-600 hover:bg-red-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
-                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#11468F] hover:bg-[#0d3873] border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center text-white">
+                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
                         </div>
                     </button>
                 </div>
 
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-red-600/90 backdrop-blur-md text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center shadow-lg">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#041562]/90 backdrop-blur-md text-white border border-[#041562] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold flex items-center shadow-lg">
                     Live Camera
                 </div>
             </div>
@@ -129,9 +128,9 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
 
         {photo && (
             <div className="space-y-3">
-                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
                     <img src={URL.createObjectURL(photo)} alt="APAR Photo" className="w-full h-full object-contain" />
-                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-green-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-emerald-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
                         <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
                         Foto Tersimpan
                     </div>
@@ -139,7 +138,7 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
                 <button
                     type="button"
                     onClick={() => setPhoto(null)}
-                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
                 >
                     <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                     Ulangi Foto APAR
@@ -150,12 +149,12 @@ const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, cap
 );
 
 const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieCamera, captureSelfie, stopSelfieCamera, selfieVideoRef, selfieCanvasRef, captureCountdown, showFlash, setSelfie }) => (
-    <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-2xl border border-blue-200 shadow-sm">
-        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
+        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
+                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <span>Selfie Teknisi <span className="text-red-500">*</span></span>
+            <span>Selfie Teknisi <span className="text-[#DA1212]">*</span></span>
         </label>
 
         {!selfie && !selfieCameraActive && (
@@ -163,18 +162,18 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                 type="button"
                 onClick={startSelfieCamera}
                 disabled={selfieLoading}
-                className="w-full aspect-[3/4] bg-white border-2 border-dashed border-blue-300 rounded-xl flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 group shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full aspect-[3/4] bg-slate-50 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/60 transition-all duration-300 group shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600" />
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-[6px] bg-white border border-slate-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 text-[#041562] shadow-xs">
+                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
                 </div>
-                <p className="mt-4 text-base sm:text-lg font-semibold text-gray-700 group-hover:text-blue-700">Ambil Selfie</p>
-                <p className="mt-1 text-xs sm:text-sm text-gray-500 px-4 text-center">Wajib selfie di lokasi inspeksi</p>
+                <p className="mt-4 text-base sm:text-lg font-bold text-slate-800 group-hover:text-[#041562]">Ambil Selfie</p>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 px-4 text-center">Wajib selfie di lokasi inspeksi</p>
             </button>
         )}
 
         {selfieCameraActive && !selfie && (
-            <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4]">
+            <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4]">
                 <video ref={selfieVideoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
                 <canvas ref={selfieCanvasRef} className="hidden" />
 
@@ -190,7 +189,7 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                     <button
                         type="button"
                         onClick={stopSelfieCamera}
-                        className="p-3 sm:p-4 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
+                        className="p-3 sm:p-4 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
                         title="Batal"
                     >
                         <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -202,14 +201,13 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                         disabled={captureCountdown > 0}
                         className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
                     >
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-blue-600 hover:bg-blue-500 border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center">
-                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#11468F] hover:bg-[#0d3873] border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center text-white">
+                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
                         </div>
                     </button>
                 </div>
 
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-blue-600/90 backdrop-blur-md text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center shadow-lg">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2"></div>
+                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#041562]/90 backdrop-blur-md text-white border border-[#041562] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold flex items-center shadow-lg">
                     Selfie Mode
                 </div>
             </div>
@@ -217,9 +215,9 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
 
         {selfie && (
             <div className="space-y-3">
-                <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
                     <img src={URL.createObjectURL(selfie)} alt="Selfie" className="w-full h-full object-contain transform scale-x-[-1]" />
-                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-blue-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-emerald-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
                         <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
                         Selfie Tersimpan
                     </div>
@@ -227,7 +225,7 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
                 <button
                     type="button"
                     onClick={() => setSelfie(null)}
-                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-blue-200 text-blue-600 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
                 >
                     <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                     Ulangi Selfie
@@ -238,39 +236,39 @@ const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieC
 );
 
 const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowDamageForm, newDamage, setNewDamage, damageCategories, startDamageCamera, damageCameraActive, damageCameraLoading, damageVideoRef, damageCanvasRef, captureCountdown, showFlash, captureDamagePhoto, stopDamageCamera, addDamage }) => (
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-        <label className="block text-xl font-bold text-gray-900 mb-6 flex items-center">
+    <div className="bg-white p-6 rounded-[6px] border border-slate-200 shadow-sm">
+        <label className="block text-xl font-bold text-slate-900 mb-6 flex items-center">
             🚨 Kategori Kerusakan
         </label>
 
         {selectedDamages.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {selectedDamages.map((damage) => (
-                    <div key={damage.id} className="bg-red-50 border border-red-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
+                    <div key={damage.id} className="bg-slate-50 border border-slate-200 rounded-[6px] p-4 shadow-sm hover:shadow-md transition-all">
                         <div className="flex items-start justify-between mb-3">
                             <div className="space-y-1">
-                                <span className="inline-block bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-bold">{damage.category_name}</span>
+                                <span className="inline-block bg-rose-100 text-[#DA1212] border border-rose-200 px-3 py-1 rounded-[3px] text-xs font-bold">{damage.category_name}</span>
                                 <div className="flex items-center mt-1">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide ${damage.severity === 'low' ? 'bg-green-100 text-green-800' :
-                                        damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                            damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                'bg-red-100 text-red-800'
+                                    <span className={`px-2 py-0.5 rounded-[3px] text-xs font-semibold uppercase tracking-wide ${damage.severity === 'low' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                        damage.severity === 'medium' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                            damage.severity === 'high' ? 'bg-orange-50 text-orange-800 border border-orange-200' :
+                                                'bg-rose-50 text-[#DA1212] border border-rose-200'
                                         }`}>
                                         {damage.severity === 'low' ? 'Rendah' : damage.severity === 'medium' ? 'Sedang' : damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
                                     </span>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => removeDamage(damage.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1">
+                            <button type="button" onClick={() => removeDamage(damage.id)} className="text-slate-400 hover:text-[#DA1212] transition-colors p-1">
                                 <TrashIcon className="h-5 w-5" />
                             </button>
                         </div>
 
-                        {damage.notes && <p className="text-sm text-gray-600 mb-4 bg-white/50 p-2 rounded-lg">{damage.notes}</p>}
+                        {damage.notes && <p className="text-sm text-slate-600 mb-4 bg-white p-2.5 rounded-[3px] border border-slate-200">{damage.notes}</p>}
 
                         {damage.damage_photo && (
-                            <div className="relative rounded-lg overflow-hidden aspect-video bg-black">
+                            <div className="relative rounded-[6px] overflow-hidden aspect-video bg-black">
                                 <img src={URL.createObjectURL(damage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                <div className="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                <div className="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-[3px] text-[10px] font-semibold">
                                     Foto Kerusakan
                                 </div>
                             </div>
@@ -284,19 +282,19 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
             <button
                 type="button"
                 onClick={() => setShowDamageForm(true)}
-                className="w-full py-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group"
+                className="w-full py-8 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-50 transition-all duration-300 group"
             >
-                <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-red-100 transition-colors duration-300 mb-3">
-                    <PlusIcon className="h-8 w-8 text-gray-400 group-hover:text-red-600 transition-colors duration-300" />
+                <div className="h-14 w-14 rounded-[6px] bg-slate-100 flex items-center justify-center group-hover:bg-[#041562] group-hover:text-white transition-colors duration-300 mb-3 text-slate-500">
+                    <PlusIcon className="h-8 w-8" />
                 </div>
-                <p className="text-lg font-semibold text-gray-700 group-hover:text-red-700">Tambah Kategori Kerusakan</p>
-                <p className="text-sm text-gray-500">Klik untuk melaporkan kerusakan baru</p>
+                <p className="text-lg font-bold text-slate-800 group-hover:text-[#041562]">Tambah Kategori Kerusakan</p>
+                <p className="text-sm text-slate-500">Klik untuk melaporkan kerusakan baru</p>
             </button>
         ) : (
-            <div className="border-2 border-red-100 rounded-xl p-6 bg-red-50/50 animate-fadeIn">
+            <div className="border border-slate-200 rounded-[6px] p-6 bg-slate-50/70 animate-fadeIn">
                 <div className="flex justify-between items-center mb-6">
-                    <h4 className="text-lg font-bold text-gray-900">Form Laporan Kerusakan</h4>
-                    <button onClick={() => setShowDamageForm(false)} className="text-gray-400 hover:text-gray-600">
+                    <h4 className="text-lg font-bold text-slate-900">Form Laporan Kerusakan</h4>
+                    <button onClick={() => setShowDamageForm(false)} className="text-slate-400 hover:text-slate-600">
                         <XMarkIcon className="h-6 w-6" />
                     </button>
                 </div>
@@ -304,7 +302,7 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Kerusakan <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Kategori Kerusakan <span className="text-[#DA1212]">*</span></label>
                             <select
                                 value={newDamage.category_id}
                                 onChange={(e) => {
@@ -315,18 +313,18 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                                         severity: category ? category.severity : 'medium'
                                     });
                                 }}
-                                className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white" required>
+                                className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] bg-white text-sm" required>
                                 <option value="">Pilih kategori kerusakan</option>
                                 {damageCategories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Tingkat Keparahan</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Tingkat Keparahan</label>
                             <select
                                 value={newDamage.severity}
                                 disabled
-                                className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-100 cursor-not-allowed text-gray-500"
+                                className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] bg-slate-100 cursor-not-allowed text-slate-500 text-sm"
                             >
                                 <option value="low">Rendah</option>
                                 <option value="medium">Sedang</option>
@@ -336,31 +334,31 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Catatan Tambahan</label>
-                        <textarea value={newDamage.notes} onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })} rows={3} className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none bg-white" placeholder="Jelaskan detail kerusakan..." />
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan Tambahan</label>
+                        <textarea value={newDamage.notes} onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })} rows={3} className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] resize-none bg-white text-sm" placeholder="Jelaskan detail kerusakan..." />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {/* Damage Photo Section */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Foto Kerusakan <span className="text-red-500">*</span></label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Foto Kerusakan <span className="text-[#DA1212]">*</span></label>
 
                             {!newDamage.damage_photo && !damageCameraActive && (
                                 <button
                                     type="button"
                                     onClick={() => startDamageCamera()}
                                     disabled={damageCameraLoading}
-                                    className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center hover:border-red-500 hover:bg-red-50 transition-all duration-300 group disabled:opacity-50"
+                                    className="w-full aspect-[3/4] border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/50 transition-all duration-300 group disabled:opacity-50"
                                 >
-                                    <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 mb-3">
-                                        <CameraIcon className="h-6 w-6 text-red-600" />
+                                    <div className="h-12 w-12 rounded-[6px] bg-slate-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 mb-3 text-[#041562]">
+                                        <CameraIcon className="h-6 w-6" />
                                     </div>
-                                    <p className="font-medium text-gray-700 group-hover:text-red-700">Ambil Foto Kerusakan</p>
+                                    <p className="font-bold text-slate-800 group-hover:text-[#041562]">Ambil Foto Kerusakan</p>
                                 </button>
                             )}
 
                             {damageCameraActive && !newDamage.damage_photo && (
-                                <div className="relative bg-black rounded-xl overflow-hidden shadow-lg aspect-[3/4] group">
+                                <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] group">
                                     <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                                     <canvas ref={damageCanvasRef} className="hidden" />
 
@@ -373,9 +371,9 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                                     {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
 
                                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4">
-                                        <button onClick={stopDamageCamera} className="p-3 rounded-full bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
+                                        <button onClick={stopDamageCamera} className="p-3 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
                                         <button onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="p-1 rounded-full border-2 border-white/30">
-                                            <div className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-500 border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6 text-white" /></div>
+                                            <div className="h-12 w-12 rounded-full bg-[#11468F] hover:bg-[#0d3873] text-white border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6" /></div>
                                         </button>
                                     </div>
                                 </div>
@@ -383,9 +381,9 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
 
                             {newDamage.damage_photo && (
                                 <div className="space-y-3">
-                                    <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[3/4] bg-black">
+                                    <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
                                         <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-500 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-bold shadow-lg flex items-center">
+                                        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
                                             <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
                                             Foto Kerusakan
                                         </div>
@@ -393,7 +391,7 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                                     <button
                                         type="button"
                                         onClick={() => setNewDamage({ ...newDamage, damage_photo: null })}
-                                        className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border-2 border-orange-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-all font-medium text-sm sm:text-base shadow-sm"
+                                        className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
                                     >
                                         <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                                         Ulangi Foto
@@ -404,8 +402,8 @@ const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowD
                     </div>
 
                     <div className="flex space-x-3 pt-4">
-                        <button type="button" onClick={addDamage} className="flex-1 bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg hover:shadow-red-500/30">Simpan Kerusakan</button>
-                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null }); }} className="px-6 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium text-gray-700">Batal</button>
+                        <button type="button" onClick={addDamage} className="flex-1 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold px-6 py-2.5 rounded-[6px] transition-all shadow-sm">Simpan Kerusakan</button>
+                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null }); }} className="px-6 py-2.5 border border-slate-300 rounded-[6px] hover:bg-slate-50 transition-colors font-medium text-slate-700">Batal</button>
                     </div>
                 </div>
             </div>
@@ -1339,28 +1337,28 @@ const InspectionFormEnhanced = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-slate-50">
             <div className="max-w-4xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <Header apar={apar} />
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white shadow-xl rounded-2xl p-4 sm:p-6 space-y-6 sm:space-y-8 border border-gray-100">
+                <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-[6px] p-4 sm:p-6 space-y-6 sm:space-y-8 border border-slate-200">
                     <APARPhotoCapture photo={photo} cameraActive={cameraActive} cameraLoading={cameraLoading} startCamera={startCamera} capturePhoto={capturePhoto} stopCamera={stopCamera} videoRef={videoRef} canvasRef={canvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setPhoto={setPhoto} />
 
                     <SelfieCapture selfie={selfie} selfieCameraActive={selfieCameraActive} selfieLoading={selfieLoading} startSelfieCamera={startSelfieCamera} captureSelfie={captureSelfie} stopSelfieCamera={stopSelfieCamera} selfieVideoRef={selfieVideoRef} selfieCanvasRef={selfieCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setSelfie={setSelfie} />
 
                     {/* Condition */}
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
-                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gray-200 flex items-center justify-center mr-3">
-                                <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+                    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
+                        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
+                                <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                             </div>
-                            <span>Kondisi APAR <span className="text-red-500">*</span></span>
+                            <span>Kondisi APAR <span className="text-[#DA1212]">*</span></span>
                         </label>
                         <select
                             value={condition}
                             onChange={(e) => setCondition(e.target.value)}
-                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                            className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-bold bg-white shadow-sm"
                             required
                         >
                             <option value="good">✅ Baik</option>
@@ -1392,24 +1390,24 @@ const InspectionFormEnhanced = () => {
 
                     {/* Teknisi and Schedule Selection (Admin/Supervisor only) */}
                     {isAdminOrSupervisor && condition === 'damaged' && (
-                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 rounded-2xl border-2 border-blue-200 shadow-sm">
-                            <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4 flex items-center">
-                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-200 flex items-center justify-center mr-3">
-                                    <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                        <div className="bg-slate-50 p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
+                            <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
+                                    <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
-                                <span>Penugasan Perbaikan <span className="text-red-500">*</span></span>
+                                <span>Penugasan Perbaikan <span className="text-[#DA1212]">*</span></span>
                             </label>
                             
                             <div className="space-y-4">
                                 {/* Teknisi Selection */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Pilih Teknisi yang Akan Melakukan Perbaikan <span className="text-red-500">*</span>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Pilih Teknisi yang Akan Melakukan Perbaikan <span className="text-[#DA1212]">*</span>
                                     </label>
                                     <select
                                         value={selectedTeknisiId}
                                         onChange={(e) => setSelectedTeknisiId(e.target.value)}
-                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
                                         required={isAdminOrSupervisor && condition === 'damaged'}
                                     >
                                         <option value="">Pilih Teknisi</option>
@@ -1420,35 +1418,35 @@ const InspectionFormEnhanced = () => {
                                         ))}
                                     </select>
                                     {teknisiListQuery.isLoading && (
-                                        <p className="mt-2 text-sm text-gray-500">Memuat daftar teknisi...</p>
+                                        <p className="mt-2 text-sm text-slate-500 font-medium">Memuat daftar teknisi...</p>
                                     )}
                                 </div>
 
                                 {/* Schedule Date */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Tanggal Jadwal Perbaikan <span className="text-red-500">*</span>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Tanggal Jadwal Perbaikan <span className="text-[#DA1212]">*</span>
                                     </label>
                                     <input
                                         type="date"
                                         value={scheduleDate}
                                         onChange={(e) => setScheduleDate(e.target.value)}
                                         min={new Date().toISOString().split('T')[0]}
-                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
                                         required={isAdminOrSupervisor && condition === 'damaged'}
                                     />
                                 </div>
 
                                 {/* Schedule Time */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Waktu Jadwal Perbaikan <span className="text-red-500">*</span>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                        Waktu Jadwal Perbaikan <span className="text-[#DA1212]">*</span>
                                     </label>
                                     <input
                                         type="time"
                                         value={scheduleTime}
                                         onChange={(e) => setScheduleTime(e.target.value)}
-                                        className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base sm:text-lg font-medium bg-white shadow-sm"
+                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
                                         required={isAdminOrSupervisor && condition === 'damaged'}
                                     />
                                 </div>
@@ -1457,17 +1455,17 @@ const InspectionFormEnhanced = () => {
                     )}
 
                     {/* Location Status */}
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm">
+                    <div className="bg-white rounded-[6px] p-4 sm:p-6 border border-slate-200 shadow-sm">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
-                            <label className="block text-lg sm:text-xl font-bold text-gray-900 flex items-center">
-                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                                    <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                            <label className="block text-lg sm:text-xl font-bold text-slate-900 flex items-center">
+                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
+                                    <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </div>
                                 <span>Lokasi Inspeksi</span>
                             </label>
                             {locationLoading && (
-                                <span className="text-sm text-gray-500 flex items-center">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mr-2"></div>
+                                <span className="text-sm text-slate-500 font-medium flex items-center">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#11468F] mr-2"></div>
                                     Mencari lokasi...
                                 </span>
                             )}
@@ -1475,23 +1473,23 @@ const InspectionFormEnhanced = () => {
 
                         {currentLocation ? (
                             <div className="space-y-3">
-                                <div className="flex items-center text-sm text-gray-600">
-                                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                                <div className="flex items-center text-sm text-slate-700 font-medium">
+                                    <CheckCircleIcon className="h-5 w-5 text-emerald-600 mr-2" />
                                     <span>Koordinat: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</span>
                                 </div>
 
                                 {apar?.latitude && apar?.longitude && (
-                                    <div className={`flex items-center p-3 rounded-lg ${locationValid ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+                                    <div className={`flex items-center p-3 rounded-[6px] ${locationValid ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}`}>
                                         {locationValid ? (
-                                            <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                                            <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 text-emerald-600" />
                                         ) : (
-                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0 text-[#DA1212]" />
                                         )}
                                         <div>
-                                            <p className="font-medium">
+                                            <p className="font-bold">
                                                 {locationValid ? 'Lokasi Valid' : 'Lokasi Tidak Valid'}
                                             </p>
-                                            <p className="text-sm mt-1">
+                                            <p className="text-sm mt-0.5">
                                                 Jarak ke APAR: <strong>{locationDistance}m</strong> (Maks: {locationValidRadius}m)
                                             </p>
                                         </div>
@@ -1499,28 +1497,28 @@ const InspectionFormEnhanced = () => {
                                 )}
                             </div>
                         ) : locationSkipped ? (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-4">
                                 <div className="flex items-start">
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-slate-600 mr-2 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-medium text-blue-800">
+                                        <p className="text-sm font-bold text-slate-900">
                                             Lokasi Dilewati
                                         </p>
-                                        <p className="text-sm text-blue-700 mt-1">
+                                        <p className="text-sm text-slate-600 mt-1">
                                             Inspeksi akan disimpan tanpa data lokasi.
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div className="bg-amber-50 border border-amber-200 rounded-[6px] p-4">
                                 <div className="flex items-start">
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
+                                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mr-2 mt-0.5" />
                                     <div>
-                                        <p className="text-sm font-medium text-yellow-800">
+                                        <p className="text-sm font-bold text-amber-900">
                                             Lokasi belum terdeteksi
                                         </p>
-                                        <p className="text-sm text-yellow-700 mt-1">
+                                        <p className="text-sm text-amber-800 mt-1">
                                             {locationError || 'Pastikan GPS aktif dan izin lokasi diberikan.'}
                                         </p>
                                     </div>
@@ -1533,7 +1531,7 @@ const InspectionFormEnhanced = () => {
                                 type="button"
                                 onClick={getCurrentLocation}
                                 disabled={locationLoading}
-                                className="flex-1 flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                                className="flex-1 flex items-center justify-center px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-bold rounded-[6px] text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] disabled:opacity-50"
                             >
                                 <MapPinIcon className="h-4 w-4 mr-2" />
                                 {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi'}
@@ -1543,7 +1541,7 @@ const InspectionFormEnhanced = () => {
                                 <button
                                     type="button"
                                     onClick={skipLocation}
-                                    className="flex-1 flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                    className="flex-1 flex items-center justify-center px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-bold rounded-[6px] text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F]"
                                 >
                                     Lanjutkan Tanpa Lokasi
                                 </button>
@@ -1552,13 +1550,13 @@ const InspectionFormEnhanced = () => {
                     </div>
 
                     {/* Notes */}
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <label className="block text-lg sm:text-xl font-bold text-gray-900 mb-4">Catatan Tambahan</label>
+                    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
+                        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4">Catatan Tambahan</label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={4}
-                            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none bg-white shadow-sm text-sm sm:text-base"
+                            className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] resize-none bg-white shadow-sm text-sm sm:text-base"
                             placeholder="Tambahkan catatan inspeksi jika diperlukan..."
                         />
                     </div>
@@ -1568,7 +1566,7 @@ const InspectionFormEnhanced = () => {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="w-full sm:flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3.5 sm:py-4 rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl"
+                            className="w-full sm:flex-1 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold px-6 py-3.5 sm:py-4 rounded-[6px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-base sm:text-lg shadow-sm"
                         >
                             {submitting ? (
                                 <div className="flex items-center justify-center space-x-2">
@@ -1582,7 +1580,7 @@ const InspectionFormEnhanced = () => {
                         <button
                             type="button"
                             onClick={() => navigate({ to: '/' })}
-                            className="w-full sm:w-auto px-6 py-3.5 sm:py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold text-base sm:text-lg shadow-sm"
+                            className="w-full sm:w-auto px-6 py-3.5 sm:py-4 border border-slate-300 rounded-[6px] hover:bg-slate-50 transition-all duration-200 font-bold text-base sm:text-lg shadow-sm text-slate-700"
                         >
                             Batal
                         </button>

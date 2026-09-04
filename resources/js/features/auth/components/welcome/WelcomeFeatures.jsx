@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-    SparklesIcon, 
     ArrowRightIcon, 
     MapPinIcon, 
     CameraIcon, 
@@ -14,78 +13,89 @@ const WelcomeFeatures = ({ settings }) => {
     const features = [
         {
             icon: MapPinIcon,
-            title: 'Validasi Lokasi',
-            description: 'Pastikan inspeksi APAR statis hanya bisa dilakukan di lokasi valid dengan radius 30 meter',
-            color: 'from-emerald-500 to-teal-600'
+            title: 'Validasi Lokasi GPS',
+            badge: 'Geofencing',
+            description: 'Memastikan inspeksi APAR hanya dapat dilakukan di lokasi fisik valid dengan batas radius 30 meter secara otomatis.',
         },
         {
             icon: CameraIcon,
-            title: 'Bukti Foto Kamera',
-            description: 'Tidak bisa upload dari galeri, hanya kamera langsung untuk memastikan keaslian',
-            color: 'from-blue-500 to-indigo-600'
+            title: 'Bukti Foto Kamera Langsung',
+            badge: 'Anti-Fraud',
+            description: 'Mewajibkan pengambilan foto langsung melalui kamera gawai saat inspeksi berlangsung tanpa opsi unggah galeri.',
         },
         {
             icon: ChartBarIcon,
-            title: 'Dashboard Realtime',
-            description: 'Statistik inspeksi dan status APAR lengkap dengan grafik visual yang informatif',
-            color: 'from-purple-500 to-violet-600'
+            title: 'Dashboard Telemetri Real-time',
+            badge: 'Analytics',
+            description: 'Visualisasi status APAR, rasio kesiapan darurat, grafik tipe tabung, dan pemantauan perbaikan secara instan.',
         },
         {
             icon: ShieldCheckIcon,
-            title: 'Akses Terbatas',
-            description: 'Hanya user yang terverifikasi bisa input inspeksi dengan role-based access control',
-            color: 'from-orange-500 to-red-600'
+            title: 'Role-Based Access Control',
+            badge: 'Security',
+            description: 'Pembagian hierarki hak akses yang ketat antara Teknisi lapangan, Supervisor verifikator, dan Administrator sistem.',
         },
         {
             icon: BellIcon,
-            title: 'Notifikasi Inspeksi',
-            description: 'Jadwal & pengingat via Email untuk memastikan inspeksi tepat waktu',
-            color: 'from-amber-500 to-orange-600'
+            title: 'Jadwal & Notifikasi Otomatis',
+            badge: 'Scheduler',
+            description: 'Pengingat berkala via sistem dan email untuk menjamin tidak ada tabung APAR yang melewati batas periode inspeksi.',
         },
         {
             icon: QrCodeIcon,
-            title: 'QR Code Scanner',
-            description: 'Scan QR code APAR untuk memulai inspeksi dengan cepat dan akurat',
-            color: 'from-red-500 to-pink-600'
+            title: 'Barcode & QR Scanner',
+            badge: 'Identification',
+            description: 'Pemindaian cepat QR code pada tabung statis maupun armada mobil tangki untuk mengakses rekam jejak aset seketika.',
         }
     ];
 
     return (
-        <section id="features" className="py-20 lg:py-32 bg-gray-50">
+        <section id="features" className="py-20 bg-white text-slate-900 border-t border-b border-[#EEEEEE]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16 lg:mb-20">
-                    <div className="inline-flex items-center px-4 py-2 bg-red-100 rounded-full mb-6">
-                        <SparklesIcon className="h-4 w-4 text-red-600 mr-2" />
-                        <span className="text-sm font-semibold text-red-700">Fitur Unggulan</span>
+                {/* Section Header */}
+                <div className="text-center mb-14">
+                    <div className="inline-flex items-center px-3 py-1 bg-[#EEEEEE] border border-slate-200 rounded-[6px] mb-3">
+                        <span className="text-xs font-semibold text-[#041562] tracking-wider uppercase">
+                            Fitur Inti Sistem
+                        </span>
                     </div>
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                        Fitur Utama Sistem
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#041562] tracking-tight leading-tight mb-3">
+                        Dirancang Khusus untuk Standar Keamanan Tinggi
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                        {settings.site_name} dilengkapi dengan fitur-fitur canggih untuk memastikan inspeksi APAR yang akurat dan dapat dipercaya.
+                    <p className="text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
+                        Fitur dirancang untuk menyederhanakan tugas lapangan teknisi sekaligus memberikan data yang tak terbantahkan bagi manajemen.
                     </p>
                 </div>
 
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Features Grid */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {features.map((feature, index) => (
                         <div
                             key={index}
-                            className="group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+                            className="bg-white rounded-[6px] p-6 border border-[#EEEEEE] hover:border-slate-300 hover:shadow-md transition-all duration-150 flex flex-col justify-between"
                         >
-                            <div className={`bg-gradient-to-r ${feature.color} rounded-2xl p-4 w-fit mb-6 shadow-lg group-hover:scale-110 transition-all duration-300`}>
-                                <feature.icon className="h-8 w-8 text-white" />
+                            <div>
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className="w-11 h-11 rounded-[6px] bg-blue-50 border border-blue-100 flex items-center justify-center text-[#11468F]">
+                                        <feature.icon className="h-5 w-5" />
+                                    </div>
+                                    <span className="px-2.5 py-0.5 rounded-[3px] text-[10px] font-semibold bg-[#EEEEEE] text-slate-700 uppercase tracking-wider">
+                                        {feature.badge}
+                                    </span>
+                                </div>
+
+                                <h3 className="text-base font-bold text-[#041562] mb-2 tracking-tight">
+                                    {feature.title}
+                                </h3>
+
+                                <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                                    {feature.description}
+                                </p>
                             </div>
 
-                            <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-red-600 transition-colors duration-300">
-                                {feature.title}
-                            </h3>
-
-                            <p className="text-gray-600 leading-relaxed mb-6">
-                                {feature.description}
-                            </p>
-
-                            <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
-                                <ArrowRightIcon className="h-5 w-5 text-red-500 transform group-hover:translate-x-2 transition-transform duration-300" />
+                            <div className="pt-4 mt-5 border-t border-[#EEEEEE] flex items-center text-xs font-semibold text-[#11468F]">
+                                <span>Standar Industri Terpenuhi</span>
+                                <ArrowRightIcon className="h-3.5 w-3.5 ml-1.5" />
                             </div>
                         </div>
                     ))}

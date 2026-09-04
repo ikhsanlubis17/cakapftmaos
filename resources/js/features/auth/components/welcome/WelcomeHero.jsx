@@ -5,108 +5,151 @@ import {
     ArrowRightIcon, 
     ChartBarIcon, 
     QrCodeIcon, 
-    CameraIcon, 
-    MapPinIcon, 
-    ShieldCheckIcon 
+    ShieldCheckIcon,
+    MapPinIcon,
+    CameraIcon,
+    CheckCircleIcon
 } from '@heroicons/react/24/outline';
 
 const WelcomeHero = ({ scrollToSection, settings }) => {
     return (
-        <section id="hero" className="relative min-h-screen flex items-start lg:items-center bg-gradient-to-br from-gray-900 via-gray-800 to-red-900 overflow-hidden pt-32 lg:pt-0">
-            {/* Animated Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-transparent to-orange-500/20"></div>
-                <div className="absolute inset-0" style={{
-                    backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-                    backgroundSize: '40px 40px'
-                }}></div>
+        <section id="hero" className="relative min-h-screen flex items-center bg-[#041562] text-white overflow-hidden pt-24 pb-16 lg:py-0">
+            {/* Background Texture & Subtle Depth */}
+            <div className="absolute inset-0 pointer-events-none">
+                <div 
+                    className="absolute inset-0 opacity-10"
+                    style={{
+                        backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
+                        backgroundSize: '40px 40px'
+                    }}
+                />
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#11468F] rounded-full blur-3xl opacity-40"></div>
+                <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-[#11468F] rounded-full blur-3xl opacity-30"></div>
             </div>
 
-            {/* Floating Elements */}
-            <div className="absolute top-20 left-10 w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-            <div className="absolute top-40 right-20 w-3 h-3 bg-orange-400 rounded-full animate-pulse delay-300"></div>
-            <div className="absolute bottom-40 left-20 w-1 h-1 bg-yellow-400 rounded-full animate-pulse delay-700"></div>
-
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                    <div className="text-center lg:text-left space-y-8">
-                        {/* Badge */}
-                        <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
-                            <div className="w-2 h-2 bg-red-400 rounded-full mr-2 animate-pulse"></div>
-                            <span className="text-sm font-medium text-white/90">
-                                Sistem Monitoring Terdepan
+                <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+                    {/* Left Column: Headline & Action */}
+                    <div className="lg:col-span-7 text-center lg:text-left space-y-6">
+                        {/* Pill Badge */}
+                        <div className="inline-flex items-center px-3 py-1.5 bg-white/10 border border-white/20 rounded-[6px] shadow-sm">
+                            <span className="text-xs font-semibold text-white tracking-wide uppercase">
+                                Industrial Asset & Safety Management
                             </span>
                         </div>
 
-                        {/* Main Headline */}
-                        <div className="space-y-6">
-                            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
-                                <span className="block text-white mb-2">
-                                    Sistem Monitoring
-                                </span>
-                                <span className="block bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
-                                    APAR Modern
-                                </span>
+                        {/* Display Headline */}
+                        <div className="space-y-4">
+                            <h1 className="text-3xl sm:text-4xl lg:text-[48px] font-bold text-white leading-[1.2] tracking-tight">
+                                Sistem Monitoring APAR Berstandar Industrial.
                             </h1>
-                            
-                            <p className="text-xl lg:text-2xl text-gray-300 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                                Solusi digital untuk inspeksi APAR yang{' '}
-                                <span className="text-emerald-400 font-semibold">akurat</span>,{' '}
-                                <span className="text-blue-400 font-semibold">real-time</span>, dan{' '}
-                                <span className="text-purple-400 font-semibold">anti-manipulasi</span>.
+                            <p className="text-base sm:text-lg text-slate-200 font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                                Optimalkan kepatuhan inspeksi, cegah risiko kegagalan darurat, dan pantau seluruh APAR statis serta armada mobil tangki dengan validasi GPS & kamera real-time.
                             </p>
                         </div>
 
+                        {/* Key Spec Badges */}
+                        <div className="flex flex-wrap gap-2.5 justify-center lg:justify-start pt-1">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-white/10 border border-white/15 text-xs font-medium text-white">
+                                <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
+                                Validasi Geofence 30m
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-white/10 border border-white/15 text-xs font-medium text-white">
+                                <CameraIcon className="w-4 h-4 text-emerald-400" />
+                                Kamera Langsung (Anti-Manipulasi)
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] bg-white/10 border border-white/15 text-xs font-medium text-white">
+                                <ShieldCheckIcon className="w-4 h-4 text-emerald-400" />
+                                Audit Log Terverifikasi
+                            </div>
+                        </div>
+
                         {/* CTA Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <div className="flex flex-col sm:flex-row gap-3.5 justify-center lg:justify-start pt-2">
                             <Link
                                 to="/login"
-                                className="group inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-lg font-semibold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+                                className="inline-flex items-center justify-center px-6 py-3 bg-[#11468F] text-white text-sm font-semibold rounded-[6px] shadow-sm hover:bg-[#0d3873] transition-colors duration-150"
                             >
-                                <PlayIcon className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-300" />
+                                <PlayIcon className="h-4 w-4 mr-2" />
                                 Masuk Sistem
-                                <ArrowRightIcon className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                                <ArrowRightIcon className="ml-2 h-4 w-4" />
                             </Link>
                             
                             <button
                                 onClick={() => scrollToSection('features')}
-                                className="group inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-lg font-semibold rounded-2xl hover:bg-white/20 transform hover:scale-105 transition-all duration-300"
+                                className="inline-flex items-center justify-center px-6 py-3 bg-transparent text-white border border-white/30 text-sm font-semibold rounded-[6px] hover:bg-white/10 transition-colors duration-150"
                             >
-                                <ChartBarIcon className="h-5 w-5 mr-3 group-hover:scale-110 transition-transform duration-300" />
-                                Lihat Fitur
+                                <ChartBarIcon className="h-4 w-4 mr-2 text-slate-200" />
+                                Pelajari Fitur
                             </button>
                         </div>
                     </div>
 
-                    {/* Hero Visual */}
-                    <div className="relative flex justify-center lg:justify-end">
-                        <div className="relative max-w-md w-full">
-                            {/* Main Card */}
-                            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-6 sm:p-8 transform hover:scale-105 transition-all duration-500">
-                                <div className="bg-gradient-to-br from-red-500 to-orange-500 rounded-2xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-white/10 rounded-2xl"></div>
-                                    <div className="relative z-10">
-                                        <QrCodeIcon className="h-20 w-20 mx-auto mb-6 animate-pulse" />
-                                        <h3 className="text-2xl font-bold mb-3">Scan QR APAR</h3>
-                                        <p className="text-white/90 text-lg mb-6">Mulai inspeksi dengan mudah</p>
-                                        <div className="flex justify-center space-x-2">
-                                            <div className="w-3 h-3 bg-white/70 rounded-full animate-bounce"></div>
-                                            <div className="w-3 h-3 bg-white/70 rounded-full animate-bounce delay-100"></div>
-                                            <div className="w-3 h-3 bg-white/70 rounded-full animate-bounce delay-200"></div>
+                    {/* Right Column: Telemetry Card */}
+                    <div className="lg:col-span-5 relative flex justify-center">
+                        <div className="relative w-full max-w-md">
+                            {/* Main Card Container */}
+                            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-[6px] p-6 shadow-xl space-y-5">
+                                {/* Header bar */}
+                                <div className="flex items-center justify-between pb-3.5 border-b border-white/15">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-white">
+                                            Terminal Inspeksi Terintegrasi
+                                        </span>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded-[3px] text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        AKTIF
+                                    </span>
+                                </div>
+
+                                {/* QR Scan Focus Panel */}
+                                <div className="bg-[#041562]/80 border border-white/15 rounded-[6px] p-6 text-center">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-[6px] bg-[#11468F] border border-white/20 mb-3 text-white shadow-sm">
+                                        <QrCodeIcon className="h-9 w-9" />
+                                    </div>
+
+                                    <h3 className="text-base font-bold text-white tracking-tight">
+                                        Scan QR APAR
+                                    </h3>
+                                    <p className="text-xs text-slate-300 mt-1">
+                                        Deteksi otomatis nomor seri & riwayat pemeliharaan
+                                    </p>
+                                </div>
+
+                                {/* Live Telemetry Metrics */}
+                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div className="p-3 bg-white/5 border border-white/15 rounded-[4px]">
+                                        <div className="flex items-center gap-1.5 text-slate-300 text-xs font-medium">
+                                            <MapPinIcon className="w-3.5 h-3.5 text-slate-200" />
+                                            GPS Radius
+                                        </div>
+                                        <div className="text-sm font-bold text-white mt-1">
+                                            &le; 30 Meter
+                                        </div>
+                                        <div className="text-[10px] text-emerald-400 font-medium mt-0.5">
+                                            &bull; Terverifikasi
+                                        </div>
+                                    </div>
+
+                                    <div className="p-3 bg-white/5 border border-white/15 rounded-[4px]">
+                                        <div className="flex items-center gap-1.5 text-slate-300 text-xs font-medium">
+                                            <CameraIcon className="w-3.5 h-3.5 text-slate-200" />
+                                            Foto Kamera
+                                        </div>
+                                        <div className="text-sm font-bold text-white mt-1">
+                                            Kamera Langsung
+                                        </div>
+                                        <div className="text-[10px] text-emerald-400 font-medium mt-0.5">
+                                            &bull; Anti-Manipulasi
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Floating Icons */}
-                            <div className="absolute -top-6 -right-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-xl hover:scale-110 transition-all duration-300">
-                                <CameraIcon className="h-8 w-8" />
-                            </div>
-                            <div className="absolute -bottom-6 -left-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-4 text-white shadow-xl hover:scale-110 transition-all duration-300">
-                                <MapPinIcon className="h-8 w-8" />
-                            </div>
-                            <div className="absolute top-1/2 -right-4 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-3 text-white shadow-xl hover:scale-110 transition-all duration-300 hidden sm:block">
-                                <ShieldCheckIcon className="h-6 w-6" />
+                                {/* Status Footer */}
+                                <div className="pt-2 flex items-center justify-between text-xs text-slate-300 border-t border-white/10">
+                                    <span>Lokasi: FT Maos Cilacap</span>
+                                    <span className="font-semibold text-emerald-300">Siaga Operasional</span>
+                                </div>
                             </div>
                         </div>
                     </div>

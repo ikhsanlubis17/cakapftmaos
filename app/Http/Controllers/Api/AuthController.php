@@ -6,10 +6,14 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\UpdateProfileRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Notifications\ResetPasswordNotification;
 
 class AuthController extends Controller
 {
@@ -208,4 +212,71 @@ class AuthController extends Controller
             'message' => 'Akun berhasil diaktivasi. Silakan login.',
         ]);
     }
+
+    /**
+     * Send password reset link to the user's email.
+     */
+    public function forgotPassword(ForgotPasswordRequest $request)
+    {
+        $email = $request->validated()['email'];
+        $user  = User::where('email', $email)->first();
+
+        // Always return success to prevent user enumeration
+        if (!$user) {
+            return response()->json([
+                'message' => 'Jika email terdaftar, instruksi pemulihan kata sandi telah dikirim.',
+            ]);
+        }
+
+        // Generate a secure token valid for 60 minutes
+        $token   = \Illuminate\Support\Str::random(64);
+        $expires = now()->addMinutes(60);
+
+        $user->update([
+            'password_reset_token'      => $token,
+            'password_reset_expires_at' => $expires,
+        ]);
+
+        // Send notification (log driver in dev, SMTP in prod)
+        $user->notify(new ResetPasswordNotification($token, $email, $user->name));
+
+        return response()->json([
+            'message' => 'Jika email terdaftar, instruksi pemulihan kata sandi telah dikirim.',
+        ]);
+    }
+
+    /**
+     * Reset user password using the token from email.
+     */
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        $validated = $request->validated();
+
+        $user = User::where('email', $validated['email'])
+            ->where('password_reset_token', $validated['token'])
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Token reset tidak valid atau email tidak ditemukan.',
+            ], 400);
+        }
+
+        if ($user->password_reset_expires_at && now()->greaterThan($user->password_reset_expires_at)) {
+            return response()->json([
+                'message' => 'Token reset sudah kedaluwarsa. Silakan minta link reset baru.',
+            ], 400);
+        }
+
+        $user->update([
+            'password'                  => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'password_reset_token'      => null,
+            'password_reset_expires_at' => null,
+        ]);
+
+        return response()->json([
+            'message' => 'Kata sandi berhasil diperbarui. Silakan login dengan kata sandi baru Anda.',
+        ]);
+    }
 }
+

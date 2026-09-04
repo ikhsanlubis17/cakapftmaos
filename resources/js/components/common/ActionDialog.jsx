@@ -75,22 +75,20 @@ const ActionDialog = ({
     };
 
     const getConfirmButtonStyle = () => {
-        if (type === 'approve') return 'bg-green-600 hover:bg-green-700 focus:ring-green-500';
-        if (type === 'reject') return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
-        if (type === 'rework') return 'bg-amber-500 hover:bg-amber-600 focus:ring-amber-500';
+        if (type === 'approve') return 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500';
+        if (type === 'reject') return 'bg-[#DA1212] hover:bg-[#b00f0f] text-white focus:ring-[#DA1212]';
+        if (type === 'rework') return 'bg-amber-600 hover:bg-amber-700 text-white focus:ring-amber-500';
         
         switch (confirmButtonColor) {
             case 'red':
-                return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+                return 'bg-[#DA1212] hover:bg-[#b00f0f] text-white focus:ring-[#DA1212]';
             case 'green':
-                return 'bg-green-600 hover:bg-green-700 focus:ring-green-500';
+                return 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500';
             case 'blue':
-                return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
             case 'yellow':
             case 'amber':
-                return 'bg-amber-500 hover:bg-amber-600 focus:ring-amber-500';
             default:
-                return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+                return 'bg-[#11468F] hover:bg-[#0d3873] text-white focus:ring-[#11468F]';
         }
     };
 
@@ -159,30 +157,30 @@ const ActionDialog = ({
                 />
                 
                 {/* Dialog */}
-                <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-auto transform transition-all duration-300 ease-out scale-100 opacity-100">
+                <div className="relative bg-white rounded-[6px] border border-[#EEEEEE] shadow-xl max-w-md w-full mx-auto transform transition-all duration-150 ease-out scale-100 opacity-100">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                        <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-between p-5 border-b border-[#EEEEEE]">
+                        <div className="flex items-center space-x-3.5">
                             <div className="flex-shrink-0">
                                 {getIcon()}
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 leading-6">
+                            <h3 className="text-base font-bold text-slate-900 leading-6">
                                 {title}
                             </h3>
                         </div>
                         <button
                             onClick={onClose}
                             disabled={isLoading}
-                            className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200 rounded-lg p-1 hover:bg-gray-100 disabled:opacity-50"
+                            className="text-slate-400 hover:text-slate-600 transition-colors duration-150 rounded-[4px] p-1.5 hover:bg-[#EEEEEE] disabled:opacity-50"
                         >
                             <XMarkIcon className="h-5 w-5" />
                         </button>
                     </div>
                     
                     {/* Content */}
-                    <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
+                    <div className="px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
                         {message && (
-                            <p className="text-gray-600 leading-relaxed text-base">
+                            <p className="text-slate-600 leading-relaxed text-sm">
                                 {message}
                             </p>
                         )}
@@ -190,7 +188,7 @@ const ActionDialog = ({
                         {/* Teknisi Selection */}
                         {showTeknisiSelect && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                                     Pilih Teknisi untuk Perbaikan
                                 </label>
                                 <select
@@ -199,7 +197,7 @@ const ActionDialog = ({
                                         setFormData({ ...formData, assigned_teknisi_id: e.target.value });
                                         if (errors.assigned_teknisi_id) setErrors({ ...errors, assigned_teknisi_id: '' });
                                     }}
-                                    className="w-full rounded-lg border border-gray-300 shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full rounded-[6px] border border-slate-300 shadow-sm p-2 text-sm focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] outline-none transition-colors"
                                 >
                                     <option value="">-- Pilih Teknisi --</option>
                                     {teknisiList.map((teknisi) => (
@@ -215,8 +213,8 @@ const ActionDialog = ({
                         {showScheduleFields && (
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Tanggal {(requireSchedule || formData.assigned_teknisi_id) && <span className="text-red-500">*</span>}
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                        Tanggal {(requireSchedule || formData.assigned_teknisi_id) && <span className="text-rose-500">*</span>}
                                     </label>
                                     <input
                                         type="date"
@@ -226,13 +224,13 @@ const ActionDialog = ({
                                             if (errors.schedule_date) setErrors({ ...errors, schedule_date: '' });
                                         }}
                                         min={new Date().toISOString().split('T')[0]}
-                                        className={`w-full rounded-lg border ${errors.schedule_date ? 'border-red-300' : 'border-gray-300'} shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500`}
+                                        className={`w-full rounded-[6px] border ${errors.schedule_date ? 'border-rose-300' : 'border-slate-300'} shadow-sm p-2 text-sm focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] outline-none transition-colors`}
                                     />
-                                    {errors.schedule_date && <p className="mt-1 text-xs text-red-600">{errors.schedule_date}</p>}
+                                    {errors.schedule_date && <p className="mt-1 text-xs text-rose-600 font-medium">{errors.schedule_date}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Waktu {(requireSchedule || formData.assigned_teknisi_id) && <span className="text-red-500">*</span>}
+                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                        Waktu {(requireSchedule || formData.assigned_teknisi_id) && <span className="text-rose-500">*</span>}
                                     </label>
                                     <input
                                         type="time"
@@ -241,9 +239,9 @@ const ActionDialog = ({
                                             setFormData({ ...formData, schedule_time: e.target.value });
                                             if (errors.schedule_time) setErrors({ ...errors, schedule_time: '' });
                                         }}
-                                        className={`w-full rounded-lg border ${errors.schedule_time ? 'border-red-300' : 'border-gray-300'} shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500`}
+                                        className={`w-full rounded-[6px] border ${errors.schedule_time ? 'border-rose-300' : 'border-slate-300'} shadow-sm p-2 text-sm focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] outline-none transition-colors`}
                                     />
-                                    {errors.schedule_time && <p className="mt-1 text-xs text-red-600">{errors.schedule_time}</p>}
+                                    {errors.schedule_time && <p className="mt-1 text-xs text-rose-600 font-medium">{errors.schedule_time}</p>}
                                 </div>
                             </div>
                         )}
@@ -251,8 +249,8 @@ const ActionDialog = ({
                         {/* Notes Field */}
                         {showNotesField && (
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {notesLabel || inputLabel} {(requireInput || requireNotes) && <span className="text-red-500">*</span>}
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    {notesLabel || inputLabel} {(requireInput || requireNotes) && <span className="text-rose-500">*</span>}
                                 </label>
                                 <textarea
                                     value={formData.notes}
@@ -262,11 +260,11 @@ const ActionDialog = ({
                                     }}
                                     placeholder={notesPlaceholder || inputPlaceholder}
                                     rows={3}
-                                    className={`w-full rounded-lg border ${errors.notes ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'} shadow-sm p-2 text-sm`}
+                                    className={`w-full rounded-[6px] border ${errors.notes ? 'border-rose-300 focus:ring-rose-500 focus:border-rose-500' : 'border-slate-300 focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]'} shadow-sm p-2 text-sm outline-none transition-colors`}
                                 />
-                                {errors.notes && <p className="mt-1 text-xs text-red-600">{errors.notes}</p>}
+                                {errors.notes && <p className="mt-1 text-xs text-rose-600 font-medium">{errors.notes}</p>}
                                 {minInputLength > 0 && (
-                                    <p className={`mt-1 text-xs ${formData.notes.trim().length >= minInputLength ? 'text-green-600' : 'text-gray-500'}`}>
+                                    <p className={`mt-1 text-xs ${formData.notes.trim().length >= minInputLength ? 'text-emerald-600 font-medium' : 'text-slate-500'}`}>
                                         {formData.notes.trim().length}/{minInputLength} karakter minimum
                                     </p>
                                 )}
@@ -275,12 +273,12 @@ const ActionDialog = ({
                     </div>
                     
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:justify-end p-6 bg-gray-50 rounded-b-2xl">
+                    <div className="flex flex-col sm:flex-row gap-2.5 sm:justify-end p-4 bg-slate-50 border-t border-[#EEEEEE]">
                         {showCancel && (
                             <button
                                 onClick={onClose}
                                 disabled={isLoading}
-                                className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 shadow-sm disabled:opacity-50"
+                                className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-[#EEEEEE] transition-colors duration-150 shadow-sm disabled:opacity-50"
                             >
                                 {cancelText}
                             </button>
@@ -288,7 +286,7 @@ const ActionDialog = ({
                         <button
                             onClick={handleConfirm}
                             disabled={isLoading}
-                            className={`w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm disabled:opacity-50 flex items-center justify-center ${getConfirmButtonStyle()}`}
+                            className={`w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-[6px] transition-colors duration-150 shadow-sm disabled:opacity-50 flex items-center justify-center ${getConfirmButtonStyle()}`}
                         >
                             {isLoading && (
                                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

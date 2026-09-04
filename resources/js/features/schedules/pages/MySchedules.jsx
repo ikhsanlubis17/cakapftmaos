@@ -271,17 +271,21 @@ const MySchedules = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Jadwal Tugas Saya</h1>
-                        <p className="text-sm sm:text-base text-gray-600 mt-1">
-                            Daftar jadwal inspeksi APAR yang telah ditugaskan kepada Anda
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center">
+                            <CalendarDaysIcon className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Jadwal Tugas Saya</h1>
+                            <p className="text-sm text-slate-600 mt-0.5">
+                                Daftar jadwal inspeksi APAR yang telah ditugaskan kepada Anda
+                            </p>
+                        </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <CalendarDaysIcon className="h-6 w-6 sm:h-8 sm:w-8 text-red-600" />
-                        <span className="text-base sm:text-lg font-semibold text-gray-900">
+                        <span className="inline-flex items-center px-3 py-1.5 rounded-[6px] text-sm font-semibold bg-[#11468F] text-white border border-[#11468F]">
                             {schedules.length} Jadwal
                         </span>
                     </div>
@@ -289,51 +293,51 @@ const MySchedules = () => {
             </div>
 
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-5">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <BellIcon className="h-8 w-8 text-yellow-600" />
+                        <div className="w-11 h-11 rounded-[6px] bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center flex-shrink-0">
+                            <BellIcon className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Hari Ini</p>
-                            <p className="text-2xl font-bold text-gray-900">{todaySchedules.length}</p>
+                        <div className="ml-3.5">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Hari Ini</p>
+                            <p className="text-2xl font-bold text-slate-900">{todaySchedules.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-5">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <CalendarIcon className="h-8 w-8 text-blue-600" />
+                        <div className="w-11 h-11 rounded-[6px] bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center flex-shrink-0">
+                            <CalendarIcon className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Akan Datang</p>
-                            <p className="text-2xl font-bold text-gray-900">{upcomingSchedules.length}</p>
+                        <div className="ml-3.5">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Akan Datang</p>
+                            <p className="text-2xl font-bold text-slate-900">{upcomingSchedules.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-5">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
+                        <div className="w-11 h-11 rounded-[6px] bg-red-50 border border-red-200 text-red-600 flex items-center justify-center flex-shrink-0">
+                            <ExclamationTriangleIcon className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Terlambat</p>
-                            <p className="text-2xl font-bold text-gray-900">{overdueSchedules.length}</p>
+                        <div className="ml-3.5">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Terlambat</p>
+                            <p className="text-2xl font-bold text-slate-900">{overdueSchedules.length}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-5">
                     <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                            <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                        <div className="w-11 h-11 rounded-[6px] bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <CheckCircleIcon className="h-6 w-6" />
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-500">Selesai</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                        <div className="ml-3.5">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Selesai</p>
+                            <p className="text-2xl font-bold text-slate-900">
                                 {completedSchedules.length}
                             </p>
                         </div>
@@ -342,11 +346,11 @@ const MySchedules = () => {
             </div>
 
             {/* Filters */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-4 sm:p-6">
-                <div className="grid grid-cols-1 gap-4">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Search */}
                     <div>
-                        <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="search" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
                             Cari Jadwal
                         </label>
                         <div className="relative">
@@ -356,24 +360,24 @@ const MySchedules = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="APAR, lokasi, atau catatan..."
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-[6px] text-sm bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                             />
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
                             </div>
                         </div>
                     </div>
 
                     {/* Status Filter */}
                     <div>
-                        <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="status-filter" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
                             Filter Status
                         </label>
                         <select
                             id="status-filter"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                            className="block w-full px-3 py-2 border border-slate-300 rounded-[6px] text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                         >
                             <option value="all">Semua Status</option>
                             <option value="today">Hari Ini</option>
@@ -384,14 +388,14 @@ const MySchedules = () => {
 
                     {/* Date Filter */}
                     <div>
-                        <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="date-filter" className="block text-xs sm:text-sm font-semibold text-slate-700 mb-2">
                             Filter Periode
                         </label>
                         <select
                             id="date-filter"
                             value={dateFilter}
                             onChange={(e) => setDateFilter(e.target.value)}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                            className="block w-full px-3 py-2 border border-slate-300 rounded-[6px] text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                         >
                             <option value="all">Semua Periode</option>
                             <option value="this_week">Minggu Ini</option>
@@ -402,12 +406,12 @@ const MySchedules = () => {
             </div>
 
             {/* Schedules List */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] overflow-hidden">
                 {filteredSchedules.length === 0 ? (
                     <div className="text-center py-12">
-                        <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 className="mt-2 text-sm font-medium text-gray-900">Tidak ada jadwal</h3>
-                        <p className="mt-1 text-sm text-gray-500">
+                        <CalendarIcon className="mx-auto h-12 w-12 text-slate-400" />
+                        <h3 className="mt-2 text-base font-bold text-slate-900">Tidak ada jadwal</h3>
+                        <p className="mt-1 text-sm text-slate-500">
                             {searchTerm || statusFilter !== 'all' || dateFilter !== 'all'
                                 ? 'Tidak ada jadwal yang sesuai dengan filter yang dipilih.'
                                 : 'Anda belum memiliki jadwal tugas inspeksi APAR.'
@@ -415,75 +419,77 @@ const MySchedules = () => {
                         </p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-slate-200">
                         {filteredSchedules.map((schedule) => (
-                            <div key={schedule.id} className="p-4 sm:p-6 hover:bg-gray-50 transition-colors">
+                            <div key={schedule.id} className="p-5 hover:bg-slate-50 transition-colors">
                                 <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
                                     <div className="flex-1 w-full">
                                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                                            <div className="flex items-center space-x-2">
-                                                <FireIcon className="h-5 w-5 text-red-600" />
-                                                <h3 className="text-base sm:text-lg font-medium text-gray-900">
+                                            <div className="flex items-center space-x-2.5">
+                                                <div className="w-8 h-8 rounded-[6px] bg-[#11468F]/10 text-[#11468F] flex items-center justify-center">
+                                                    <FireIcon className="h-4 w-4" />
+                                                </div>
+                                                <h3 className="text-base font-bold text-slate-900">
                                                     {schedule.apar?.serial_number || 'APAR Tidak Diketahui'}
                                                 </h3>
                                             </div>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(schedule)} w-fit`}>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-semibold ${getStatusColor(schedule)} w-fit`}>
                                                 {getStatusIcon(schedule)}
                                                 <span className="ml-1">{getStatusText(schedule)}</span>
                                             </span>
                                         </div>
 
-                                        <div className="grid grid-cols-1 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                                            <div className="space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                            <div className="space-y-2">
                                                 <div className="flex items-center space-x-2">
-                                                    <MapPinIcon className="h-4 w-4 text-gray-400" />
-                                                    <span className="text-sm text-gray-600">
+                                                    <MapPinIcon className="h-4 w-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-700">
                                                         {schedule.apar?.location_name || 'Lokasi tidak diketahui'}
                                                     </span>
                                                     {schedule.apar?.location_type === 'mobile' ? (
-                                                        <TruckIcon className="h-4 w-4 text-purple-500" />
+                                                        <TruckIcon className="h-4 w-4 text-indigo-500" />
                                                     ) : (
-                                                        <MapPinIcon className="h-4 w-4 text-blue-500" />
+                                                        <MapPinIcon className="h-4 w-4 text-[#11468F]" />
                                                     )}
                                                 </div>
 
                                                 <div className="flex items-center space-x-2">
-                                                    <CalendarIcon className="h-4 w-4 text-gray-400" />
-                                                    <span className="text-sm text-gray-600">
+                                                    <CalendarIcon className="h-4 w-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-700">
                                                         {formatDate(schedule)}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center space-x-2">
-                                                    <ClockIcon className="h-4 w-4 text-gray-400" />
-                                                    <span className="text-sm text-gray-600">
+                                                    <ClockIcon className="h-4 w-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-700">
                                                         {schedule.start_time} - {schedule.end_time}
                                                     </span>
                                                 </div>
 
                                                 <div className="flex items-center space-x-2">
-                                                    <UserIcon className="h-4 w-4 text-gray-400" />
-                                                    <span className="text-sm text-gray-600">
+                                                    <UserIcon className="h-4 w-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-700">
                                                         {getFrequencyText(schedule.frequency)}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            <div className="space-y-3">
-                                                <div className="text-sm text-gray-600">
-                                                    <span className="font-medium">Jarak waktu:</span> {getDaysUntil(schedule)}
+                                            <div className="space-y-2">
+                                                <div className="text-sm text-slate-700">
+                                                    <span className="font-semibold text-slate-800">Jarak waktu:</span> {getDaysUntil(schedule)}
                                                 </div>
 
                                                 {schedule.notes && (
-                                                    <div className="text-sm text-gray-600">
-                                                        <span className="font-medium">Catatan:</span> {schedule.notes}
+                                                    <div className="text-sm text-slate-700">
+                                                        <span className="font-semibold text-slate-800">Catatan:</span> {schedule.notes}
                                                     </div>
                                                 )}
 
                                                 {schedule.apar?.tank_truck && (
                                                     <div className="flex items-center space-x-2">
-                                                        <TruckIcon className="h-4 w-4 text-gray-400" />
-                                                        <span className="text-sm text-gray-600">
+                                                        <TruckIcon className="h-4 w-4 text-slate-400" />
+                                                        <span className="text-sm text-slate-700">
                                                             Mobil Tangki: {schedule.apar.tank_truck.plate_number}
                                                         </span>
                                                     </div>
@@ -493,12 +499,12 @@ const MySchedules = () => {
                                     </div>
 
                                     {schedule.is_active && !schedule.is_completed && (
-                                        <div className="lg:ml-4 flex flex-col items-stretch lg:items-end space-y-2 mt-4 lg:mt-0">
+                                        <div className="lg:ml-4 flex flex-col items-stretch lg:items-end space-y-2 mt-4 lg:mt-0 w-full lg:w-auto">
                                             <button
                                                 onClick={() => window.location.href = `/scan`}
-                                                className="inline-flex items-center justify-center px-4 py-2.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full lg:w-auto"
+                                                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] w-full lg:w-auto shadow-sm transition-colors"
                                             >
-                                                <FireIcon className="h-4 w-4 mr-1" />
+                                                <FireIcon className="h-4 w-4 mr-1.5" />
                                                 Mulai Inspeksi
                                             </button>
                                         </div>

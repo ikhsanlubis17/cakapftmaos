@@ -102,17 +102,17 @@ const MyRepairApprovals = () => {
 
     const getStatusBadge = (status) => {
         const statusConfig = {
-            pending: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', icon: ClockIcon, text: 'Menunggu' },
-            approved: { color: 'bg-green-100 text-green-800 border-green-200', icon: CheckCircleIcon, text: 'Disetujui' },
-            rejected: { color: 'bg-red-100 text-red-800 border-red-200', icon: XCircleIcon, text: 'Ditolak' },
-            completed: { color: 'bg-blue-100 text-blue-800 border-blue-200', icon: CheckCircleIcon, text: 'Selesai' }
+            pending: { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: ClockIcon, text: 'Menunggu' },
+            approved: { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircleIcon, text: 'Disetujui' },
+            rejected: { color: 'bg-rose-50 text-rose-700 border-rose-200', icon: XCircleIcon, text: 'Ditolak' },
+            completed: { color: 'bg-blue-50 text-blue-700 border-blue-200', icon: CheckCircleIcon, text: 'Selesai' }
         };
 
         const config = statusConfig[status] || statusConfig.pending;
         const Icon = config.icon;
 
         return (
-            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-bold uppercase tracking-wider border ${config.color}`}>
                 <Icon className="h-3 w-3 mr-1" />
                 {config.text}
             </span>
@@ -128,59 +128,63 @@ const MyRepairApprovals = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="space-y-6">
             {/* Header Section */}
-            <div className="bg-white shadow-sm sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Perbaikan Saya</h1>
-                            <p className="text-xs sm:text-sm text-gray-500">Kelola status perbaikan APAR Anda</p>
-                        </div>
-                        <button
-                            onClick={handleManualRefresh}
-                            disabled={refreshing}
-                            className={`p-2 rounded-full hover:bg-gray-100 transition-colors ${refreshing ? 'animate-spin text-red-600' : 'text-gray-600'}`}
-                        >
-                            <ArrowPathIcon className="h-6 w-6" />
-                        </button>
+            <div className="bg-white border border-slate-200 rounded-[6px] p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-black text-xl shadow-sm">
+                        <WrenchScrewdriverIcon className="w-6 h-6" />
                     </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Perbaikan Saya</h1>
+                        <p className="text-sm text-slate-500 mt-0.5">Status dan disposisi perbaikan APAR yang Anda tangani</p>
+                    </div>
+                </div>
+                <button
+                    onClick={handleManualRefresh}
+                    disabled={refreshing}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-xs self-start md:self-auto"
+                >
+                    <ArrowPathIcon className={`h-4 w-4 text-[#11468F] ${refreshing ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                </button>
+            </div>
 
-                    {/* Filter Chips */}
-                    <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                        {filterOptions.map((option) => (
-                            <button
-                                key={option.id}
-                                onClick={() => setFilter(option.id)}
-                                className={`px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm rounded-full font-medium whitespace-nowrap transition-all ${
-                                    filter === option.id
-                                        ? 'bg-red-600 text-white shadow-md shadow-red-200'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                            >
-                                {option.label}
-                            </button>
-                        ))}
-                    </div>
+            {/* Filter Chips */}
+            <div className="bg-white border border-slate-200 rounded-[6px] p-4 shadow-sm">
+                <div className="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {filterOptions.map((option) => (
+                        <button
+                            key={option.id}
+                            onClick={() => setFilter(option.id)}
+                            className={`px-3.5 py-1.5 text-xs rounded-[6px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                filter === option.id
+                                    ? 'bg-[#041562] text-white shadow-xs'
+                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                            }`}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
             {/* Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div>
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                        <p className="text-gray-500">Memuat data...</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F] mb-4"></div>
+                        <p className="text-sm font-semibold text-slate-500">Memuat data perbaikan...</p>
                     </div>
                 ) : approvals.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                        <div className="bg-gray-100 p-6 rounded-full mb-4">
-                            <WrenchScrewdriverIcon className="h-12 w-12 text-gray-400" />
+                    <div className="bg-white border border-slate-200 rounded-[6px] p-12 text-center shadow-sm">
+                        <div className="w-12 h-12 bg-slate-100 rounded-[6px] flex items-center justify-center mx-auto mb-3">
+                            <WrenchScrewdriverIcon className="h-6 w-6 text-slate-400" />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">Belum ada perbaikan</h3>
-                        <p className="text-gray-500 mt-1 max-w-xs mx-auto">
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">Belum Ada Perbaikan</h3>
+                        <p className="text-xs text-slate-500 max-w-xs mx-auto">
                             {filter === 'all' 
-                                ? 'Anda belum memiliki riwayat perbaikan APAR.' 
+                                ? 'Anda belum memiliki riwayat perbaikan APAR yang tercatat.' 
                                 : `Tidak ada perbaikan dengan status "${filterOptions.find(f => f.id === filter)?.label}".`}
                         </p>
                     </div>
@@ -189,47 +193,45 @@ const MyRepairApprovals = () => {
                         {approvals.map((approval) => (
                             <div 
                                 key={approval.id} 
-                                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300"
+                                className="bg-white rounded-[6px] shadow-sm border border-slate-200 overflow-hidden hover:border-[#11468F] transition-colors"
                             >
                                 {/* Card Header */}
-                                <div className="p-5 border-b border-gray-50 bg-gradient-to-r from-gray-50 to-white">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex items-center space-x-2">
-                                            <div className="bg-red-100 p-2 rounded-lg">
-                                                <FireIcon className="h-5 w-5 text-red-600" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-gray-900">{approval.inspection?.apar?.serial_number}</h3>
-                                                <p className="text-xs text-gray-500">ID: #{approval.id}</p>
-                                            </div>
+                                <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold">
+                                            <FireIcon className="h-5 w-5" />
                                         </div>
-                                        {getStatusBadge(approval.status)}
+                                        <div>
+                                            <h3 className="font-bold text-slate-900 text-sm">{approval.inspection?.apar?.serial_number}</h3>
+                                            <p className="text-[11px] text-slate-500 font-medium">ID Ref: #{approval.id}</p>
+                                        </div>
                                     </div>
+                                    {getStatusBadge(approval.status)}
                                 </div>
 
                                 {/* Card Body */}
-                                <div className="p-5 space-y-4">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center text-sm text-gray-600">
-                                            <MapPinIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                            <span className="truncate">{approval.inspection?.apar?.location_name}</span>
+                                <div className="p-4 space-y-4">
+                                    <div className="space-y-2 text-xs">
+                                        <div className="flex items-center text-slate-600">
+                                            <MapPinIcon className="h-4 w-4 mr-2 text-[#11468F] flex-shrink-0" />
+                                            <span className="truncate font-medium">{approval.inspection?.apar?.location_name || 'Lokasi N/A'}</span>
                                         </div>
-                                        <div className="flex items-center text-sm text-gray-600">
-                                            <ClockIcon className="h-4 w-4 mr-2 text-gray-400" />
-                                            <span>{new Date(approval.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                        <div className="flex items-center text-slate-600">
+                                            <ClockIcon className="h-4 w-4 mr-2 text-[#11468F] flex-shrink-0" />
+                                            <span className="font-medium">{new Date(approval.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         </div>
                                     </div>
 
                                     {/* Damage Tags */}
                                     {approval.inspection?.inspectionDamages?.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex flex-wrap gap-1.5">
                                             {approval.inspection.inspectionDamages.slice(0, 3).map((damage, idx) => (
-                                                <span key={idx} className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded-md font-medium border border-red-100">
+                                                <span key={idx} className="px-2 py-0.5 bg-rose-50 text-rose-800 text-xs rounded-[3px] font-bold uppercase tracking-wider border border-rose-200">
                                                     {damage.damageCategory?.name}
                                                 </span>
                                             ))}
                                             {approval.inspection.inspectionDamages.length > 3 && (
-                                                <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-md font-medium border border-gray-200">
+                                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-[3px] font-bold border border-slate-200">
                                                     +{approval.inspection.inspectionDamages.length - 3}
                                                 </span>
                                             )}
@@ -237,21 +239,21 @@ const MyRepairApprovals = () => {
                                     )}
 
                                     {/* Action Button */}
-                                    <div className="pt-2">
+                                    <div className="pt-2 border-t border-slate-100">
                                         {approval.status === 'approved' ? (
                                             <button
                                                 onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
-                                                className="w-full flex items-center justify-center px-4 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors shadow-sm shadow-green-200"
+                                                className="w-full flex items-center justify-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white rounded-[6px] font-bold text-xs uppercase tracking-wider shadow-xs transition-colors"
                                             >
                                                 <WrenchScrewdriverIcon className="h-4 w-4 mr-2" />
                                                 Lakukan Perbaikan
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={() => navigate({ to: `/repair-approvals/${approval.id}` })}
-                                                className="w-full flex items-center justify-center px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                                                onClick={() => navigate({ to: `/view/${approval.id}` })}
+                                                className="w-full flex items-center justify-center px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-[6px] font-bold text-xs uppercase tracking-wider transition-colors"
                                             >
-                                                <EyeIcon className="h-4 w-4 mr-2" />
+                                                <EyeIcon className="h-4 w-4 mr-2 text-[#11468F]" />
                                                 Lihat Detail
                                             </button>
                                         )}

@@ -29,7 +29,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/activate', [AuthController::class, 'activate']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::post('/refresh', [AuthController::class, 'refresh']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::get('/public-settings', [SettingController::class, 'publicSettings']);
+
 
 // QR Code route (handles auth internally)
 Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);

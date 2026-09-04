@@ -15,8 +15,8 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Foto Inspeksi</h3>
+        <div className="bg-white rounded-[6px] p-5 border border-slate-200 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Foto Inspeksi</h3>
 
             {/* Photo Grid */}
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -25,14 +25,14 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                         <img
                             src={photo}
                             alt={`Foto ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
+                            className="w-full h-48 object-cover rounded-[6px] border border-slate-200"
                         />
                         <button
                             type="button"
                             onClick={() => onRemovePhoto(index)}
-                            className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors opacity-0 group-hover:opacity-100"
+                            className="absolute top-2 right-2 p-1.5 bg-[#DA1212] text-white rounded-[4px] hover:bg-rose-700 transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
                         >
-                            <XMarkIcon className="h-5 w-5" />
+                            <XMarkIcon className="h-4 w-4" />
                         </button>
                     </div>
                 ))}
@@ -50,15 +50,15 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
             <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-xl hover:border-red-500 hover:bg-red-50 transition-all duration-200 flex items-center justify-center space-x-2 text-gray-700 hover:text-red-600"
+                className="w-full py-3 px-4 border-2 border-dashed border-slate-300 rounded-[6px] hover:border-[#11468F] hover:bg-slate-50 transition-all flex items-center justify-center space-x-2 text-slate-600 hover:text-slate-900"
             >
-                <CameraIcon className="h-6 w-6" />
-                <span className="font-medium">
+                <CameraIcon className="h-5 w-5" />
+                <span className="text-xs font-bold uppercase tracking-wider">
                     {photos.length > 0 ? 'Tambah Foto Lainnya' : 'Ambil Foto APAR'}
                 </span>
             </button>
 
-            <p className="text-sm text-gray-500 mt-2 text-center">
+            <p className="text-xs text-slate-500 mt-2 text-center">
                 Foto harus diambil langsung dari kamera
             </p>
         </div>

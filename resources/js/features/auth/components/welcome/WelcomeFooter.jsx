@@ -3,84 +3,96 @@ import { Link } from '@tanstack/react-router';
 
 const WelcomeFooter = ({ scrollToSection, settings }) => {
     return (
-        <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-16 lg:py-20">
+        <footer className="bg-[#041562] text-white border-t border-[#11468F]/30 pt-16 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid md:grid-cols-4 gap-8 lg:gap-12">
-                    <div className="col-span-2 space-y-6">
-                        <div className="flex items-center">
+                <div className="grid md:grid-cols-4 gap-10 lg:gap-12 pb-12 border-b border-white/10">
+                    {/* Brand Info */}
+                    <div className="col-span-2 space-y-4">
+                        <div className="flex items-center gap-3">
                             <img 
                                 src={settings.site_logo} 
                                 alt={`${settings.site_name} Logo`} 
-                                className="h-12 w-12 rounded-2xl shadow-xl"
+                                className="h-10 w-10 rounded-[6px] bg-white p-1 border border-white/20 shadow-sm"
                             />
-                            <div className="ml-4">
-                                <span className="text-2xl font-bold">{settings.site_name}</span>
-                                <div className="text-sm text-gray-400 font-medium">{settings.site_tagline}</div>
+                            <div>
+                                <div className="text-xl font-bold tracking-tight text-white">
+                                    {settings.site_name}
+                                </div>
+                                <div className="text-xs text-slate-300 font-medium">
+                                    {settings.site_tagline}
+                                </div>
                             </div>
                         </div>
                         
-                        <p className="text-gray-300 text-lg leading-relaxed max-w-md">
-                            Sistem monitoring APAR yang handal dan terpercaya untuk memastikan keamanan di seluruh wilayah operasional {settings.organization_name}.
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md font-normal">
+                            Platform monitoring dan pemeliharaan APAR terpadu untuk memastikan standar keselamatan operasional tertinggi di wilayah kerja {settings.organization_name}.
                         </p>
                     </div>
 
+                    {/* Navigation */}
                     <div>
-                        <h3 className="text-xl font-bold mb-6 text-white">Navigasi</h3>
-                        <ul className="space-y-4">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+                            Navigasi Cepat
+                        </h4>
+                        <ul className="space-y-2.5 text-xs font-medium">
                             {[
                                 { id: 'about', label: 'Tentang Sistem' },
-                                { id: 'features', label: 'Fitur Unggulan' },
+                                { id: 'features', label: 'Fitur Utama' },
                                 { id: 'workflow', label: 'Alur Kerja' },
                                 { id: 'roles', label: 'Peran Pengguna' }
                             ].map((item) => (
                                 <li key={item.id}>
                                     <button
                                         onClick={() => scrollToSection(item.id)}
-                                        className="text-gray-400 hover:text-white transition-all duration-300 text-lg hover:translate-x-1 transform inline-block"
+                                        className="text-slate-300 hover:text-white transition-colors duration-150"
                                     >
                                         {item.label}
                                     </button>
                                 </li>
                             ))}
-                            <li>
+                            <li className="pt-1">
                                 <Link
                                     to="/login"
-                                    className="text-red-400 hover:text-red-300 transition-all duration-300 text-lg hover:translate-x-1 transform inline-block font-semibold"
+                                    className="text-white hover:text-blue-200 transition-colors duration-150 font-semibold"
                                 >
-                                    Login Sistem
+                                    Login ke Sistem &rarr;
                                 </Link>
                             </li>
                         </ul>
                     </div>
 
+                    {/* Industrial Telemetry / System Specs */}
                     <div>
-                        <h3 className="text-xl font-bold mb-6 text-white">Informasi</h3>
-                        <ul className="space-y-4">
-                            <li className="flex items-center">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 animate-pulse"></div>
-                                <span className="text-gray-300">Versi: v1.0.0</span>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">
+                            Status Sistem
+                        </h4>
+                        <ul className="space-y-2 text-xs font-medium text-slate-300">
+                            <li>
+                                <span>Platform Status: Aktif & Terlindungi</span>
                             </li>
-                            <li className="flex items-center">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full mr-3 animate-pulse delay-100"></div>
-                                <span className="text-gray-300">{settings.contact_address || 'FT Maos, Cilacap'}</span>
+                            <li>
+                                <span>Uptime: 99.98% High Availability</span>
                             </li>
-                            <li className="flex items-center">
-                                <div className="w-2 h-2 bg-green-500 rounded-full mr-3 animate-pulse delay-200"></div>
-                                <span className="text-gray-300">Status: Aktif</span>
+                            <li>
+                                <span>Lokasi: {settings.contact_address || 'FT Maos, Cilacap'}</span>
                             </li>
-                            <li className="flex items-center">
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3 animate-pulse delay-300"></div>
-                                <span className="text-gray-300">Uptime: 99.9%</span>
+                            <li>
+                                <span>Versi: v2.0 (Integrated APAR Management)</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="border-t border-gray-700 mt-12 pt-8 text-center">
-                    <p className="text-gray-400">
-                        © {new Date().getFullYear()} {settings.site_name}. {settings.footer_copyright}
+                <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-300 font-medium">
+                    <p>
+                        &copy; {new Date().getFullYear()} {settings.site_name}. {settings.footer_copyright}
                     </p>
+                    <div className="flex items-center gap-4 text-slate-400">
+                        <span>Standar NFPA 10 Compliant</span>
+                        <span>&bull;</span>
+                        <span>Pertamina Health, Safety, Security & Environment (HSSE)</span>
+                    </div>
                 </div>
             </div>
         </footer>

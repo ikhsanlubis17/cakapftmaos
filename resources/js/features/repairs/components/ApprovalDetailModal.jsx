@@ -45,44 +45,44 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
     return (
         <>
             {/* Modal Overlay */}
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-[6px] shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-red-50 to-white">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                    <FireIcon className="h-7 w-7 text-red-600" />
+                                <div className="w-12 h-12 bg-[#041562] text-white rounded-[6px] flex items-center justify-center shadow-sm">
+                                    <FireIcon className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">
+                                    <h2 className="text-xl font-black text-slate-900 tracking-tight">
                                         {approval.inspection?.apar?.serial_number || 'N/A'}
                                     </h2>
-                                    <p className="text-sm text-gray-600">
-                                        Detail Persetujuan Perbaikan
+                                    <p className="text-xs font-semibold text-slate-500">
+                                        Detail Permohonan & Keputusan Perbaikan APAR
                                     </p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-2 hover:bg-slate-100 rounded-[6px] text-slate-500 hover:text-slate-900 transition-colors"
                             >
-                                <XMarkIcon className="h-6 w-6 text-gray-500" />
+                                <XMarkIcon className="h-6 w-6" />
                             </button>
                         </div>
 
                         {/* Tabs */}
-                        <div className="mt-4 flex gap-2 overflow-x-auto">
+                        <div className="mt-4 flex gap-2 overflow-x-auto border-t border-slate-100 pt-3">
                             {tabs.map((tab) => {
                                 const Icon = tab.icon;
                                 return (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap ${
                                             activeTab === tab.id
-                                                ? 'bg-red-600 text-white'
-                                                : 'bg-white text-gray-700 hover:bg-gray-100'
+                                                ? 'bg-[#041562] text-white'
+                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                         }`}
                                     >
                                         <Icon className="h-4 w-4" />
@@ -105,30 +105,30 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                 </div>
 
                                 {/* APAR Information */}
-                                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                                    <h4 className="font-semibold text-gray-900 mb-4">Informasi APAR</h4>
+                                <div className="bg-slate-50 rounded-[6px] p-5 border border-slate-200">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Informasi APAR</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Serial Number</p>
-                                            <p className="font-medium text-gray-900">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Serial Number</p>
+                                            <p className="font-bold text-slate-900">
                                                 {approval.inspection?.apar?.serial_number || '-'}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Tipe APAR</p>
-                                            <p className="font-medium text-gray-900">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tipe APAR</p>
+                                            <p className="font-bold text-slate-900">
                                                 {approval.inspection?.apar?.apar_type?.name || '-'}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Lokasi</p>
-                                            <p className="font-medium text-gray-900">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Lokasi</p>
+                                            <p className="font-bold text-slate-900">
                                                 {approval.inspection?.apar?.location_name || '-'}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Jenis Lokasi</p>
-                                            <p className="font-medium text-gray-900 capitalize">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Jenis Lokasi</p>
+                                            <p className="font-bold text-slate-900 capitalize">
                                                 {approval.inspection?.apar?.location_type || '-'}
                                             </p>
                                         </div>
@@ -137,41 +137,41 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
 
                                 {/* Supervisor Decision */}
                                 {approval.approver && (
-                                    <div className="bg-blue-50 rounded-xl p-5 border border-blue-200">
-                                        <h4 className="font-semibold text-gray-900 mb-4">Keputusan Supervisor</h4>
+                                    <div className="bg-[#041562]/5 rounded-[6px] p-5 border border-[#041562]/20">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#041562] mb-4">Keputusan Supervisor</h4>
                                         <div className="flex items-start gap-4 mb-4">
                                             {approval.approver.photo ? (
                                                 <img
                                                     src={approval.approver.photo}
                                                     alt={approval.approver.name}
-                                                    className="w-16 h-16 rounded-full border-2 border-white shadow-md"
+                                                    className="w-14 h-14 rounded-[6px] border border-slate-200 shadow-xs"
                                                 />
                                             ) : (
-                                                <UserCircleIcon className="w-16 h-16 text-blue-600" />
+                                                <UserCircleIcon className="w-14 h-14 text-[#041562]" />
                                             )}
                                             <div className="flex-1">
-                                                <p className="font-semibold text-gray-900 text-lg">
+                                                <p className="font-bold text-slate-900 text-base">
                                                     {approval.approver.name}
                                                 </p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-xs font-semibold text-slate-600">
                                                     {approval.approver.role 
                                                         ? approval.approver.role.charAt(0).toUpperCase() + approval.approver.role.slice(1) 
                                                         : 'Approver'}
                                                 </p>
-                                                <p className="text-sm text-gray-500 mt-1">
+                                                <p className="text-xs text-slate-500 mt-1">
                                                     {approval.approver.email}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Waktu Keputusan</p>
-                                                <p className="font-medium text-gray-900">
+                                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Waktu Keputusan</p>
+                                                <p className="font-bold text-slate-900">
                                                     {formatDate(approval.decision_made_at || approval.approved_at)}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Status</p>
+                                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Status</p>
                                                 <ApprovalStatusBadge status={approval.status} size="md" />
                                             </div>
                                         </div>
@@ -179,18 +179,18 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                 )}
 
                                 {/* Teknisi Information */}
-                                <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
-                                    <h4 className="font-semibold text-gray-900 mb-4">Informasi Teknisi</h4>
+                                <div className="bg-slate-50 rounded-[6px] p-5 border border-slate-200">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Informasi Teknisi</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Nama Teknisi</p>
-                                            <p className="font-medium text-gray-900">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nama Teknisi</p>
+                                            <p className="font-bold text-slate-900">
                                                 {approval.inspection?.user?.name || '-'}
                                             </p>
                                         </div>
                                         <div>
-                                            <p className="text-sm text-gray-600 mb-1">Tanggal Inspeksi</p>
-                                            <p className="font-medium text-gray-900">
+                                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tanggal Inspeksi</p>
+                                            <p className="font-bold text-slate-900">
                                                 {formatDate(approval.inspection?.created_at)}
                                             </p>
                                         </div>
@@ -199,13 +199,13 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
 
                                 {/* Damage Categories */}
                                 {approval.inspection?.inspection_damages && approval.inspection.inspection_damages.length > 0 && (
-                                    <div className="bg-red-50 rounded-xl p-5 border border-red-200">
-                                        <h4 className="font-semibold text-gray-900 mb-4">Kategori Kerusakan</h4>
+                                    <div className="bg-rose-50/60 rounded-[6px] p-5 border border-rose-200">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-rose-900 mb-4">Kategori Kerusakan Ditemukan</h4>
                                         <div className="flex flex-wrap gap-2">
                                             {approval.inspection.inspection_damages.map((damage, index) => (
                                                 <span
                                                     key={index}
-                                                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-300"
+                                                    className="inline-flex items-center px-2.5 py-1 rounded-[3px] text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300"
                                                 >
                                                     {damage.damage_category?.name || 'Kategori tidak tersedia'}
                                                 </span>
@@ -354,7 +354,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                         {/* Photos Tab */}
                         {activeTab === 'photos' && (
                             <div className="space-y-6">
-                                <h3 className="text-lg font-semibold text-gray-900">Foto Inspeksi</h3>
+                                <h3 className="text-base font-bold text-slate-900 tracking-tight">Foto Inspeksi</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                     {/* APAR Photo */}
                                     {approval.inspection?.photo_url && (
@@ -362,17 +362,17 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                             className="relative group cursor-pointer"
                                             onClick={() => setSelectedPhoto(approval.inspection.photo_url)}
                                         >
-                                            <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                            <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                 <img
                                                     src={approval.inspection.photo_url}
                                                     alt="Foto APAR"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-[6px]">
                                                 <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                             </div>
-                                            <p className="mt-2 text-sm font-medium text-gray-700">Foto APAR</p>
+                                            <p className="mt-2 text-xs font-bold text-slate-700 uppercase tracking-wider">Foto APAR</p>
                                         </div>
                                     )}
 
@@ -382,17 +382,17 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                             className="relative group cursor-pointer"
                                             onClick={() => setSelectedPhoto(approval.inspection.selfie_url)}
                                         >
-                                            <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                            <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                 <img
                                                     src={approval.inspection.selfie_url}
                                                     alt="Foto Selfie"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
                                             </div>
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-[6px]">
                                                 <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                             </div>
-                                            <p className="mt-2 text-sm font-medium text-gray-700">Foto Selfie</p>
+                                            <p className="mt-2 text-xs font-bold text-slate-700 uppercase tracking-wider">Foto Selfie</p>
                                         </div>
                                     )}
 
@@ -404,20 +404,20 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                                 className="relative group cursor-pointer"
                                                 onClick={() => setSelectedPhoto(damage.damage_photo_url)}
                                             >
-                                                <div className="aspect-video w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                                                <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                     <img
                                                         src={damage.damage_photo_url}
                                                         alt={`Kerusakan ${idx + 1}`}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                     />
                                                 </div>
-                                                <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full shadow-sm z-10">
+                                                <div className="absolute top-2 right-2 bg-[#DA1212] text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[3px] shadow-sm z-10">
                                                     Rusak
                                                 </div>
-                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-xl">
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-[6px]">
                                                     <CameraIcon className="h-8 w-8 text-white drop-shadow-lg" />
                                                 </div>
-                                                <p className="mt-2 text-sm font-medium text-gray-700">
+                                                <p className="mt-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
                                                     {damage.damage_category?.name || `Kerusakan ${idx + 1}`}
                                                 </p>
                                             </div>
@@ -428,9 +428,9 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                 {(!approval.inspection?.photo_url && 
                                   !approval.inspection?.selfie_url && 
                                   (!approval.inspection?.inspection_damages || approval.inspection.inspection_damages.filter(d => d.damage_photo_url).length === 0)) && (
-                                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                                        <CameraIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                                        <p className="text-gray-500">Tidak ada foto tersedia</p>
+                                    <div className="text-center py-12 bg-slate-50 rounded-[6px] border border-slate-200">
+                                        <CameraIcon className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+                                        <p className="text-xs text-slate-500 font-semibold">Tidak ada foto tersedia</p>
                                     </div>
                                 )}
                             </div>
@@ -438,10 +438,10 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end">
                         <button
                             onClick={onClose}
-                            className="w-full px-4 py-2.5 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                            className="px-6 py-2.5 bg-[#041562] hover:bg-[#11468F] text-white text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-sm transition-colors"
                         >
                             Tutup
                         </button>

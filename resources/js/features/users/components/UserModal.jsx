@@ -13,26 +13,26 @@ const UserModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-2xl rounded-2xl bg-white">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="relative w-full max-w-md bg-white rounded-[6px] border border-[#EEEEEE] shadow-xl overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900">
+                <div className="px-6 py-4 border-b border-[#EEEEEE] flex items-center justify-between bg-slate-50">
+                    <h3 className="text-base font-bold text-[#041562] tracking-tight">
                         {editingUser ? 'Edit Pengguna' : 'Tambah Pengguna Baru'}
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                        className="text-slate-400 hover:text-slate-600 rounded-[6px] p-1 transition-colors"
                     >
-                        <XMarkIcon className="h-6 w-6" />
+                        <XMarkIcon className="h-5 w-5" />
                     </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={onSubmit} className="space-y-6">
+                <form onSubmit={onSubmit} className="p-6 space-y-4">
                     {/* Name Field */}
                     <div>
-                        <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             Nama Lengkap
                         </label>
                         <input
@@ -40,7 +40,7 @@ const UserModal = ({
                             id="name"
                             value={formData.name}
                             onChange={(e) => setFormData({...formData, name: e.target.value})}
-                            className="input-modern"
+                            className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                             placeholder="Masukkan nama lengkap"
                             required
                         />
@@ -48,7 +48,7 @@ const UserModal = ({
 
                     {/* Email Field */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             Email
                         </label>
                         <input
@@ -56,7 +56,7 @@ const UserModal = ({
                             id="email"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            className="input-modern"
+                            className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                             placeholder="contoh@email.com"
                             required
                         />
@@ -64,7 +64,7 @@ const UserModal = ({
 
                     {/* Phone Field */}
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             Nomor Telepon
                         </label>
                         <input
@@ -72,21 +72,21 @@ const UserModal = ({
                             id="phone"
                             value={formData.phone}
                             onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                            className="input-modern"
+                            className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                             placeholder="081234567890"
                         />
                     </div>
 
                     {/* Role Field */}
                     <div>
-                        <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label htmlFor="role" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                             Role
                         </label>
                         <select
                             id="role"
                             value={formData.role}
                             onChange={(e) => setFormData({...formData, role: e.target.value})}
-                            className="input-modern"
+                            className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                         >
                             <option value="teknisi">Teknisi</option>
                             <option value="supervisor">Supervisor</option>
@@ -98,19 +98,19 @@ const UserModal = ({
                     {/* Admin Password Confirmation - Required for creating new users */}
                     {!editingUser && (
                         <div>
-                            <label htmlFor="admin_password" className="block text-sm font-semibold text-gray-700 mb-2">
-                                Konfirmasi Password Admin (Anda)
+                            <label htmlFor="admin_password" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                                Konfirmasi Password Admin
                             </label>
                             <input
                                 type="password"
                                 id="admin_password"
                                 value={formData.admin_password}
                                 onChange={(e) => setFormData({...formData, admin_password: e.target.value})}
-                                className="input-modern bg-yellow-50 border-yellow-300 focus:ring-yellow-500 focus:border-yellow-500"
+                                className="block w-full px-3 py-2 text-sm border border-amber-300 bg-amber-50/50 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                                 placeholder="Masukkan password admin Anda untuk konfirmasi"
                                 required
                             />
-                            <p className="mt-1 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-slate-500">
                                 Diperlukan untuk validasi keamanan. User baru akan membuat password mereka sendiri saat aktivasi.
                             </p>
                         </div>
@@ -119,7 +119,7 @@ const UserModal = ({
                     {/* Password Reset - Only for editing users */}
                     {editingUser && (
                         <div>
-                            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
                                 Reset Password (Opsional)
                             </label>
                             <input
@@ -127,7 +127,7 @@ const UserModal = ({
                                 id="password"
                                 value={formData.password}
                                 onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                className="input-modern"
+                                className="block w-full px-3 py-2 text-sm border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all"
                                 placeholder="Kosongkan jika tidak ingin mengubah"
                                 minLength={8}
                             />
@@ -135,46 +135,45 @@ const UserModal = ({
                     )}
 
                     {/* Active Status */}
-                    {/* Active Status */}
                     {editingUser ? (
-                        <div className="flex items-center">
+                        <div className="flex items-center pt-2">
                             <input
                                 type="checkbox"
                                 id="is_active"
                                 checked={formData.is_active}
                                 onChange={(e) => setFormData({...formData, is_active: e.target.checked})}
-                                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-[#11468F] focus:ring-[#11468F] border-slate-300 rounded-[3px]"
                             />
-                            <label htmlFor="is_active" className="ml-3 block text-sm font-medium text-gray-900">
+                            <label htmlFor="is_active" className="ml-2.5 block text-xs font-semibold text-slate-900">
                                 Akun Aktif (Dapat Login)
                             </label>
                         </div>
                     ) : (
-                        <div className="p-4 bg-blue-50 rounded-md">
-                            <p className="text-sm text-blue-700">
+                        <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-[6px]">
+                            <p className="text-xs text-[#041562]">
                                 Pengguna baru akan menerima email aktivasi. Akun belum dapat digunakan login sampai diaktivasi oleh pengguna.
                             </p>
                         </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <div className="flex justify-end space-x-2.5 pt-4 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="btn-secondary"
+                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-[6px] transition-colors"
                             disabled={loading}
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary"
+                            className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] rounded-[6px] shadow-sm transition-all flex items-center"
                             disabled={loading}
                         >
                             {loading ? (
                                 <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-2"></div>
                                     {editingUser ? 'Menyimpan...' : 'Membuat...'}
                                 </div>
                             ) : (

@@ -40,15 +40,13 @@ const ConfirmDialog = ({
     const getConfirmButtonStyle = () => {
         switch (confirmButtonColor) {
             case 'red':
-                return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+                return 'bg-[#DA1212] hover:bg-[#b00f0f] text-white focus:ring-[#DA1212]';
             case 'green':
-                return 'bg-green-600 hover:bg-green-700 focus:ring-green-500';
+                return 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500';
             case 'blue':
-                return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
             case 'yellow':
-                return 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500';
             default:
-                return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+                return 'bg-[#11468F] hover:bg-[#0d3873] text-white focus:ring-[#11468F]';
         }
     };
 
@@ -67,25 +65,25 @@ const ConfirmDialog = ({
             <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
                 {/* Backdrop */}
                 <div 
-                    className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-out"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150 ease-in-out"
                     onClick={handleBackdropClick}
                 />
                 
                 {/* Dialog */}
-                <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-auto transform transition-all duration-300 ease-out scale-100 opacity-100">
+                <div className="relative bg-white rounded-[6px] shadow-xl max-w-md w-full mx-auto border border-[#EEEEEE] transform transition-all duration-150 ease-in-out scale-100 opacity-100 overflow-hidden">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                        <div className="flex items-center space-x-4">
+                    <div className="flex items-center justify-between p-5 border-b border-[#EEEEEE]">
+                        <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0">
                                 {getIcon()}
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 leading-6">
+                            <h3 className="text-base font-bold text-slate-900 leading-6 tracking-tight">
                                 {title}
                             </h3>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors duration-200 rounded-lg p-1 hover:bg-gray-100"
+                            className="text-slate-400 hover:text-slate-600 transition-colors duration-150 rounded-[4px] p-1.5 hover:bg-[#EEEEEE]"
                         >
                             <XMarkIcon className="h-5 w-5" />
                         </button>
@@ -93,24 +91,24 @@ const ConfirmDialog = ({
                     
                     {/* Content */}
                     <div className="px-6 py-4">
-                        <p className="text-gray-600 leading-relaxed text-base">
+                        <p className="text-slate-600 leading-relaxed text-sm font-medium">
                             {message}
                         </p>
                     </div>
                     
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:justify-end p-6 bg-gray-50 rounded-b-2xl">
+                    <div className="flex flex-col sm:flex-row gap-2.5 sm:justify-end p-4 bg-slate-50 border-t border-[#EEEEEE]">
                         {showCancel && (
                             <button
                                 onClick={onClose}
-                                className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 shadow-sm"
+                                className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-[#EEEEEE] transition-colors duration-150"
                             >
                                 {cancelText}
                             </button>
                         )}
                         <button
                             onClick={handleConfirm}
-                            className={`w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 shadow-sm ${getConfirmButtonStyle()}`}
+                            className={`w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-[6px] shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${getConfirmButtonStyle()}`}
                         >
                             {confirmText}
                         </button>

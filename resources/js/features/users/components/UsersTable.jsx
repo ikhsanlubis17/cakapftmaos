@@ -15,13 +15,13 @@ const UsersTable = ({ users, onEdit, onDelete, onUnblock, onResendActivation }) 
     const getRoleIcon = (role) => {
         switch (role) {
             case 'admin':
-                return <ShieldCheckIcon className="h-5 w-5 text-red-500" />;
+                return <ShieldCheckIcon className="h-4 w-4 mr-1 text-white" />;
             case 'supervisor':
-                return <UserGroupIcon className="h-5 w-5 text-blue-500" />;
+                return <UserGroupIcon className="h-4 w-4 mr-1 text-white" />;
             case 'teknisi':
-                return <UserIcon className="h-5 w-5 text-green-500" />;
+                return <UserIcon className="h-4 w-4 mr-1 text-[#041562]" />;
             default:
-                return <UserIcon className="h-5 w-5 text-gray-500" />;
+                return <UserIcon className="h-4 w-4 mr-1 text-slate-500" />;
         }
     };
 
@@ -38,173 +38,170 @@ const UsersTable = ({ users, onEdit, onDelete, onUnblock, onResendActivation }) 
         }
     };
 
-    const getRoleColor = (role) => {
+    const getRoleBadgeClasses = (role) => {
         switch (role) {
             case 'admin':
-                return 'bg-red-100 text-red-800 border-red-200';
+                return 'bg-[#041562] text-white';
             case 'supervisor':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-[#11468F] text-white';
             case 'teknisi':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-[#EEEEEE] text-[#041562]';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-[#EEEEEE] text-slate-700';
         }
     };
 
     if (users.length === 0) {
         return (
-            <div className="text-center py-12">
-                <UserIcon className="mx-auto h-16 w-16 text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium text-gray-900">Tidak ada pengguna</h3>
-                <p className="mt-2 text-sm text-gray-500">
-                    Mulai dengan menambahkan pengguna pertama.
+            <div className="text-center py-16 bg-white rounded-[6px] border border-slate-200 shadow-sm">
+                <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-[6px] flex items-center justify-center mx-auto mb-3">
+                    <UserIcon className="h-6 w-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Tidak ada pengguna ditemukan</h3>
+                <p className="mt-1 text-xs text-slate-500">
+                    Coba sesuaikan filter atau tambahkan pengguna baru.
                 </p>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                <h3 className="text-lg font-semibold text-gray-900">Daftar Pengguna</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                    Total {users.length} pengguna ditemukan
-                </p>
+        <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h3 className="text-base font-bold text-slate-900 tracking-tight">Daftar Pengguna</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                        Total {users.length} pengguna terdaftar di sistem
+                    </p>
+                </div>
             </div>
             
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead className="bg-slate-50">
                         <tr>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 Pengguna
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 Role
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 Kontak
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-6 py-3.5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 Aksi
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((user, index) => (
+                    <tbody className="bg-white divide-y divide-slate-200">
+                        {users.map((user) => (
                             <tr 
                                 key={user.id} 
-                                className={`hover:bg-gray-50 transition-all duration-150 ${
-                                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                                }`}
+                                className="hover:bg-slate-50/80 transition-colors"
                             >
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="flex-shrink-0 h-12 w-12">
-                                            <div className="h-12 w-12 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center shadow-sm">
-                                                <UserIcon className="h-6 w-6 text-gray-600" />
-                                            </div>
-                                        </div>
-                                        <div className="ml-4">
-                                            <div className="text-sm font-semibold text-gray-900">
-                                                {user.name}
-                                            </div>
-                                            <div className="text-sm text-gray-500">
-                                                ID: {user.id}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="flex items-center">
-                                        {getRoleIcon(user.role)}
-                                        <span className={`ml-2 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getRoleColor(user.role)}`}>
-                                            {getRoleDisplayName(user.role)}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm text-gray-900 font-medium">{user.email}</div>
-                                    <div className="text-sm text-gray-500">{user.phone || '-'}</div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    {(() => {
-                                        if (!user.email_verified_at) {
-                                            return (
-                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-yellow-100 text-yellow-800 border-yellow-200">
-                                                    <span className="w-2 h-2 rounded-full mr-2 bg-yellow-400"></span>
-                                                    Menunggu Aktivasi
-                                                </span>
-                                            );
-                                        }
-                                        if (user.is_active) {
-                                            return (
-                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
-                                                    <span className="w-2 h-2 rounded-full mr-2 bg-green-400"></span>
-                                                    Aktif
-                                                </span>
-                                            );
-                                        }
-                                        return (
-                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-800 border-red-200">
-                                                <span className="w-2 h-2 rounded-full mr-2 bg-red-400"></span>
-                                                Nonaktif
-                                            </span>
-                                        );
-                                    })()}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div className="flex items-center space-x-2">
-                                                                                                                                <Link
-                                            to={`/users/${user.id}`}
-                                            className="action-btn action-btn-view"
-                                            title="Lihat Detail"
-                                        >
-                                            <EyeIcon className="h-4 w-4" />
-                                        </Link>
-                                        <button
-                                            onClick={() => onEdit(user)}
-                                            className="action-btn action-btn-edit"
-                                            title="Edit Pengguna"
-                                        >
-                                            <PencilIcon className="h-4 w-4" />
-                                        </button>
-                                        {/* Unblock Button */}
-                                        {user.blocked_until && new Date(user.blocked_until) > new Date() && (
-                                            <button
-                                                onClick={() => onUnblock(user)}
-                                                className="p-1.5 rounded-md text-purple-600 bg-purple-100 hover:bg-purple-200 transition-colors"
-                                                title="Buka Blokir"
-                                            >
-                                                <LockOpenIcon className="h-4 w-4" />
-                                            </button>
-                                        )}
+                                         <div className="flex-shrink-0 h-10 w-10">
+                                             <div className="h-10 w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                                                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                                             </div>
+                                         </div>
+                                         <div className="ml-3">
+                                             <div className="text-sm font-bold text-slate-900">
+                                                 {user.name}
+                                             </div>
+                                             <div className="text-xs text-slate-500">
+                                                 ID: #{user.id}
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </td>
+                                 <td className="px-6 py-4 whitespace-nowrap">
+                                     <span className={`inline-flex items-center px-2.5 py-1 rounded-[3px] text-xs font-semibold tracking-wider uppercase ${getRoleBadgeClasses(user.role)}`}>
+                                         {getRoleIcon(user.role)}
+                                         {getRoleDisplayName(user.role)}
+                                     </span>
+                                 </td>
+                                 <td className="px-6 py-4 whitespace-nowrap">
+                                     <div className="text-sm font-medium text-slate-900">{user.email}</div>
+                                     <div className="text-xs text-slate-500">{user.phone || '-'}</div>
+                                 </td>
+                                 <td className="px-6 py-4 whitespace-nowrap">
+                                     {(() => {
+                                         if (!user.email_verified_at) {
+                                             return (
+                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-[3px] text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                                     Menunggu Aktivasi
+                                                 </span>
+                                             );
+                                         }
+                                         if (user.is_active) {
+                                             return (
+                                                 <span className="inline-flex items-center px-2.5 py-1 rounded-[3px] text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                     Aktif
+                                                 </span>
+                                             );
+                                         }
+                                         return (
+                                             <span className="inline-flex items-center px-2.5 py-1 rounded-[3px] text-xs font-semibold bg-rose-50 text-[#DA1212] border border-rose-200">
+                                                 Nonaktif
+                                             </span>
+                                         );
+                                     })()}
+                                 </td>
+                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                     <div className="flex items-center justify-end space-x-1.5">
+                                         <Link
+                                             to={`/users/${user.id}`}
+                                             className="p-1.5 rounded-[6px] text-slate-600 hover:text-[#041562] hover:bg-slate-100 border border-slate-200 transition-colors"
+                                             title="Lihat Detail"
+                                         >
+                                             <EyeIcon className="h-4 w-4" />
+                                         </Link>
+                                         <button
+                                             onClick={() => onEdit(user)}
+                                             className="p-1.5 rounded-[6px] text-slate-600 hover:text-[#041562] hover:bg-slate-100 border border-slate-200 transition-colors"
+                                             title="Edit Pengguna"
+                                         >
+                                             <PencilIcon className="h-4 w-4" />
+                                         </button>
+                                         {/* Unblock Button */}
+                                         {user.blocked_until && new Date(user.blocked_until) > new Date() && (
+                                             <button
+                                                 onClick={() => onUnblock(user)}
+                                                 className="p-1.5 rounded-[6px] text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors"
+                                                 title="Buka Blokir"
+                                             >
+                                                 <LockOpenIcon className="h-4 w-4" />
+                                             </button>
+                                         )}
 
-                                        {/* Resend Activation Button */}
-                                        {onResendActivation && !user.email_verified_at && (
-                                            <button
-                                                onClick={() => onResendActivation(user)}
-                                                className="p-1.5 rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors"
-                                                title="Kirim Ulang Aktivasi"
-                                            >
-                                                <PaperAirplaneIcon className="h-4 w-4" />
-                                            </button>
-                                        )}
+                                         {/* Resend Activation Button */}
+                                         {onResendActivation && !user.email_verified_at && (
+                                             <button
+                                                 onClick={() => onResendActivation(user)}
+                                                 className="p-1.5 rounded-[6px] text-[#11468F] bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors"
+                                                 title="Kirim Ulang Aktivasi"
+                                             >
+                                                 <PaperAirplaneIcon className="h-4 w-4" />
+                                             </button>
+                                         )}
 
-                                        {user.role !== 'admin' && (
-                                            <button
-                                                onClick={() => onDelete(user.id)}
-                                                className="action-btn action-btn-delete"
-                                                title="Hapus Pengguna"
-                                            >
-                                                <TrashIcon className="h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
+                                         {user.role !== 'admin' && (
+                                             <button
+                                                 onClick={() => onDelete(user.id)}
+                                                 className="p-1.5 rounded-[6px] text-[#DA1212] bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+                                                 title="Hapus Pengguna"
+                                             >
+                                                 <TrashIcon className="h-4 w-4" />
+                                             </button>
+                                         )}
+                                     </div>
+                                 </td>
                             </tr>
                         ))}
                     </tbody>

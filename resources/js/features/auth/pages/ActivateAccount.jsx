@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createApiClient } from '../../../services/api';
-// Create a client instance
+import { CheckCircleIcon, XCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
+
 const api = createApiClient();
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 const ActivateAccount = () => {
     const [status, setStatus] = useState('input'); // input, submitting, success, error
@@ -47,62 +47,71 @@ const ActivateAccount = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="min-h-screen bg-[#041562] text-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background Grid */}
+            <div 
+                className="absolute inset-0 pointer-events-none opacity-10"
+                style={{
+                    backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
+                    backgroundSize: '40px 40px'
+                }}
+            />
+
+            <div className="relative sm:mx-auto sm:w-full sm:max-w-md">
+                <div className="bg-white py-8 px-6 shadow-xl rounded-[6px] border border-[#EEEEEE] sm:px-10">
                     
                     {/* Input Form State */}
                     {status === 'input' && (
                         <div>
-                            <div className="text-center mb-6">
-                                <h2 className="text-xl font-bold text-gray-900">Aktivasi Akun</h2>
-                                <p className="mt-2 text-sm text-gray-600">
-                                    Silakan buat password baru untuk mengaktifkan akun Anda.
+                            <div className="text-center mb-6 pb-4 border-b border-slate-100">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-[20px] bg-[#EEEEEE] border border-slate-200 text-xs font-semibold text-[#041562] uppercase tracking-wider mb-3">
+                                    <ShieldCheckIcon className="w-4 h-4 text-[#11468F]" />
+                                    <span>Aktivasi Akun</span>
+                                </div>
+                                <h2 className="text-xl font-bold text-[#041562] tracking-tight">Atur Kata Sandi Baru</h2>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Silakan buat kata sandi baru untuk mengaktifkan akses Anda ke sistem.
                                 </p>
                             </div>
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleSubmit} className="space-y-5">
                                 <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                                         Password Baru
                                     </label>
-                                    <div className="mt-1">
-                                        <input
-                                            id="password"
-                                            name="password"
-                                            type="password"
-                                            required
-                                            minLength={8}
-                                            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                                            placeholder="Minimal 8 karakter"
-                                        />
-                                    </div>
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        className="appearance-none block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-[6px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-sm transition-all duration-150"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({...formData, password: e.target.value})}
+                                        placeholder="Minimal 8 karakter"
+                                    />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">
+                                    <label htmlFor="password_confirmation" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                                         Konfirmasi Password
                                     </label>
-                                    <div className="mt-1">
-                                        <input
-                                            id="password_confirmation"
-                                            name="password_confirmation"
-                                            type="password"
-                                            required
-                                            minLength={8}
-                                            className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
-                                            value={formData.password_confirmation}
-                                            onChange={(e) => setFormData({...formData, password_confirmation: e.target.value})}
-                                            placeholder="Ulangi password baru"
-                                        />
-                                    </div>
+                                    <input
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        className="appearance-none block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-[6px] text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-sm transition-all duration-150"
+                                        value={formData.password_confirmation}
+                                        onChange={(e) => setFormData({...formData, password_confirmation: e.target.value})}
+                                        placeholder="Ulangi password baru"
+                                    />
                                 </div>
 
-                                <div>
+                                <div className="pt-2">
                                     <button
                                         type="submit"
-                                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        className="w-full flex justify-center py-3 px-4 rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] transition-all duration-150"
                                     >
                                         Aktifkan Akun
                                     </button>
@@ -113,21 +122,21 @@ const ActivateAccount = () => {
 
                     {/* Loading State */}
                     {status === 'submitting' && (
-                        <div className="flex flex-col items-center py-6">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                            <p className="text-gray-600 font-medium">{message}</p>
+                        <div className="flex flex-col items-center py-8">
+                            <div className="w-10 h-10 border-3 border-slate-200 border-t-[#11468F] rounded-full animate-spin mb-4"></div>
+                            <p className="text-slate-600 text-sm font-medium">{message}</p>
                         </div>
                     )}
 
                     {/* Success State */}
                     {status === 'success' && (
-                        <div className="flex flex-col items-center py-4">
-                            <CheckCircleIcon className="h-16 w-16 text-green-500 mb-4" />
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Aktivasi Berhasil</h2>
-                            <p className="text-gray-600 text-center mb-6">{message}</p>
+                        <div className="flex flex-col items-center py-6 text-center">
+                            <CheckCircleIcon className="h-14 w-14 text-emerald-500 mb-4" />
+                            <h2 className="text-xl font-bold text-[#041562] mb-2">Aktivasi Berhasil</h2>
+                            <p className="text-sm text-slate-600 mb-6">{message}</p>
                             <button
                                 onClick={() => window.location.href = '/login'}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                className="w-full flex justify-center py-2.5 px-4 rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-all duration-150"
                             >
                                 Ke Halaman Login
                             </button>
@@ -136,13 +145,13 @@ const ActivateAccount = () => {
 
                     {/* Error State */}
                     {status === 'error' && (
-                        <div className="flex flex-col items-center py-4">
-                            <XCircleIcon className="h-16 w-16 text-red-500 mb-4" />
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Aktivasi Gagal</h2>
-                            <p className="text-gray-600 text-center mb-6">{message}</p>
+                        <div className="flex flex-col items-center py-6 text-center">
+                            <XCircleIcon className="h-14 w-14 text-[#DA1212] mb-4" />
+                            <h2 className="text-xl font-bold text-[#041562] mb-2">Aktivasi Gagal</h2>
+                            <p className="text-sm text-slate-600 mb-6">{message}</p>
                             <button
                                 onClick={() => window.location.href = '/'}
-                                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                className="w-full flex justify-center py-2.5 px-4 rounded-[6px] text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 transition-all duration-150"
                             >
                                 Kembali ke Beranda
                             </button>

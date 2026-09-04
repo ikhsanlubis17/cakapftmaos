@@ -314,7 +314,7 @@ const AparList = () => {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -323,11 +323,11 @@ const AparList = () => {
         <Fragment>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl">
-                                <FireIcon className="h-6 w-6 text-red-600" />
+                            <div className="flex items-center justify-center w-12 h-12 bg-[#041562] text-white rounded-[6px] shadow-sm">
+                                <FireIcon className="h-6 w-6" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
@@ -345,7 +345,7 @@ const AparList = () => {
                                 user?.role === "supervisor") && (
                                 <button
                                     onClick={handleQrDownload}
-                                    className="inline-flex items-center px-4 py-2.5 border border-blue-300 text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all duration-200"
+                                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-[6px] text-[#11468F] bg-white hover:bg-slate-50 transition-all duration-200 shadow-sm"
                                 >
                                     <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
                                     Unduh QR Code APAR
@@ -358,10 +358,10 @@ const AparList = () => {
                                     onClick={() =>
                                         setBulkDeleteMode(!bulkDeleteMode)
                                     }
-                                    className={`inline-flex items-center px-4 py-2.5 border text-sm font-medium rounded-lg transition-all duration-200 ${
+                                    className={`inline-flex items-center px-4 py-2.5 border text-sm font-medium rounded-[6px] transition-all duration-200 ${
                                         bulkDeleteMode
                                             ? "border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
-                                            : "border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
+                                            : "border-slate-300 text-slate-700 bg-white hover:bg-slate-50 shadow-sm"
                                     }`}
                                 >
                                     {bulkDeleteMode ? (
@@ -382,7 +382,7 @@ const AparList = () => {
                             {user?.role === "teknisi" && (
                                 <Link
                                     to="/scan"
-                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm"
+                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
                                 >
                                     <QrCodeIcon className="h-4 w-4 mr-2" />
                                     Scan QR & Inspeksi
@@ -394,7 +394,7 @@ const AparList = () => {
                                 user?.role === "supervisor") && (
                                 <Link
                                     to="/apar/create"
-                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
                                 >
                                     <PlusIcon className="h-4 w-4 mr-2" />
                                     Tambah APAR
@@ -405,7 +405,7 @@ const AparList = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
                     <div className="flex flex-col lg:flex-row lg:items-end gap-6">
                         {/* Search */}
                         <div className="flex-1">
@@ -427,7 +427,7 @@ const AparList = () => {
                                     onChange={(e) =>
                                         setSearchTerm(e.target.value)
                                     }
-                                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
                                     placeholder="Nomor seri atau lokasi..."
                                 />
                             </div>
@@ -448,7 +448,7 @@ const AparList = () => {
                                 onChange={(e) =>
                                     setStatusFilter(e.target.value)
                                 }
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
                             >
                                 <option value="all">Semua Status</option>
                                 <option value="active">Aktif</option>
@@ -477,7 +477,7 @@ const AparList = () => {
                                 onChange={(e) =>
                                     setLocationFilter(e.target.value)
                                 }
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors duration-200"
+                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
                             >
                                 <option value="all">Semua Lokasi</option>
                                 <option value="statis">Statis</option>
@@ -496,7 +496,7 @@ const AparList = () => {
                                         setStatusFilter("all");
                                         setLocationFilter("all");
                                     }}
-                                    className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200"
+                                    className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-[6px] hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-colors duration-200"
                                 >
                                     Bersihkan Filter
                                 </button>
@@ -506,13 +506,13 @@ const AparList = () => {
                 </div>
 
                 {/* APAR List */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] overflow-hidden">
                     {/* List Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <div className="px-6 py-4 border-b border-gray-200 bg-slate-50">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-2">
-                                    <FireIcon className="h-5 w-5 text-red-600" />
+                                    <FireIcon className="h-5 w-5 text-[#041562]" />
                                     <h3 className="text-lg font-semibold text-gray-900">
                                         Daftar APAR ({filteredApars.length})
                                     </h3>
@@ -690,14 +690,11 @@ const AparList = () => {
                                                             {apar.apar_type
                                                                 ?.name && (
                                                                 <>
-                                                                    <span className="mx-1 text-gray-300">
+                                                                    <span className="mx-1 text-slate-300">
                                                                         |
                                                                     </span>
-                                                                    <span className="inline-flex items-center gap-1">
-                                                                        <span className="h-2 w-2 rounded-full bg-gray-400"></span>
-                                                                        <span className="text-xs font-medium text-gray-700 tracking-wide">
-                                                                            {apar.apar_type.name.toUpperCase()}
-                                                                        </span>
+                                                                    <span className="text-xs font-semibold text-slate-700 tracking-wide">
+                                                                        {apar.apar_type.name.toUpperCase()}
                                                                     </span>
                                                                 </>
                                                             )}
@@ -858,7 +855,7 @@ const AparList = () => {
                                     <div className="mt-6">
                                         <Link
                                             to="/apar/create"
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-colors duration-200 shadow-sm"
                                         >
                                             <PlusIcon className="h-4 w-4 mr-2" />
                                             Tambah APAR Pertama
@@ -872,11 +869,11 @@ const AparList = () => {
 
             {/* QR Download Modal */}
             {showQrDownloadModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                    <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-                        <div className="mt-3">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                    <div className="relative mx-auto p-6 border border-slate-200 w-full max-w-lg shadow-xl rounded-[6px] bg-white">
+                        <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-medium text-gray-900">
+                                <h3 className="text-lg font-bold text-gray-900">
                                     Unduh QR Code APAR
                                 </h3>
                                 <button
@@ -912,7 +909,7 @@ const AparList = () => {
                                                     setQrDownloadApars([]);
                                                 }
                                             }}
-                                            className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                            className="rounded-[3px] border-gray-300 text-[#11468F] focus:ring-[#11468F]"
                                         />
                                         <span className="ml-2 text-sm font-medium text-gray-700">
                                             Pilih Semua ({filteredApars.length}{" "}
@@ -922,7 +919,7 @@ const AparList = () => {
                                 </div>
 
                                 {/* APAR List */}
-                                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-[6px] p-3">
                                     {filteredApars.map((apar) => (
                                         <label
                                             key={apar.id}
@@ -952,7 +949,7 @@ const AparList = () => {
                                                         );
                                                     }
                                                 }}
-                                                className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                                className="rounded-[3px] border-gray-300 text-[#11468F] focus:ring-[#11468F]"
                                             />
                                             <span className="ml-2 text-sm text-gray-700">
                                                 {apar.serial_number} -{" "}
@@ -968,7 +965,7 @@ const AparList = () => {
                                     onClick={() =>
                                         setShowQrDownloadModal(false)
                                     }
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                    className="px-4 py-2 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
                                 >
                                     Batal
                                 </button>
@@ -980,16 +977,16 @@ const AparList = () => {
                                         qrDownloadApars.length === 0 ||
                                         downloadingQr
                                     }
-                                    className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-4 py-2 border border-transparent rounded-[6px] text-sm font-semibold text-white bg-[#041562] hover:bg-[#11468F] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
                                 >
                                     {downloadingQr ? (
                                         <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
                                             Mengunduh...
                                         </>
                                     ) : (
                                         <>
-                                            <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                                            <DocumentArrowDownIcon className="h-4 w-4 mr-2 inline-block" />
                                             Unduh PDF ({qrDownloadApars.length}{" "}
                                             APAR)
                                         </>

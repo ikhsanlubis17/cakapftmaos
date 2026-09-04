@@ -236,7 +236,7 @@ const AparTypeManagement = () => {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -244,11 +244,11 @@ const AparTypeManagement = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-xl">
-                            <FireIcon className="h-6 w-6 text-red-600" />
+                        <div className="flex items-center justify-center w-12 h-12 bg-[#041562] text-white rounded-[6px] shadow-sm">
+                            <FireIcon className="h-6 w-6" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">
@@ -263,7 +263,7 @@ const AparTypeManagement = () => {
                     <div className="flex flex-col sm:flex-row gap-3">
                         {bulkDeleteMode ? (
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                <div className="flex items-center justify-center sm:justify-start px-3 py-2 bg-gray-50 rounded-md">
+                                <div className="flex items-center justify-center sm:justify-start px-3 py-2 bg-gray-50 rounded-[6px]">
                                     <span className="text-sm text-gray-600">
                                         {selectedTypes.length} dipilih
                                     </span>
@@ -271,9 +271,9 @@ const AparTypeManagement = () => {
                                 <button
                                     onClick={handleBulkDelete}
                                     disabled={selectedTypes.length === 0 || deleting}
-                                    className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white ${
+                                    className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-[6px] text-white ${
                                         selectedTypes.length > 0 && !deleting
-                                            ? "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                            ? "bg-[#DA1212] hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                             : "bg-gray-300 cursor-not-allowed"
                                     } transition-all duration-200`}
                                 >
@@ -291,7 +291,7 @@ const AparTypeManagement = () => {
                                 </button>
                                 <button
                                     onClick={toggleBulkDeleteMode}
-                                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all duration-200"
                                 >
                                     <XMarkIcon className="h-4 w-4 mr-2" />
                                     Batal
@@ -301,14 +301,14 @@ const AparTypeManagement = () => {
                             <>
                                 <button
                                     onClick={toggleBulkDeleteMode}
-                                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all duration-200 shadow-sm"
                                 >
                                     <TrashIcon className="h-4 w-4 mr-2" />
                                     Hapus Massal
                                 </button>
                                 <button
                                     onClick={() => openModal()}
-                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
                                 >
                                     <PlusIcon className="h-4 w-4 mr-2" />
                                     Tambah Jenis APAR
@@ -320,12 +320,12 @@ const AparTypeManagement = () => {
             </div>
 
             {/* APAR Types List */}
-            <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] overflow-hidden">
                 {/* List Header */}
-                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <div className="px-6 py-4 border-b border-gray-200 bg-slate-50">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
-                            <FireIcon className="h-5 w-5 text-red-600" />
+                            <FireIcon className="h-5 w-5 text-[#041562]" />
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Daftar Jenis APAR (
                                 {
@@ -409,7 +409,7 @@ const AparTypeManagement = () => {
                                             </div>
                                             <button
                                                 onClick={() => openModal()}
-                                                className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                                                className="inline-flex items-center px-4 py-2 bg-[#11468F] text-white rounded-[6px] hover:bg-[#0d3873] transition-colors text-sm font-semibold shadow-sm"
                                             >
                                                 <PlusIcon className="h-4 w-4 mr-2" />
                                                 Tambah Jenis APAR Pertama
@@ -433,14 +433,14 @@ const AparTypeManagement = () => {
                                                     type="checkbox"
                                                     checked={selectedTypes.includes(type.id)}
                                                     onChange={() => handleSelectType(type.id)}
-                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                    className="h-4 w-4 text-[#11468F] focus:ring-[#11468F] border-gray-300 rounded-[3px]"
                                                 />
                                             </td>
                                         )}
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-lg">
-                                                    <FireIcon className="h-4 w-4 text-red-600" />
+                                                <div className="flex items-center justify-center w-8 h-8 bg-[#041562]/10 rounded-[6px]">
+                                                    <FireIcon className="h-4 w-4 text-[#041562]" />
                                                 </div>
                                                 <div className="text-sm font-medium text-gray-900 capitalize">
                                                     {type.name}
@@ -462,10 +462,10 @@ const AparTypeManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-[3px] text-xs font-bold uppercase tracking-wider ${
                                                     type.is_active
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-red-100 text-red-800"
+                                                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                                                        : "bg-rose-50 text-rose-800 border border-rose-200"
                                                 }`}
                                             >
                                                 {type.is_active
@@ -479,7 +479,7 @@ const AparTypeManagement = () => {
                                                     onClick={() =>
                                                         openModal(type)
                                                     }
-                                                    className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                    className="inline-flex items-center p-2 text-slate-600 hover:text-[#11468F] hover:bg-slate-100 rounded-[3px] transition-colors"
                                                     title="Edit"
                                                 >
                                                     <PencilIcon className="h-4 w-4" />
@@ -491,7 +491,7 @@ const AparTypeManagement = () => {
                                                             type.name
                                                         )
                                                     }
-                                                    className="inline-flex items-center p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                                                    className="inline-flex items-center p-2 text-red-600 hover:text-red-700 hover:bg-rose-50 rounded-[3px] transition-colors"
                                                     title="Hapus"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
@@ -508,10 +508,10 @@ const AparTypeManagement = () => {
 
             {/* Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                        <div className="mt-3">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                    <div className="relative mx-auto p-6 border border-slate-200 w-full max-w-md shadow-xl rounded-[6px] bg-white">
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">
                                 {editingType
                                     ? "Edit Jenis APAR"
                                     : "Tambah Jenis APAR Baru"}
@@ -527,7 +527,7 @@ const AparTypeManagement = () => {
                                         name="name"
                                         value={formData.name}
                                         onChange={handleChange}
-                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                        className={`w-full px-3 py-2 border rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] text-sm ${
                                             errors.name
                                                 ? "border-red-500"
                                                 : "border-gray-300"
@@ -550,7 +550,7 @@ const AparTypeManagement = () => {
                                         value={formData.description}
                                         onChange={handleChange}
                                         rows="3"
-                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                                        className={`w-full px-3 py-2 border rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] text-sm ${
                                             errors.description
                                                 ? "border-red-500"
                                                 : "border-gray-300"
@@ -571,7 +571,7 @@ const AparTypeManagement = () => {
                                             name="is_active"
                                             checked={formData.is_active}
                                             onChange={handleChange}
-                                            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-[#11468F] focus:ring-[#11468F] border-gray-300 rounded-[3px]"
                                         />
                                         <span className="ml-2 text-sm text-gray-700">
                                             Aktif
@@ -583,13 +583,13 @@ const AparTypeManagement = () => {
                                     <button
                                         type="button"
                                         onClick={closeModal}
-                                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                                        className="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-slate-50 text-sm font-medium transition-colors"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                                        className="px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold border border-transparent rounded-[6px] text-sm transition-colors shadow-sm"
                                     >
                                         {editingType ? "Update" : "Simpan"}
                                     </button>

@@ -301,9 +301,9 @@ const RepairApprovalList = () => {
 
         return (
             <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border ${config.color}`}
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[3px] text-xs font-bold uppercase tracking-wider border ${config.color}`}
             >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-3 w-3" />
                 {config.text}
             </span>
         );
@@ -325,7 +325,7 @@ const RepairApprovalList = () => {
 
         return (
             <span
-                className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium border ${config.color}`}
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-[3px] text-xs font-bold uppercase tracking-wider border ${config.color}`}
             >
                 {config.text}
             </span>
@@ -334,11 +334,11 @@ const RepairApprovalList = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="flex items-center justify-center min-h-64">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-3 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-sm text-gray-600">
-                        Memuat data persetujuan...
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F] mx-auto mb-4"></div>
+                    <p className="text-sm font-semibold text-slate-500">
+                        Memuat data persetujuan perbaikan...
                     </p>
                 </div>
             </div>
@@ -347,27 +347,27 @@ const RepairApprovalList = () => {
 
     if (approvalsError) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="text-center max-w-md">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
+            <div className="flex items-center justify-center min-h-64">
+                <div className="text-center max-w-md bg-white border border-slate-200 rounded-[6px] p-6 shadow-sm">
+                    <div className="w-12 h-12 bg-rose-100 rounded-[6px] flex items-center justify-center mx-auto mb-4">
+                        <ExclamationTriangleIcon className="h-6 w-6 text-rose-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-base font-bold text-slate-900 mb-1">
                         Terjadi Kesalahan
                     </h3>
-                    <p className="text-sm text-gray-600 mb-6">{approvalsError?.message || 'Gagal memuat data'}</p>
+                    <p className="text-xs text-slate-500 mb-4">{approvalsError?.message || 'Gagal memuat data'}</p>
                     <div className="flex gap-3 justify-center">
                         <button
                             onClick={refetchApprovals}
-                            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
+                            className="px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-sm transition-colors"
                         >
                             Coba Lagi
                         </button>
                         <button
-                            onClick={() => navigate({ to: "/dashboard" })}
-                            className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                            onClick={() => navigate({ to: "/" })}
+                            className="px-4 py-2 bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider rounded-[6px] transition-colors"
                         >
-                            Kembali
+                            Kembali ke Dashboard
                         </button>
                     </div>
                 </div>
@@ -376,408 +376,398 @@ const RepairApprovalList = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-                {/* Header */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <FireIcon className="h-6 w-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                            <h1 className="text-xl font-semibold text-gray-900">
-                                Persetujuan Perbaikan APAR
-                            </h1>
-                            <p className="text-sm text-gray-600 mt-0.5">
-                                Kelola dan monitoring persetujuan perbaikan
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="bg-white border border-slate-200 rounded-[6px] p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-black text-xl shadow-sm">
+                        <FireIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Persetujuan Perbaikan APAR
+                        </h1>
+                        <p className="text-sm text-slate-500 mt-0.5">
+                            Kelola dan validasi disposisi permohonan tindakan perbaikan APAR
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="inline-flex items-center px-3 py-1 bg-slate-100 border border-slate-200 rounded-[3px]">
+                        <span className={`text-xs font-bold ${pusherConnected ? "text-emerald-700" : "text-slate-500"}`}>
+                            {pusherConnected ? "Live Link" : "Offline"}
+                        </span>
+                    </div>
+                    <button
+                        onClick={handleManualRefresh}
+                        disabled={refreshing}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-slate-50 disabled:opacity-50 transition-colors shadow-xs"
+                    >
+                        <ArrowPathIcon
+                            className={`h-4 w-4 text-[#11468F] ${
+                                refreshing ? "animate-spin" : ""
+                            }`}
+                        />
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white rounded-[6px] border border-slate-200 p-5 shadow-sm hover:border-[#11468F] transition-colors">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                Menunggu
+                            </p>
+                            <p className="text-3xl font-black text-slate-900 tracking-tight">
+                                {statsData.pending || 0}
                             </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                                <div
-                                    className={`w-2 h-2 rounded-full ${
-                                        pusherConnected
-                                            ? "bg-emerald-500"
-                                            : "bg-gray-400"
-                                    }`}
-                                ></div>
-                                <span className="text-xs text-gray-600 hidden sm:inline">
-                                    {pusherConnected ? "Real-time" : "Offline"}
-                                </span>
-                            </div>
-                            <button
-                                onClick={handleManualRefresh}
-                                disabled={refreshing}
-                                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                        <div className="w-11 h-11 bg-amber-50 border border-amber-200 rounded-[6px] flex items-center justify-center">
+                            <ClockIcon className="h-5 w-5 text-amber-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-[6px] border border-slate-200 p-5 shadow-sm hover:border-[#11468F] transition-colors">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                Disetujui
+                            </p>
+                            <p className="text-3xl font-black text-slate-900 tracking-tight">
+                                {statsData.approved || 0}
+                            </p>
+                        </div>
+                        <div className="w-11 h-11 bg-emerald-50 border border-emerald-200 rounded-[6px] flex items-center justify-center">
+                            <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-[6px] border border-slate-200 p-5 shadow-sm hover:border-[#11468F] transition-colors">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                Ditolak
+                            </p>
+                            <p className="text-3xl font-black text-slate-900 tracking-tight">
+                                {statsData.rejected || 0}
+                            </p>
+                        </div>
+                        <div className="w-11 h-11 bg-rose-50 border border-rose-200 rounded-[6px] flex items-center justify-center">
+                            <XCircleIcon className="h-5 w-5 text-rose-600" />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-[6px] border border-slate-200 p-5 shadow-sm hover:border-[#11468F] transition-colors">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                                Selesai
+                            </p>
+                            <p className="text-3xl font-black text-slate-900 tracking-tight">
+                                {statsData.completed || 0}
+                            </p>
+                        </div>
+                        <div className="w-11 h-11 bg-blue-50 border border-blue-200 rounded-[6px] flex items-center justify-center">
+                            <CheckCircleIcon className="h-5 w-5 text-blue-600" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filter */}
+            <div className="bg-white rounded-[6px] border border-slate-200 p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                    <FunnelIcon className="h-4 w-4 text-slate-400" />
+                    <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="flex-1 sm:flex-none border border-slate-300 rounded-[6px] px-3 py-2 text-xs font-bold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
+                    >
+                        <option value="all">Semua Status</option>
+                        <option value="pending">Menunggu</option>
+                        <option value="approved">Disetujui</option>
+                        <option value="rejected">Ditolak</option>
+                        <option value="completed">Selesai</option>
+                    </select>
+                    {lastUpdate && (
+                        <span className="text-xs text-slate-500 ml-auto hidden sm:inline font-medium">
+                            Sinkron: {lastUpdate.toLocaleTimeString("id-ID")}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Approvals List */}
+            <div className="bg-white rounded-[6px] border border-slate-200 overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Daftar Permohonan Perbaikan{" "}
+                        <span className="text-slate-500 font-medium">
+                            ({approvalsData.length})
+                        </span>
+                    </h3>
+                </div>
+
+                {approvalsData.length > 0 ? (
+                    <div className="divide-y divide-slate-200">
+                        {approvalsData.map((approval) => (
+                            <div
+                                key={approval.id}
+                                className="p-6 hover:bg-slate-50/80 transition-colors"
                             >
-                                <ArrowPathIcon
-                                    className={`h-4 w-4 ${
-                                        refreshing ? "animate-spin" : ""
-                                    }`}
-                                />
-                                <span className="hidden sm:inline">
-                                    Refresh
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Statistics */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <ClockIcon className="h-5 w-5 text-amber-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-semibold text-gray-900">
-                                    {statsData.pending || 0}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                    Menunggu
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <CheckCircleIcon className="h-5 w-5 text-emerald-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-semibold text-gray-900">
-                                    {statsData.approved || 0}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                    Disetujui
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <XCircleIcon className="h-5 w-5 text-rose-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-semibold text-gray-900">
-                                    {statsData.rejected || 0}
-                                </p>
-                                <p className="text-xs text-gray-600">Ditolak</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <CheckCircleIcon className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-semibold text-gray-900">
-                                    {statsData.completed || 0}
-                                </p>
-                                <p className="text-xs text-gray-600">Selesai</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Filter */}
-                <div className="bg-white rounded-xl border border-gray-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <FunnelIcon className="h-5 w-5 text-gray-400" />
-                        <select
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                            className="flex-1 sm:flex-none border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                        >
-                            <option value="all">Semua Status</option>
-                            <option value="pending">Menunggu</option>
-                            <option value="approved">Disetujui</option>
-                            <option value="rejected">Ditolak</option>
-                            <option value="completed">Selesai</option>
-                        </select>
-                        {lastUpdate && (
-                            <span className="text-xs text-gray-500 ml-auto hidden sm:inline">
-                                Update: {lastUpdate.toLocaleTimeString("id-ID")}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Approvals List */}
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-                        <h3 className="text-sm font-semibold text-gray-900">
-                            Daftar Persetujuan{" "}
-                            <span className="text-gray-500">
-                                ({approvalsData.length})
-                            </span>
-                        </h3>
-                    </div>
-
-                    {approvalsData.length > 0 ? (
-                        <div className="divide-y divide-gray-200">
-                            {approvalsData.map((approval) => (
-                                <div
-                                    key={approval.id}
-                                    className="p-6 hover:bg-gray-50 transition-colors"
-                                >
-                                    <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                                        <div className="flex-1 space-y-4">
-                                            {/* Header */}
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                <h4 className="text-base font-semibold text-gray-900">
-                                                    APAR{" "}
-                                                    {approval.inspection?.apar
-                                                        ?.serial_number ||
-                                                        "N/A"}
-                                                </h4>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {getStatusBadge(
-                                                        approval.status
-                                                    )}
-                                                    {getConditionBadge(
-                                                        approval.inspection
-                                                            ?.condition
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Info Grid */}
-                                            <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                                                <div className="flex items-start gap-2 text-gray-600">
-                                                    <MapPinIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                    <span>
-                                                        {approval.inspection
-                                                            ?.apar
-                                                            ?.location_name ||
-                                                            "Lokasi tidak tersedia"}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-start gap-2 text-gray-600">
-                                                    <UserIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                    <span>
-                                                        {approval.inspection
-                                                            ?.user?.name ||
-                                                            "User tidak tersedia"}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-start gap-2 text-gray-600">
-                                                    <CalendarIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                    <span>
-                                                        {approval.inspection
-                                                            ?.created_at
-                                                            ? new Date(
-                                                                  approval.inspection.created_at
-                                                              ).toLocaleDateString(
-                                                                  "id-ID"
-                                                              )
-                                                            : "Tanggal tidak tersedia"}
-                                                    </span>
-                                                </div>
-                                                {approval.inspection?.notes && (
-                                                    <div className="flex items-start gap-2 text-gray-600">
-                                                        <DocumentTextIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                                        <span className="line-clamp-1">
-                                                            {
-                                                                approval
-                                                                    .inspection
-                                                                    .notes
-                                                            }
-                                                        </span>
-                                                    </div>
+                                <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                                    <div className="flex-1 space-y-3.5">
+                                        {/* Header */}
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <h4 className="text-base font-black text-slate-900">
+                                                APAR{" "}
+                                                {approval.inspection?.apar
+                                                    ?.serial_number ||
+                                                    "N/A"}
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {getStatusBadge(
+                                                    approval.status
+                                                )}
+                                                {getConditionBadge(
+                                                    approval.inspection
+                                                        ?.condition
                                                 )}
                                             </div>
+                                        </div>
 
-                                            {/* Damage Categories */}
-                                            {approval.inspection
-                                                ?.inspectionDamages &&
-                                                approval.inspection
-                                                    .inspectionDamages.length >
-                                                    0 && (
-                                                    <div>
-                                                        <p className="text-xs font-medium text-gray-700 mb-2">
-                                                            Kategori Kerusakan:
-                                                        </p>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {approval.inspection.inspectionDamages.map(
-                                                                (
-                                                                    damage,
-                                                                    index
-                                                                ) => (
-                                                                    <span
-                                                                        key={
-                                                                            index
-                                                                        }
-                                                                        className="bg-red-50 text-red-700 px-2.5 py-1 rounded-md text-xs font-medium border border-red-200"
-                                                                    >
-                                                                        {damage
-                                                                            .damageCategory
-                                                                            ?.name ||
-                                                                            "Kategori tidak tersedia"}
-                                                                    </span>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                            {/* Admin Notes */}
-                                            {approval.admin_notes && (
-                                                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                                    <p className="text-xs font-medium text-gray-700 mb-1">
-                                                        Catatan Admin:
-                                                    </p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {approval.admin_notes}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {/* Action Buttons */}
-                                            {approval.status === "pending" && (
-                                                <div className="flex flex-wrap gap-2 pt-2">
-                                                    <button
-                                                        onClick={() => openApproveDialog(approval)}
-                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors"
-                                                    >
-                                                        <CheckCircleIcon className="h-4 w-4" />
-                                                        Setujui
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openRejectDialog(approval)}
-                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-sm font-medium rounded-lg hover:bg-rose-700 transition-colors"
-                                                    >
-                                                        <XCircleIcon className="h-4 w-4" />
-                                                        Tolak
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {approval.status === "approved" && (
-                                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 text-emerald-800 text-sm font-medium">
-                                                        <CheckCircleIcon className="h-4 w-4" />
-                                                        Perbaikan disetujui -
-                                                        Teknisi dapat melakukan
-                                                        perbaikan
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {approval.status === "rejected" && (
-                                                <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 text-rose-800 text-sm font-medium mb-1">
-                                                        <XCircleIcon className="h-4 w-4" />
-                                                        Perbaikan ditolak
-                                                    </div>
-                                                    <p className="text-sm text-rose-700">
-                                                        {approval.admin_notes}
-                                                    </p>
-                                                </div>
-                                            )}
-
-                                            {approval.status ===
-                                                "completed" && (
-                                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 text-blue-800 text-sm font-medium">
-                                                        <CheckCircleIcon className="h-4 w-4" />
-                                                        Perbaikan selesai - APAR
-                                                        siap digunakan
-                                                    </div>
+                                        {/* Info Grid */}
+                                        <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                                            <div className="flex items-start gap-2 text-slate-600">
+                                                <MapPinIcon className="h-4 w-4 text-[#041562] flex-shrink-0" />
+                                                <span className="font-medium">
+                                                    {approval.inspection
+                                                        ?.apar
+                                                        ?.location_name ||
+                                                        "Lokasi tidak tersedia"}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-slate-600">
+                                                <UserIcon className="h-4 w-4 text-[#041562] flex-shrink-0" />
+                                                <span className="font-medium">
+                                                    {approval.inspection
+                                                        ?.user?.name ||
+                                                        "User tidak tersedia"}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-slate-600">
+                                                <CalendarIcon className="h-4 w-4 text-[#041562] flex-shrink-0" />
+                                                <span className="font-medium">
+                                                    {approval.inspection
+                                                        ?.created_at
+                                                        ? new Date(
+                                                              approval.inspection.created_at
+                                                          ).toLocaleDateString(
+                                                              "id-ID"
+                                                          )
+                                                        : "Tanggal tidak tersedia"}
+                                                </span>
+                                            </div>
+                                            {approval.inspection?.notes && (
+                                                <div className="flex items-start gap-2 text-slate-600">
+                                                    <DocumentTextIcon className="h-4 w-4 text-[#041562] flex-shrink-0" />
+                                                    <span className="line-clamp-1 font-medium">
+                                                        {
+                                                            approval
+                                                                .inspection
+                                                                .notes
+                                                        }
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <button
-                                            onClick={() =>
-                                                navigate({
-                                                    to: `/view/${approval.id}`,
-                                                })
-                                            }
-                                            className="lg:self-start inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                                        >
-                                            <EyeIcon className="h-4 w-4" />
-                                            Detail
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-16 px-6">
-                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <FireIcon className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <h3 className="text-base font-medium text-gray-900 mb-2">
-                                Tidak ada persetujuan
-                            </h3>
-                            <p className="text-sm text-gray-600 max-w-md mx-auto">
-                                {filter === "all"
-                                    ? "Belum ada permintaan perbaikan yang perlu ditinjau."
-                                    : `Tidak ada persetujuan dengan status "${filter}".`}
-                            </p>
-                            {filter !== "all" && (
-                                <button
-                                    onClick={() => setFilter("all")}
-                                    className="mt-4 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                                >
-                                    Lihat Semua Status
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                        {/* Damage Categories */}
+                                        {approval.inspection
+                                            ?.inspectionDamages &&
+                                            approval.inspection
+                                                .inspectionDamages.length >
+                                                0 && (
+                                                <div>
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                                                        Kategori Kerusakan:
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {approval.inspection.inspectionDamages.map(
+                                                            (
+                                                                damage,
+                                                                index
+                                                            ) => (
+                                                                <span
+                                                                    key={
+                                                                        index
+                                                                    }
+                                                                    className="bg-rose-50 text-rose-800 px-2 py-0.5 rounded-[3px] text-xs font-bold uppercase tracking-wider border border-rose-200"
+                                                                >
+                                                                    {damage
+                                                                        .damageCategory
+                                                                        ?.name ||
+                                                                        "Kategori tidak tersedia"}
+                                                                </span>
+                                                            )
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
 
-                {/* Info Card */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-                    <div className="flex gap-4">
-                        <div className="text-2xl flex-shrink-0">💡</div>
-                        <div>
-                            <h4 className="text-sm font-semibold text-blue-900 mb-3">
-                                Panduan Persetujuan:
-                            </h4>
-                            <div className="grid sm:grid-cols-2 gap-3 text-sm text-blue-800">
-                                <div className="flex gap-2">
-                                    <span className="text-blue-600">•</span>
-                                    <div>
-                                        <span className="font-medium">
-                                            Menunggu:
-                                        </span>{" "}
-                                        Perlu ditinjau
+                                        {/* Admin Notes */}
+                                        {approval.admin_notes && (
+                                            <div className="bg-slate-50 rounded-[6px] p-3 border border-slate-200">
+                                                <p className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                                    Catatan Disposisi:
+                                                </p>
+                                                <p className="text-xs text-slate-600">
+                                                    {approval.admin_notes}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Action Buttons */}
+                                        {approval.status === "pending" && (
+                                            <div className="flex flex-wrap gap-2 pt-2">
+                                                <button
+                                                    onClick={() => openApproveDialog(approval)}
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-xs transition-colors"
+                                                >
+                                                    <CheckCircleIcon className="h-4 w-4" />
+                                                    Setujui
+                                                </button>
+                                                <button
+                                                    onClick={() => openRejectDialog(approval)}
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#DA1212] hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider border border-transparent rounded-[6px] transition-colors"
+                                                >
+                                                    <XCircleIcon className="h-4 w-4" />
+                                                    Tolak
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {approval.status === "approved" && (
+                                            <div className="bg-emerald-50 border border-emerald-200 rounded-[6px] p-3">
+                                                <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                                                    <CheckCircleIcon className="h-4 w-4" />
+                                                    Perbaikan disetujui - Teknisi dapat melakukan perbaikan fisik
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {approval.status === "rejected" && (
+                                            <div className="bg-rose-50 border border-rose-200 rounded-[6px] p-3">
+                                                <div className="flex items-center gap-2 text-rose-800 text-xs font-bold uppercase tracking-wider mb-1">
+                                                    <XCircleIcon className="h-4 w-4" />
+                                                    Perbaikan ditolak
+                                                </div>
+                                                <p className="text-xs text-rose-700">
+                                                    {approval.admin_notes}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {approval.status ===
+                                            "completed" && (
+                                            <div className="bg-blue-50 border border-blue-200 rounded-[6px] p-3">
+                                                <div className="flex items-center gap-2 text-blue-800 text-xs font-bold uppercase tracking-wider">
+                                                    <CheckCircleIcon className="h-4 w-4" />
+                                                    Perbaikan selesai - APAR siap beroperasi normal
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+
+                                    <button
+                                        onClick={() =>
+                                            navigate({
+                                                to: `/view/${approval.id}`,
+                                            })
+                                        }
+                                        className="lg:self-start inline-flex items-center gap-1.5 px-4 py-2 bg-[#041562] hover:bg-[#11468F] text-white text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-sm transition-colors whitespace-nowrap"
+                                    >
+                                        <EyeIcon className="h-4 w-4 text-white" />
+                                        Detail
+                                    </button>
                                 </div>
-                                <div className="flex gap-2">
-                                    <span className="text-blue-600">•</span>
-                                    <div>
-                                        <span className="font-medium">
-                                            Disetujui:
-                                        </span>{" "}
-                                        Dapat diperbaiki
-                                    </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 px-6">
+                        <div className="w-12 h-12 bg-slate-100 rounded-[6px] flex items-center justify-center mx-auto mb-3">
+                            <FireIcon className="h-6 w-6 text-slate-400" />
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">
+                            Tidak Ada Data Persetujuan
+                        </h3>
+                        <p className="text-xs text-slate-500 max-w-md mx-auto">
+                            {filter === "all"
+                                ? "Belum ada permintaan perbaikan yang perlu ditinjau."
+                                : `Tidak ada persetujuan dengan status "${filter}".`}
+                        </p>
+                        {filter !== "all" && (
+                            <button
+                                onClick={() => setFilter("all")}
+                                className="mt-4 px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent text-xs font-bold uppercase tracking-wider rounded-[6px] shadow-sm transition-colors"
+                            >
+                                Lihat Semua Status
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Info Card */}
+            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-5 shadow-xs">
+                <div className="flex gap-4">
+                    <div className="text-xl flex-shrink-0">💡</div>
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2">
+                            Panduan Alur Status Perbaikan:
+                        </h4>
+                        <div className="grid sm:grid-cols-2 gap-3 text-xs text-slate-600">
+                            <div className="flex gap-2">
+                                <span className="text-[#11468F] font-bold">•</span>
+                                <div>
+                                    <span className="font-bold text-slate-900">
+                                        Menunggu:
+                                    </span>{" "}
+                                    Permohonan baru, perlu verifikasi supervisor
                                 </div>
-                                <div className="flex gap-2">
-                                    <span className="text-blue-600">•</span>
-                                    <div>
-                                        <span className="font-medium">
-                                            Ditolak:
-                                        </span>{" "}
-                                        Tidak disetujui
-                                    </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="text-[#11468F] font-bold">•</span>
+                                <div>
+                                    <span className="font-bold text-slate-900">
+                                        Disetujui:
+                                    </span>{" "}
+                                    Disposisi siap dikerjakan oleh teknisi
                                 </div>
-                                <div className="flex gap-2">
-                                    <span className="text-blue-600">•</span>
-                                    <div>
-                                        <span className="font-medium">
-                                            Selesai:
-                                        </span>{" "}
-                                        Perbaikan selesai
-                                    </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="text-[#11468F] font-bold">•</span>
+                                <div>
+                                    <span className="font-bold text-slate-900">
+                                        Ditolak:
+                                    </span>{" "}
+                                    Tindakan tidak disetujui atau perlu inspeksi ulang
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="text-[#11468F] font-bold">•</span>
+                                <div>
+                                    <span className="font-bold text-slate-900">
+                                        Selesai:
+                                    </span>{" "}
+                                    Laporan perbaikan telah dituntaskan teknisi
                                 </div>
                             </div>
                         </div>

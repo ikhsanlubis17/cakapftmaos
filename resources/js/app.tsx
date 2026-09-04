@@ -30,6 +30,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Login from "./features/auth/pages/Login";
 import Welcome from "./features/auth/pages/Welcome";
 import Profile from "./features/auth/pages/Profile";
+import ResetPassword from "./features/auth/pages/ResetPassword";
 
 // ... (existing imports)
 
@@ -82,9 +83,20 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
         </>
     ),
     notFoundComponent: () => (
-        <div className="p-4">
-            <h2 className="text-xl font-bold">404 - Page Not Found</h2>
-            <p>The page you were looking for does not exist.</p>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-[6px] p-8 shadow-sm text-center max-w-md w-full">
+                <div className="mx-auto h-14 w-14 rounded-[6px] bg-[#041562] text-white flex items-center justify-center text-xl font-bold font-mono mb-4 shadow-sm">
+                    404
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-1">Halaman Tidak Ditemukan</h2>
+                <p className="text-xs text-slate-500 mb-6">Halaman yang Anda tuju tidak ditemukan atau telah dipindahkan.</p>
+                <a
+                    href="/"
+                    className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#11468F] hover:bg-[#0d3873] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider shadow-sm transition-colors"
+                >
+                    Kembali ke Beranda
+                </a>
+            </div>
         </div>
     ),
 });
@@ -116,6 +128,12 @@ const loginRoute = createRoute({
             throw redirect({ to: "/" });
         }
     },
+});
+
+const resetPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/reset-password",
+    component: ResetPassword,
 });
 
 const authenticatedRoute = createRoute({
@@ -159,11 +177,11 @@ const unauthorizedRoute = createRoute({
 // A helper function for role-based authorization
 const checkRoles =
     (allowedRoles: string[]) =>
-    ({ context }: { context: RouterContext }) => {
-        if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
-            throw redirect({ to: "/unauthorized" });
-        }
-    };
+        ({ context }: { context: RouterContext }) => {
+            if (!allowedRoles.includes(context.auth.user?.role ?? "")) {
+                throw redirect({ to: "/unauthorized" });
+            }
+        };
 
 // APAR Routes (Admin only)
 const aparRoute = createRoute({
@@ -379,6 +397,7 @@ const settingsRoute = createRoute({
 const routeTree = rootRoute.addChildren([
     welcomeRoute,
     loginRoute,
+    resetPasswordRoute,
     activateAccountRoute,
     authenticatedRoute.addChildren([
         dashboardRoute,
@@ -445,11 +464,11 @@ function RouterSetup() {
             auth, // The router context now has the authenticated state.
         },
         defaultErrorComponent: ({ error }: ErrorComponentProps) => (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="text-center">
-                    <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-red-100 mb-4">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+                <div className="text-center bg-white border border-slate-200 rounded-[6px] p-8 shadow-sm max-w-md w-full">
+                    <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-[6px] bg-[#041562] text-white mb-4">
                         <svg
-                            className="h-8 w-8 text-red-600"
+                            className="h-6 w-6"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -462,17 +481,17 @@ function RouterSetup() {
                             />
                         </svg>
                     </div>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                    <h2 className="text-lg font-bold text-slate-900 mb-1">
                         Terjadi Kesalahan
                     </h2>
-                    <p className="text-gray-500 mb-4">
+                    <p className="text-slate-500 text-xs mb-6">
                         Maaf, terjadi kesalahan saat memuat halaman ini.
                     </p>
                     <button
                         onClick={() => {
                             window.location.href = "/";
                         }}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                        className="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-colors"
                     >
                         Kembali ke Dashboard
                     </button>

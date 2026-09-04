@@ -152,7 +152,7 @@ const AparCreate = () => {
                 <div className="mt-4 sm:mt-0">
                     <Link
                         to="/apar"
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-[6px] shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
                         Kembali
@@ -161,7 +161,7 @@ const AparCreate = () => {
             </div>
 
             {/* Form */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
                 <form onSubmit={handleSubmit} className="space-y-6 p-6">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         {/* Serial Number */}
@@ -176,7 +176,7 @@ const AparCreate = () => {
                                 required
                                 value={formData.serial_number}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                         </div>
 
@@ -191,7 +191,7 @@ const AparCreate = () => {
                                 required
                                 value={formData.location_type}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             >
                                 <option value="statis">Statis</option>
                                 <option value="mobile">Mobil</option>
@@ -210,7 +210,7 @@ const AparCreate = () => {
                                 required
                                 value={formData.location_name}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                         </div>
 
@@ -229,7 +229,7 @@ const AparCreate = () => {
                                 value={formData.latitude}
                                 onChange={handleChange}
                                 placeholder="-6.2088"
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                             <p className="mt-1 text-xs text-gray-500">Range: -90 sampai 90</p>
                         </div>
@@ -249,7 +249,7 @@ const AparCreate = () => {
                                 value={formData.longitude}
                                 onChange={handleChange}
                                 placeholder="106.8456"
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                             <p className="mt-1 text-xs text-gray-500">Range: -180 sampai 180</p>
                         </div>
@@ -260,7 +260,7 @@ const AparCreate = () => {
                                 type="button"
                                 onClick={() => getCurrentLocation()}
                                 disabled={gettingLocation}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                             >
                                 <MapPinIcon className="h-4 w-4 mr-2" />
                                 {gettingLocation ? 'Mendapatkan Lokasi...' : 'Dapatkan Lokasi Saat Ini'}
@@ -281,7 +281,7 @@ const AparCreate = () => {
                                 id="valid_radius"
                                 value={formData.valid_radius}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                         </div>
 
@@ -296,7 +296,7 @@ const AparCreate = () => {
                                 required
                                 value={formData.apar_type_id}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             >
                                 <option value="">Pilih Jenis APAR</option>
                                 {aparTypes.map((type) => (
@@ -322,7 +322,7 @@ const AparCreate = () => {
                                 value={formData.capacity}
                                 onChange={handleChange}
                                 placeholder="6"
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                             <p className="mt-1 text-xs text-gray-500">Masukkan angka saja (contoh: 6)</p>
                         </div>
@@ -338,7 +338,7 @@ const AparCreate = () => {
                                 id="manufactured_date"
                                 value={formData.manufactured_date}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                         </div>
 
@@ -353,7 +353,7 @@ const AparCreate = () => {
                                 id="expired_at"
                                 value={formData.expired_at}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             />
                         </div>
 
@@ -368,7 +368,7 @@ const AparCreate = () => {
                                 required
                                 value={formData.status}
                                 onChange={handleChange}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                                className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                             >
                                 <option value="active">Aktif</option>
                                 <option value="inactive">Non-Aktif</option>
@@ -389,7 +389,7 @@ const AparCreate = () => {
                             rows={3}
                             value={formData.notes}
                             onChange={handleChange}
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+                            className="mt-1 block w-full border-gray-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] text-sm"
                         />
                     </div>
 
@@ -397,14 +397,14 @@ const AparCreate = () => {
                     <div className="flex justify-end space-x-3">
                         <Link
                             to="/apar"
-                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            className="px-4 py-2 border border-slate-300 rounded-[6px] shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
                         >
                             Batal
                         </Link>
                         <button
                             type="submit"
                             disabled={isCreatingApar}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-[6px] shadow-sm text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] disabled:opacity-50"
                         >
                             {isCreatingApar ? (
                                 <>

@@ -34,23 +34,23 @@ interface ScannerContainerProps {
 
 // Subcomponents
 const Header = ({ state, onStart }: { state: string; onStart: () => void }) => (
-    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+    <div className="bg-white rounded-[6px] p-6 border border-[#EEEEEE] shadow-sm">
         <div className="text-center">
-            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-2xl bg-gradient-to-r from-red-500 to-red-600 mb-4 shadow-lg">
-                <QrCodeIcon className="h-8 w-8 text-white" />
+            <div className="mx-auto h-14 w-14 flex items-center justify-center rounded-[6px] bg-[#041562] text-white mb-4 shadow-sm">
+                <QrCodeIcon className="h-7 w-7" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-xl font-bold text-slate-900 mb-1">
                 Scan QR Code APAR
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-xs text-slate-500">
                 Arahkan kamera ke QR Code yang terpasang pada APAR
             </p>
             {state === "initial" && (
                 <button
                     onClick={onStart}
-                    className="mx-auto mt-4 px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl text-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                    className="mx-auto mt-4 px-6 py-2.5 bg-[#11468F] hover:bg-[#0d3873] text-white rounded-[6px] text-xs font-semibold uppercase tracking-wider shadow-sm flex items-center justify-center space-x-2 transition-colors"
                 >
-                    <ArrowLongUpIcon className="h-5 w-5" />
+                    <ArrowLongUpIcon className="h-4 w-4" />
                     <span>Mulai Scan</span>
                 </button>
             )}
@@ -59,12 +59,12 @@ const Header = ({ state, onStart }: { state: string; onStart: () => void }) => (
 );
 
 const CameraErrorDisplay = ({ onRetry }: { onRetry: () => void }) => (
-    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-lg">
+    <div className="bg-white border border-rose-200 rounded-[6px] p-5 shadow-sm">
         <div className="flex">
             <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                <div className="h-9 w-9 rounded-[4px] bg-rose-50 border border-rose-200 flex items-center justify-center">
                     <svg
-                        className="h-6 w-6 text-red-600"
+                        className="h-5 w-5 text-[#DA1212]"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                     >
@@ -76,19 +76,19 @@ const CameraErrorDisplay = ({ onRetry }: { onRetry: () => void }) => (
                     </svg>
                 </div>
             </div>
-            <div className="ml-4">
-                <h3 className="text-lg font-semibold text-red-800">
+            <div className="ml-3.5">
+                <h3 className="text-sm font-bold text-slate-900">
                     Error Kamera
                 </h3>
-                <div className="mt-2 text-sm text-red-700">
+                <div className="mt-1 text-xs text-rose-700 leading-relaxed">
                     Tidak dapat mengakses kamera. Pastikan izin kamera diberikan
                     dan perangkat Anda memiliki kamera yang berfungsi.
                 </div>
-                <div className="mt-4">
+                <div className="mt-3">
                     <button
                         type="button"
                         onClick={onRetry}
-                        className="bg-red-50 px-4 py-2 text-sm font-medium text-red-800 hover:bg-red-100 border border-red-200 rounded-xl transition-all duration-200 hover:shadow-md"
+                        className="bg-rose-50 px-3 py-1.5 text-xs font-semibold text-[#DA1212] hover:bg-rose-100 border border-rose-200 rounded-[6px] transition-colors"
                     >
                         Coba Lagi
                     </button>
@@ -106,7 +106,7 @@ const ScannerContainer = ({
     validatePending,
     onReset,
 }: ScannerContainerProps) => (
-    <div className="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
+    <div className="bg-white rounded-[6px] p-6 border border-[#EEEEEE] shadow-sm">
         <Scanner
             onScan={onScan}
             onError={onError}
@@ -116,17 +116,17 @@ const ScannerContainer = ({
 
         <div className="mt-4 text-center">
             {scannerState === "scanning" && (
-                <p className="text-sm text-blue-600 font-medium">
-                    🔍 Scanning... Arahkan kamera ke QR Code
+                <p className="text-xs text-slate-600 font-semibold text-center">
+                    Scanning... Arahkan kamera ke QR Code
                 </p>
             )}
             {scannerState === "barcodeDetected" && (
-                <p className="text-sm text-green-600 font-medium">
+                <p className="text-xs text-emerald-700 font-bold">
                     ✓ QR Code terdeteksi! Memvalidasi...
                 </p>
             )}
             {validatePending && (
-                <p className="text-sm text-gray-600 font-medium">
+                <p className="text-xs text-slate-500 font-medium">
                     Memvalidasi QR Code...
                 </p>
             )}
@@ -135,9 +135,9 @@ const ScannerContainer = ({
         {scannerState === "scanning" && (
             <button
                 onClick={onReset}
-                className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl text-lg font-semibold hover:from-gray-700 hover:to-gray-800 transition-all duration-200 shadow-lg flex items-center justify-center space-x-2"
+                className="w-full mt-4 px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-[6px] text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center space-x-1.5"
             >
-                <ArrowPathIcon className="h-5 w-5" />
+                <ArrowPathIcon className="h-4 w-4 text-slate-500" />
                 <span>Mulai Ulang</span>
             </button>
         )}
@@ -145,38 +145,38 @@ const ScannerContainer = ({
 );
 
 const InstructionsPanel = () => (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
-        <div className="flex items-center space-x-3 mb-4">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <CameraIcon className="h-5 w-5 text-blue-600" />
+    <div className="bg-white border border-[#EEEEEE] rounded-[6px] p-5 shadow-sm">
+        <div className="flex items-center space-x-2.5 mb-3">
+            <div className="h-6 w-6 rounded-[4px] bg-[#041562] text-white flex items-center justify-center">
+                <CameraIcon className="h-3.5 w-3.5" />
             </div>
-            <h3 className="text-lg font-semibold text-blue-900">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                 Petunjuk Penggunaan
             </h3>
         </div>
-        <ul className="text-blue-800 space-y-3">
-            <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
+        <ul className="text-slate-600 space-y-2 text-xs">
+            <li className="flex items-start space-x-2.5">
+                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-[#11468F] text-white flex items-center justify-center text-[10px] font-bold mt-0.5">
                     1
                 </span>
                 <span>
                     Pastikan QR Code APAR terlihat jelas dan tidak rusak
                 </span>
             </li>
-            <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
+            <li className="flex items-start space-x-2.5">
+                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-[#11468F] text-white flex items-center justify-center text-[10px] font-bold mt-0.5">
                     2
                 </span>
                 <span>Jaga kamera tetap stabil dan tidak bergerak</span>
             </li>
-            <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
+            <li className="flex items-start space-x-2.5">
+                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-[#11468F] text-white flex items-center justify-center text-[10px] font-bold mt-0.5">
                     3
                 </span>
                 <span>Pastikan pencahayaan cukup dan tidak ada bayangan</span>
             </li>
-            <li className="flex items-start space-x-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-200 flex items-center justify-center text-xs font-bold text-blue-800">
+            <li className="flex items-start space-x-2.5">
+                <span className="flex-shrink-0 w-4 h-4 rounded-full bg-[#11468F] text-white flex items-center justify-center text-[10px] font-bold mt-0.5">
                     4
                 </span>
                 <span>QR Code akan otomatis ter-scan saat terdeteksi</span>
@@ -186,14 +186,14 @@ const InstructionsPanel = () => (
 );
 
 const FooterBar = () => (
-    <div className="text-center py-4">
+    <div className="text-center py-3">
         <div className="flex items-center justify-center space-x-2">
             <img
                 src="/images/logo2.svg"
                 alt="CAKAP FT MAOS Logo"
-                className="h-5 w-5"
+                className="h-4 w-4"
             />
-            <p className="text-sm text-gray-500 font-medium">
+            <p className="text-xs text-slate-500 font-medium">
                 CAKAP FT MAOS - Sistem Monitoring APAR
             </p>
         </div>
@@ -307,7 +307,7 @@ const QRScanner = () => {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-slate-50 py-6">
             <div className="max-w-lg mx-auto p-4 space-y-6">
                 <Header
                     state={scannerState.state}

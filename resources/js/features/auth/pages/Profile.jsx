@@ -185,7 +185,7 @@ const Profile = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -193,30 +193,39 @@ const Profile = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="sm:flex sm:items-center sm:justify-between">
-                <div className="flex items-center">
+            <div className="bg-white border border-[#EEEEEE] rounded-[6px] p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold text-xl shadow-sm">
+                        <UserIcon className="w-6 h-6" />
+                    </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Profil Saya</h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Kelola informasi akun dan profil Anda
+                        <h1 className="text-xl sm:text-2xl font-bold text-[#041562] tracking-tight">Profil Saya</h1>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Kelola informasi akun dan preferensi kredensial Anda
                         </p>
                     </div>
                 </div>
+                {user?.role && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EEEEEE] border border-slate-200 rounded-[3px] text-xs font-bold text-[#041562] uppercase tracking-wider self-start md:self-auto">
+                        <ShieldCheckIcon className="w-4 h-4 text-[#11468F]" />
+                        {getRoleText(user.role)}
+                    </div>
+                )}
             </div>
 
             {/* Form */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white border border-[#EEEEEE] rounded-[6px] shadow-sm overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* Basic Information */}
                     <div>
-                        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                            <UserIcon className="h-5 w-5 mr-2 text-gray-400" />
+                        <h3 className="text-base font-bold text-[#041562] mb-4 flex items-center">
+                            <UserIcon className="h-5 w-5 mr-2 text-[#11468F]" />
                             Informasi Dasar
                         </h3>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             {/* Name */}
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     Nama Lengkap *
                                 </label>
                                 <input
@@ -225,24 +234,24 @@ const Profile = () => {
                                     id="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.name ? 'border-red-300' : 'border-gray-300'
+                                    className={`block w-full border rounded-[6px] px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] ${
+                                        errors.name ? 'border-[#DA1212] bg-red-50/20' : 'border-slate-300 bg-white'
                                     }`}
                                     placeholder="Masukkan nama lengkap"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                                    <p className="mt-1 text-xs text-[#DA1212] font-semibold">{errors.name}</p>
                                 )}
                             </div>
 
                             {/* Email */}
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     Email *
                                 </label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                <div className="relative rounded-[6px]">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                        <EnvelopeIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
                                     </div>
                                     <input
                                         type="email"
@@ -250,25 +259,25 @@ const Profile = () => {
                                         id="email"
                                         value={formData.email}
                                         onChange={handleChange}
-                                        className={`block w-full pl-10 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                            errors.email ? 'border-red-300' : 'border-gray-300'
+                                        className={`block w-full pl-10 border rounded-[6px] px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] ${
+                                            errors.email ? 'border-[#DA1212] bg-red-50/20' : 'border-slate-300 bg-white'
                                         }`}
                                         placeholder="contoh@email.com"
                                     />
                                 </div>
                                 {errors.email && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                                    <p className="mt-1 text-xs text-[#DA1212] font-semibold">{errors.email}</p>
                                 )}
                             </div>
 
                             {/* Phone */}
                             <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     Nomor Telepon
                                 </label>
-                                <div className="mt-1 relative rounded-md shadow-sm">
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <PhoneIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                <div className="relative rounded-[6px]">
+                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                        <PhoneIcon className="h-5 w-5 text-slate-400" aria-hidden="true" />
                                     </div>
                                     <input
                                         type="tel"
@@ -276,46 +285,46 @@ const Profile = () => {
                                         id="phone"
                                         value={formData.phone}
                                         onChange={handleChange}
-                                        className={`block w-full pl-10 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                            errors.phone ? 'border-red-300' : 'border-gray-300'
+                                        className={`block w-full pl-10 border rounded-[6px] px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] ${
+                                            errors.phone ? 'border-[#DA1212] bg-red-50/20' : 'border-slate-300 bg-white'
                                         }`}
                                         placeholder="081234567890"
                                     />
                                 </div>
                                 {errors.phone && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+                                    <p className="mt-1 text-xs text-[#DA1212] font-semibold">{errors.phone}</p>
                                 )}
                             </div>
 
                             {/* Role (Read Only) */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Role
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                                    Hak Akses Sistem (Role)
                                 </label>
-                                <div className="mt-1 flex items-center px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-500">
-                                    {React.createElement(getRoleIcon(user?.role), { className: "h-5 w-5 mr-2" })}
-                                    {getRoleText(user?.role)}
+                                <div className="flex items-center px-3.5 py-2.5 border border-slate-200 bg-[#EEEEEE]/50 rounded-[6px] text-slate-700 text-sm font-medium">
+                                    {React.createElement(getRoleIcon(user?.role), { className: "h-5 w-5 mr-2 text-[#041562]" })}
+                                    <span className="font-bold text-[#041562]">{getRoleText(user?.role)}</span>
                                 </div>
-                                <p className="mt-1 text-xs text-gray-500">
-                                    Role tidak dapat diubah sendiri. Hubungi admin jika perlu perubahan.
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Role ditentukan oleh Administrator dan tidak dapat diedit secara mandiri.
                                 </p>
                             </div>
                         </div>
                     </div>
 
                     {/* Password */}
-                    <div className="pt-6 border-t border-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                            <KeyIcon className="h-5 w-5 mr-2 text-gray-400" />
+                    <div className="pt-6 border-t border-[#EEEEEE]">
+                        <h3 className="text-base font-bold text-[#041562] mb-1 flex items-center">
+                            <KeyIcon className="h-5 w-5 mr-2 text-[#11468F]" />
                             Ganti Password
                         </h3>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Kosongkan jika tidak ingin mengubah password
+                        <p className="text-xs text-slate-500 mb-4">
+                            Kosongkan kedua kolom di bawah jika Anda tidak ingin mengubah password saat ini.
                         </p>
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                             {/* Password */}
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     Password Baru
                                 </label>
                                 <input
@@ -324,19 +333,19 @@ const Profile = () => {
                                     id="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.password ? 'border-red-300' : 'border-gray-300'
+                                    className={`block w-full border rounded-[6px] px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] ${
+                                        errors.password ? 'border-[#DA1212] bg-red-50/20' : 'border-slate-300 bg-white'
                                     }`}
                                     placeholder="Minimal 8 karakter"
                                 />
                                 {errors.password && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                                    <p className="mt-1 text-xs text-[#DA1212] font-semibold">{errors.password}</p>
                                 )}
                             </div>
 
                             {/* Confirm Password */}
                             <div>
-                                <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">
+                                <label htmlFor="password_confirmation" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                                     Konfirmasi Password Baru
                                 </label>
                                 <input
@@ -345,32 +354,32 @@ const Profile = () => {
                                     id="password_confirmation"
                                     value={formData.password_confirmation}
                                     onChange={handleChange}
-                                    className={`mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                                        errors.password_confirmation ? 'border-red-300' : 'border-gray-300'
+                                    className={`block w-full border rounded-[6px] px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] ${
+                                        errors.password_confirmation ? 'border-[#DA1212] bg-red-50/20' : 'border-slate-300 bg-white'
                                     }`}
                                     placeholder="Ulangi password baru"
                                 />
                                 {errors.password_confirmation && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.password_confirmation}</p>
+                                    <p className="mt-1 text-xs text-[#DA1212] font-semibold">{errors.password_confirmation}</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
                     {/* Submit Buttons */}
-                    <div className="flex justify-end pt-6 border-t border-gray-200">
+                    <div className="flex justify-end pt-6 border-t border-[#EEEEEE]">
                         <button
                             type="submit"
                             disabled={saving}
-                            className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+                            className={`inline-flex items-center px-6 py-2.5 rounded-[6px] shadow-sm text-sm font-semibold transition-colors ${
                                 saving
-                                    ? 'bg-gray-400 cursor-not-allowed'
-                                    : 'bg-red-600 hover:bg-red-700'
+                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    : 'bg-[#11468F] hover:bg-[#0d3873] text-white'
                             }`}
                         >
                             {saving ? (
                                 <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                                     Menyimpan...
                                 </>
                             ) : (

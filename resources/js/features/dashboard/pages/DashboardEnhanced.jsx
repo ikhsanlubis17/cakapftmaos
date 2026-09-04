@@ -283,13 +283,14 @@ const DashboardEnhanced = () => {
                     aparStatusChart.inactive,
                     aparStatusChart.underRepair,
                 ],
-                backgroundColor: ["#059669", "#d97706", "#dc2626", "#2563eb"],
-                borderWidth: 0,
+                backgroundColor: ["#10b981", "#f59e0b", "#DA1212", "#11468F"],
+                borderWidth: 1,
+                borderColor: ["#059669", "#d97706", "#b91c1c", "#0d3873"],
                 hoverBackgroundColor: [
-                    "#047857",
-                    "#b45309",
+                    "#059669",
+                    "#d97706",
                     "#b91c1c",
-                    "#1d4ed8",
+                    "#0d3873",
                 ],
             },
         ],
@@ -305,13 +306,14 @@ const DashboardEnhanced = () => {
                     repairStatusChart.rejected,
                     repairStatusChart.completed,
                 ],
-                backgroundColor: ["#059669", "#d97706", "#dc2626", "#2563eb"],
-                borderWidth: 0,
+                backgroundColor: ["#10b981", "#f59e0b", "#DA1212", "#11468F"],
+                borderWidth: 1,
+                borderColor: ["#059669", "#d97706", "#b91c1c", "#0d3873"],
                 hoverBackgroundColor: [
-                    "#047857",
-                    "#b45309",
+                    "#059669",
+                    "#d97706",
                     "#b91c1c",
-                    "#1d4ed8",
+                    "#0d3873",
                 ],
             },
         ],
@@ -335,16 +337,16 @@ const DashboardEnhanced = () => {
             {
                 label: "Baik",
                 data: inspectionsByDate.map((item) => item.good),
-                backgroundColor: "#059669",
+                backgroundColor: "#11468F",
                 borderRadius: 4,
-                maxBarThickness: 40,
+                maxBarThickness: 36,
             },
             {
                 label: "Perlu Perbaikan",
                 data: inspectionsByDate.map((item) => item.needs_repair),
-                backgroundColor: "#d97706",
+                backgroundColor: "#f59e0b",
                 borderRadius: 4,
-                maxBarThickness: 40,
+                maxBarThickness: 36,
             },
         ],
     };
@@ -603,37 +605,37 @@ const DashboardEnhanced = () => {
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-red-500 to-red-600 rounded-xl p-8 text-white shadow-lg">
+            <div className="relative bg-[#041562] border border-[#11468F]/30 rounded-[6px] p-6 lg:p-8 text-white shadow-md overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-[#11468F]"></div>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-                        <p className="text-red-100 text-lg">
+                        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-[20px] bg-white/10 border border-white/15 text-[10px] font-semibold text-white uppercase tracking-wider mb-2">
+                            <span>Sistem Pemantauan Aset</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">Dashboard Operasional</h1>
+                        <p className="text-slate-300 text-sm mt-1 font-normal">
                             Selamat datang kembali,{" "}
-                            <span className="font-semibold">{user?.name}</span>
-                        </p>
-                        <p className="text-red-200 text-sm mt-1">
-                            Kelola dan pantau sistem APAR dengan mudah
+                            <span className="font-semibold text-white">{user?.name}</span>
                         </p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2.5">
                         <button
                             onClick={() => {
                                 refetchDashboard();
                                 if (user?.role === "teknisi") {
-                                    // Refetch teknisi data if needed
                                     queryClient.invalidateQueries({
                                         queryKey: ["teknisi-dashboard"],
                                     });
                                 }
                             }}
-                            className="bg-white/20 backdrop-blur text-white px-5 py-2.5 rounded-lg hover:bg-white/30 transition-all duration-200 font-medium flex items-center justify-center gap-2"
+                            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-4 py-2.5 rounded-[6px] transition-all duration-150 text-xs font-semibold flex items-center justify-center gap-2"
                         >
                             <ArrowPathIcon className="h-4 w-4" />
-                            Refresh
+                            Refresh Data
                         </button>
                         <Link
                             to="/inspections/new"
-                            className="bg-white text-red-600 px-5 py-2.5 rounded-lg hover:bg-red-50 transition-colors font-medium flex items-center justify-center gap-2 shadow-md"
+                            className="bg-[#11468F] text-white px-5 py-2.5 rounded-[6px] hover:bg-[#0d3873] shadow-sm transition-all duration-150 font-semibold text-xs flex items-center justify-center gap-2"
                         >
                             <PlusIcon className="h-4 w-4" />
                             Inspeksi Baru
@@ -641,10 +643,10 @@ const DashboardEnhanced = () => {
                         {user?.role === "admin" && (
                             <Link
                                 to="/damage-categories"
-                                className="bg-red-700 text-white px-5 py-2.5 rounded-lg hover:bg-red-800 transition-colors font-medium flex items-center justify-center gap-2"
+                                className="bg-white/10 text-white border border-white/20 px-4 py-2.5 rounded-[6px] hover:bg-white/20 transition-colors text-xs font-semibold flex items-center justify-center gap-2"
                             >
                                 <CogIcon className="h-4 w-4" />
-                                Kelola Kategori Kerusakan
+                                Kelola Kategori
                             </Link>
                         )}
                     </div>
@@ -655,35 +657,35 @@ const DashboardEnhanced = () => {
             {user?.role !== "teknisi" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 lg:gap-6">
                     {/* Total APAR Card */}
-                    <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-red-50/50 transition-all duration-300 group">
+                    <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-[#EEEEEE] hover:border-slate-300 hover:shadow-sm transition-all duration-150 group">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
-                                    Total APAR
+                                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
+                                    Total APAR Terdaftar
                                 </p>
-                                <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-gray-900 leading-tight">
+                                <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-[#041562] leading-tight">
                                     {stats.totalApar}
                                 </p>
                             </div>
-                            <div className="p-2.5 lg:p-3 bg-red-50 rounded-xl group-hover:bg-red-100 transition-colors duration-300 flex-shrink-0">
-                                <FireIcon className="h-5 w-5 lg:h-6 lg:w-6 text-red-500" />
+                            <div className="p-3 bg-[#041562] rounded-[6px] text-white flex-shrink-0 shadow-sm">
+                                <FireIcon className="h-6 w-6" />
                             </div>
                         </div>
                     </div>
 
                     {/* Inspeksi Terlambat Card */}
-                    <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300 group">
+                    <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-[#EEEEEE] hover:border-red-200 hover:shadow-sm transition-all duration-150 group">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
+                                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
                                     Inspeksi Terlambat
                                 </p>
-                                <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-blue-600 leading-tight">
+                                <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-[#DA1212] leading-tight">
                                     {stats.overdueInspections}
                                 </p>
                             </div>
-                            <div className="p-2.5 lg:p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors duration-300 flex-shrink-0">
-                                <ClockIcon className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500" />
+                            <div className="p-3 bg-red-50 border border-red-200 rounded-[6px] text-[#DA1212] flex-shrink-0">
+                                <ClockIcon className="h-6 w-6" />
                             </div>
                         </div>
                     </div>
@@ -692,23 +694,22 @@ const DashboardEnhanced = () => {
 
             {/* Jadwal Inspeksi Terdekat Component */}
             {user?.role !== "teknisi" && (
-                <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+                <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 lg:mb-6">
                         <div>
-                            <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 leading-tight">
+                            <h3 className="text-base lg:text-lg font-bold text-slate-900 mb-1 leading-tight tracking-tight">
                                 Jadwal Inspeksi Terdekat
                             </h3>
-                            <p className="text-xs lg:text-sm text-gray-500 leading-tight">
-                                Kirim reminder email kepada teknisi untuk
-                                inspeksi yang akan datang
+                            <p className="text-xs text-slate-500 leading-tight">
+                                Kirim reminder email kepada teknisi untuk inspeksi yang akan datang
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <button
                                 onClick={() => refetchUpcomingInspections()}
-                                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm lg:text-base"
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#11468F] hover:text-[#041562] uppercase tracking-wider transition-colors"
                             >
-                                <ArrowPathIcon className="h-4 w-4" />
+                                <ArrowPathIcon className="h-3.5 w-3.5" />
                                 Refresh
                             </button>
                         </div>
@@ -716,8 +717,8 @@ const DashboardEnhanced = () => {
 
                     {upcomingInspectionsLoading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent"></div>
-                            <span className="ml-3 text-gray-600">
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-[#11468F]"></div>
+                            <span className="ml-3 text-xs text-slate-600 font-semibold">
                                 Memuat jadwal...
                             </span>
                         </div>
@@ -728,13 +729,13 @@ const DashboardEnhanced = () => {
                                 return (
                                     <div
                                         key={schedule.id}
-                                        className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all duration-200"
+                                        className="p-4 bg-white rounded-[6px] border border-[#EEEEEE] hover:border-slate-300 transition-all duration-150"
                                     >
                                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                             <div className="flex gap-4 flex-1">
                                                 <div className="flex-shrink-0">
-                                                    <div className="w-12 h-12 bg-gradient-to-r from-red-100 to-red-200 rounded-xl flex items-center justify-center">
-                                                        <FireIcon className="h-6 w-6 text-red-600" />
+                                                    <div className="w-11 h-11 bg-[#041562] rounded-[6px] flex items-center justify-center text-white">
+                                                        <FireIcon className="h-6 w-6" />
                                                     </div>
                                                 </div>
 
@@ -754,19 +755,19 @@ const DashboardEnhanced = () => {
                                                         <div className="flex items-center gap-2">
                                                             {/* Status Aktif/Nonaktif */}
                                                             <span
-                                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-semibold ${
                                                                     schedule.is_active
-                                                                        ? "bg-green-100 text-green-700 border border-green-200"
-                                                                        : "bg-gray-100 text-gray-700 border border-gray-200"
+                                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                        : "bg-slate-100 text-slate-700 border border-slate-200"
                                                                 }`}
                                                             >
                                                                 {schedule.is_active
-                                                                    ? "🟢 Aktif"
-                                                                    : "⚫ Nonaktif"}
+                                                                    ? "Aktif"
+                                                                    : "Nonaktif"}
                                                             </span>
                                                             {/* Status Jadwal */}
                                                             <span
-                                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-semibold ${getStatusColor(
                                                                     schedule
                                                                 )}`}
                                                             >
@@ -821,7 +822,7 @@ const DashboardEnhanced = () => {
                                                                     )}
                                                                 </span>
                                                             </div>
-                                                            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full w-fit">
+                                                            <span className="px-2 py-0.5 text-xs font-semibold bg-[#EEEEEE] text-[#11468F] border border-slate-200 rounded-[3px] w-fit">
                                                                 {getFrequencyText(
                                                                     schedule.frequency
                                                                 )}
@@ -927,81 +928,81 @@ const DashboardEnhanced = () => {
                     {/* Teknisi Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                         {/* Total Jadwal */}
-                        <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300 group">
+                        <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-[#EEEEEE] hover:border-slate-300 hover:shadow-sm transition-all duration-150 group">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
                                         Total Jadwal
                                     </p>
-                                    <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-blue-600 leading-tight">
+                                    <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-[#041562] leading-tight">
                                         {teknisiStats.totalAssignedSchedules}
                                     </p>
                                 </div>
-                                <div className="p-2.5 lg:p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors duration-300 flex-shrink-0">
-                                    <CalendarDaysIcon className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500" />
+                                <div className="p-3 bg-[#041562] rounded-[6px] text-white flex-shrink-0">
+                                    <CalendarDaysIcon className="h-6 w-6" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Inspeksi Selesai */}
-                        <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-emerald-50/50 transition-all duration-300 group">
+                        <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all duration-200 group">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
                                         Inspeksi Selesai
                                     </p>
                                     <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-emerald-600 leading-tight">
                                         {teknisiStats.completedInspections}
                                     </p>
                                 </div>
-                                <div className="p-2.5 lg:p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors duration-300 flex-shrink-0">
-                                    <CheckCircleIcon className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-500" />
+                                <div className="p-3 bg-emerald-50 rounded-[6px] border border-emerald-200 text-emerald-600 flex-shrink-0">
+                                    <CheckCircleIcon className="h-6 w-6" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Inspeksi Pending */}
-                        <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-amber-50/50 transition-all duration-300 group">
+                        <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all duration-200 group">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
                                         Inspeksi Pending
                                     </p>
                                     <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-amber-600 leading-tight">
                                         {teknisiStats.pendingInspections}
                                     </p>
                                 </div>
-                                <div className="p-2.5 lg:p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors duration-300 flex-shrink-0">
-                                    <ClockIcon className="h-5 w-5 lg:h-6 lg:w-6 text-amber-500" />
+                                <div className="p-3 bg-amber-50 rounded-[6px] border border-amber-200 text-amber-600 flex-shrink-0">
+                                    <ClockIcon className="h-6 w-6" />
                                 </div>
                             </div>
                         </div>
 
                         {/* Inspeksi Terlambat */}
-                        <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 hover:shadow-xl hover:shadow-red-50/50 transition-all duration-300 group">
+                        <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all duration-200 group">
                             <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-xs lg:text-sm font-medium text-gray-500 mb-2 lg:mb-3 leading-tight">
+                                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 leading-tight">
                                         Inspeksi Terlambat
                                     </p>
                                     <p className="text-2xl lg:text-3xl xl:text-4xl font-bold text-red-600 leading-tight">
                                         {teknisiStats.overdueInspections}
                                     </p>
                                 </div>
-                                <div className="p-2.5 lg:p-3 bg-red-50 rounded-xl group-hover:bg-red-100 transition-colors duration-300 flex-shrink-0">
-                                    <ExclamationTriangleIcon className="h-5 w-5 lg:h-6 lg:w-6 text-red-500" />
+                                <div className="p-3 bg-red-50 rounded-[6px] border border-red-200 text-red-600 flex-shrink-0">
+                                    <ExclamationTriangleIcon className="h-6 w-6" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* My Schedules Section */}
-                    <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+                    <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="mb-5 lg:mb-6">
-                            <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 leading-tight">
+                            <h3 className="text-base lg:text-lg font-bold text-slate-900 mb-1 leading-tight tracking-tight">
                                 Jadwal Inspeksi Saya
                             </h3>
-                            <p className="text-xs lg:text-sm text-gray-500 leading-tight">
+                            <p className="text-xs text-slate-500 leading-tight">
                                 Jadwal inspeksi yang ditugaskan kepada Anda
                             </p>
                         </div>
@@ -1036,7 +1037,7 @@ const DashboardEnhanced = () => {
                                                         </h4>
                                                         <div className="flex items-center gap-2">
                                                             <span
-                                                                className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-semibold ${getStatusColor(
                                                                     schedule
                                                                 )}`}
                                                             >
@@ -1124,13 +1125,13 @@ const DashboardEnhanced = () => {
             {user?.role !== "teknisi" && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                     {/* APAR Status Chart */}
-                    <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+                    <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="mb-5 lg:mb-6">
-                            <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 leading-tight">
-                                Status APAR
+                            <h3 className="text-base lg:text-lg font-bold text-slate-900 mb-1 leading-tight tracking-tight">
+                                Status Kondisi APAR
                             </h3>
-                            <p className="text-xs lg:text-sm text-gray-500 leading-tight">
-                                Distribusi kondisi APAR
+                            <p className="text-xs text-slate-500 leading-tight">
+                                Distribusi kondisi operasional APAR
                             </p>
                         </div>
                         <div className="h-48 lg:h-64 mb-5 lg:mb-6">
@@ -1148,68 +1149,68 @@ const DashboardEnhanced = () => {
                                 }}
                             />
                         </div>
-                        <div className="space-y-2.5 lg:space-y-3">
+                        <div className="space-y-2 lg:space-y-2.5">
                             {/* Chart Legend with Accurate Percentages (Total always 100%) */}
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-200">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Aktif
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-bold text-emerald-600 text-sm lg:text-base">
+                                    <span className="font-bold text-emerald-600 text-xs sm:text-sm">
                                         {aparStatusChart.active}
                                     </span>
-                                    <span className="text-gray-500 text-xs lg:text-sm ml-1 leading-tight">
+                                    <span className="text-slate-500 text-xs ml-1 leading-tight">
                                         ({percentages.active}%)
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-amber-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-amber-500 rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Perlu Perbaikan
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-bold text-amber-600 text-sm lg:text-base">
+                                    <span className="font-bold text-amber-600 text-xs sm:text-sm">
                                         {aparStatusChart.needsRepair}
                                     </span>
-                                    <span className="text-gray-500 text-xs lg:text-sm ml-1 leading-tight">
+                                    <span className="text-slate-500 text-xs ml-1 leading-tight">
                                         ({percentages.needsRepair}%)
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-red-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-[#DA1212] rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Nonaktif
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-bold text-red-600 text-sm lg:text-base">
+                                    <span className="font-bold text-[#DA1212] text-xs sm:text-sm">
                                         {aparStatusChart.inactive}
                                     </span>
-                                    <span className="text-gray-500 text-xs lg:text-sm ml-1 leading-tight">
+                                    <span className="text-slate-500 text-xs ml-1 leading-tight">
                                         ({percentages.inactive}%)
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-blue-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-[#11468F] rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Sedang Perbaikan
                                     </span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="font-bold text-blue-600 text-sm lg:text-base">
+                                    <span className="font-bold text-[#11468F] text-xs sm:text-sm">
                                         {aparStatusChart.underRepair}
                                     </span>
-                                    <span className="text-gray-500 text-xs lg:text-sm ml-1 leading-tight">
+                                    <span className="text-slate-500 text-xs ml-1 leading-tight">
                                         ({percentages.underRepair}%)
                                     </span>
                                 </div>
@@ -1218,13 +1219,13 @@ const DashboardEnhanced = () => {
                     </div>
 
                     {/* Repair Status Chart */}
-                    <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+                    <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="mb-5 lg:mb-6">
-                            <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 leading-tight">
-                                Status Perbaikan
+                            <h3 className="text-base lg:text-lg font-bold text-slate-900 mb-1 leading-tight tracking-tight">
+                                Status Tiket Perbaikan
                             </h3>
-                            <p className="text-xs lg:text-sm text-gray-500 leading-tight">
-                                Progress perbaikan APAR
+                            <p className="text-xs text-slate-500 leading-tight">
+                                Progress evaluasi perbaikan tabung
                             </p>
                         </div>
                         <div className="h-48 lg:h-64 mb-5 lg:mb-6">
@@ -1242,48 +1243,48 @@ const DashboardEnhanced = () => {
                                 }}
                             />
                         </div>
-                        <div className="space-y-2.5 lg:space-y-3">
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                        <div className="space-y-2 lg:space-y-2.5">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-200">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-emerald-500 rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Disetujui
                                     </span>
                                 </div>
-                                <span className="font-bold text-emerald-600 text-sm lg:text-base">
+                                <span className="font-bold text-emerald-600 text-xs sm:text-sm">
                                     {repairStatusChart.approved}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-amber-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-amber-500 rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Menunggu
                                     </span>
                                 </div>
-                                <span className="font-bold text-amber-600 text-sm lg:text-base">
+                                <span className="font-bold text-amber-600 text-xs sm:text-sm">
                                     {repairStatusChart.pending}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-red-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-[#DA1212] rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Ditolak
                                     </span>
                                 </div>
-                                <span className="font-bold text-red-600 text-sm lg:text-base">
+                                <span className="font-bold text-[#DA1212] text-xs sm:text-sm">
                                     {repairStatusChart.rejected}
                                 </span>
                             </div>
-                            <div className="flex items-center justify-between p-2.5 lg:p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200">
-                                <div className="flex items-center gap-2.5 lg:gap-3">
-                                    <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 bg-blue-600 rounded-full flex-shrink-0"></div>
-                                    <span className="text-xs lg:text-sm text-gray-700 font-medium leading-tight">
+                            <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[3px] border border-slate-100 hover:bg-slate-100 transition-colors duration-150">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-2.5 h-2.5 bg-[#11468F] rounded-[2px] flex-shrink-0"></div>
+                                    <span className="text-xs text-slate-700 font-semibold leading-tight">
                                         Selesai
                                     </span>
                                 </div>
-                                <span className="font-bold text-blue-600 text-sm lg:text-base">
+                                <span className="font-bold text-[#11468F] text-xs sm:text-sm">
                                     {repairStatusChart.completed}
                                 </span>
                             </div>
@@ -1294,31 +1295,31 @@ const DashboardEnhanced = () => {
 
             {/* Inspections Chart */}
             {user?.role !== "teknisi" && (
-                <div className="bg-white rounded-2xl p-5 lg:p-6 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300">
+                <div className="bg-white rounded-[6px] p-5 lg:p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 lg:mb-6">
                         <div>
-                            <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-1 leading-tight">
-                                Inspeksi Harian
+                            <h3 className="text-base lg:text-lg font-bold text-slate-900 mb-1 leading-tight tracking-tight">
+                                Aktivitas Inspeksi Harian
                             </h3>
-                            <p className="text-xs lg:text-sm text-gray-500 leading-tight">
-                                Aktivitas inspeksi per hari
+                            <p className="text-xs text-slate-500 leading-tight">
+                                Volume inspeksi berhasil & perbaikan per hari
                             </p>
                         </div>
                         <button
                             onClick={() => setShowDateFilter(!showDateFilter)}
-                            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium transition-colors text-sm lg:text-base"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#11468F] hover:text-[#041562] uppercase tracking-wider transition-colors"
                         >
-                            <FunnelIcon className="h-4 w-4" />
-                            Filter Tanggal
+                            <FunnelIcon className="h-3.5 w-3.5" />
+                            Filter Rentang
                         </button>
                     </div>
 
                     {/* Date Filter Panel */}
                     {showDateFilter && (
-                        <div className="mb-5 lg:mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="mb-5 lg:mb-6 p-4 bg-slate-50 rounded-[6px] border border-[#EEEEEE]">
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                                         Dari Tanggal
                                     </label>
                                     <input
@@ -1327,11 +1328,11 @@ const DashboardEnhanced = () => {
                                         onChange={(e) =>
                                             setStartDate(e.target.value)
                                         }
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-xs focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all duration-150"
                                     />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                                         Sampai Tanggal
                                     </label>
                                     <input
@@ -1340,19 +1341,19 @@ const DashboardEnhanced = () => {
                                         onChange={(e) =>
                                             setEndDate(e.target.value)
                                         }
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-xs focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-all duration-150"
                                     />
                                 </div>
                                 <div className="flex items-end gap-2">
                                     <button
                                         onClick={handleDateFilter}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                                        className="bg-[#11468F] text-white px-4 py-2 rounded-[6px] hover:bg-[#0d3873] transition-all duration-150 text-xs font-semibold shadow-sm"
                                     >
                                         Terapkan Filter
                                     </button>
                                     <button
                                         onClick={resetDateFilter}
-                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
+                                        className="bg-slate-200 text-slate-700 px-4 py-2 rounded-[6px] hover:bg-slate-300 transition-all duration-200 text-xs font-bold shadow-sm"
                                     >
                                         Reset
                                     </button>

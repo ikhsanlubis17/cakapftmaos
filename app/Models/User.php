@@ -30,6 +30,8 @@ class User extends Authenticatable implements JWTSubject
         'blocked_until',
         'activation_token',
         'activation_expires_at',
+        'password_reset_token',
+        'password_reset_expires_at',
     ];
 
     /**
@@ -50,11 +52,12 @@ class User extends Authenticatable implements JWTSubject
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-            'blocked_until' => 'datetime',
-            'activation_expires_at' => 'datetime',
+            'email_verified_at'         => 'datetime',
+            'password'                  => 'hashed',
+            'is_active'                 => 'boolean',
+            'blocked_until'             => 'datetime',
+            'activation_expires_at'     => 'datetime',
+            'password_reset_expires_at' => 'datetime',
         ];
     }
 

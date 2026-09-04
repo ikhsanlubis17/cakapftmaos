@@ -111,7 +111,7 @@ const AparDetail: React.FC = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -133,7 +133,7 @@ const AparDetail: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
                 <div className="px-4 py-5 sm:p-6">
                     <div className="flex items-center justify-between">
                         <div>
@@ -149,7 +149,7 @@ const AparDetail: React.FC = () => {
                                         ? `/apar/${apar.id}/edit`
                                         : "/apar"
                                 }
-                                className={`bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors ${
+                                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-colors ${
                                     !apar?.id
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
@@ -170,7 +170,7 @@ const AparDetail: React.FC = () => {
                             </Link>
                             <Link
                                 to="/apar"
-                                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                                className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-colors"
                             >
                                 Kembali
                             </Link>
@@ -180,7 +180,7 @@ const AparDetail: React.FC = () => {
             </div>
 
             {/* APAR Information */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
                 <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">
                         Informasi APAR
@@ -291,17 +291,17 @@ const AparDetail: React.FC = () => {
             </div>
 
             {/* QR Code */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
                 <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">
                         QR Code
                     </h3>
                     <div className="flex justify-center">
-                        <div className="bg-white p-4 rounded-lg border">
+                        <div className="bg-white p-4 rounded-[6px] border border-slate-200">
                             {!qrCodeError ? (
                                 qrQuery.isLoading ? (
                                     <div className="w-48 h-48 flex items-center justify-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#11468F]"></div>
                                     </div>
                                 ) : qrCodeUrl ? (
                                     <img
@@ -311,12 +311,12 @@ const AparDetail: React.FC = () => {
                                         onError={handleQrCodeError}
                                     />
                                 ) : (
-                                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-[6px]">
                                         <div className="text-gray-400 text-sm">QR Code tidak tersedia</div>
                                     </div>
                                 )
                             ) : (
-                                <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                                <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-[6px]">
                                     <div className="text-center">
                                         <div className="text-gray-400 text-sm">
                                             QR Code tidak tersedia

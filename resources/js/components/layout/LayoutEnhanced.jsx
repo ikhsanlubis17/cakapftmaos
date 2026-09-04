@@ -276,33 +276,35 @@ const LayoutEnhanced = () => {
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}>
         <div
-          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="fixed inset-y-0 left-0 flex w-72 flex-col bg-white shadow-xl transform transition-all duration-300 ease-in-out">
+        <div className="fixed inset-y-0 left-0 flex w-72 flex-col bg-[#041562] text-white shadow-2xl border-r border-white/10 transform transition-all duration-300 ease-in-out">
           {/* Header */}
-          <div className="flex h-16 items-center justify-between px-6 border-b border-gray-100">
+          <div className="flex h-16 items-center justify-between px-5 border-b border-white/10">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-10 w-10" />
+                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-9 w-9 rounded-[6px] bg-white p-1 shadow-sm" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{settings.site_name}</h1>
+                <h1 className="text-base font-bold tracking-tight text-white">{settings.site_name}</h1>
+                <span className="text-[10px] text-slate-300 font-medium tracking-wide">{settings.site_tagline || "Sistem Monitoring APAR"}</span>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="rounded-lg p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors"
+              className="rounded-[6px] p-2 text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <nav className="space-y-2">
+          <div className="flex-1 overflow-y-auto px-3 py-4">
+            <nav className="space-y-1.5">
               {navigation.map((item) => {
                 const Icon = item.icon
+                const active = isActive(item.href)
                 return (
                   <button
                     key={item.name}
@@ -310,18 +312,22 @@ const LayoutEnhanced = () => {
                       handleNavigation(item.href, item.name)
                       setSidebarOpen(false)
                     }}
-                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+                    className={`group w-full flex items-center px-3.5 py-2.5 text-sm font-medium rounded-[6px] transition-colors duration-150 ${
+                      active
+                        ? "bg-[#11468F] text-white shadow-sm font-semibold"
+                        : "text-slate-200 hover:bg-[#11468F]/30 hover:text-white"
+                    }`}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                        }`}
+                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                        active ? "text-white" : "text-slate-300 group-hover:text-white"
+                      }`}
                     />
                     <div className="text-left flex-1">
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                      <div className="font-semibold text-xs tracking-wide">{item.name}</div>
+                      <div className={`text-[11px] mt-0.5 ${active ? "text-white/80" : "text-slate-300/80"}`}>
+                        {item.description}
+                      </div>
                     </div>
                   </button>
                 )
@@ -333,40 +339,46 @@ const LayoutEnhanced = () => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
-        <div className="flex flex-col h-full bg-white border-r border-gray-200">
+        <div className="flex flex-col h-full bg-[#041562] text-white border-r border-white/10 shadow-lg">
           {/* Header */}
-          <div className="flex h-16 items-center px-6 border-b border-gray-100">
+          <div className="flex h-16 items-center px-6 border-b border-white/10">
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-10 w-10" />
+                <img src={settings.site_logo} alt={`${settings.site_name} Logo`} className="h-9 w-9 rounded-[6px] bg-white p-1 shadow-sm" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">{settings.site_name}</h1>
+                <h1 className="text-base font-bold tracking-tight text-white">{settings.site_name}</h1>
+                <span className="block text-[10px] text-slate-300 font-medium tracking-wide">{settings.site_tagline || "Sistem Monitoring APAR"}</span>
               </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto px-4 py-4">
-            <nav className="space-y-2">
+          <div className="flex-1 overflow-y-auto px-3.5 py-4">
+            <nav className="space-y-1.5">
               {navigation.map((item) => {
                 const Icon = item.icon
+                const active = isActive(item.href)
                 return (
                   <button
                     key={item.name}
                     onClick={() => handleNavigation(item.href, item.name)}
-                    className={`group w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${isActive(item.href)
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+                    className={`group w-full flex items-center px-3.5 py-2.5 text-sm font-medium rounded-[6px] transition-colors duration-150 ${
+                      active
+                        ? "bg-[#11468F] text-white shadow-sm font-semibold"
+                        : "text-slate-200 hover:bg-[#11468F]/30 hover:text-white"
+                    }`}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${isActive(item.href) ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
-                        }`}
+                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
+                        active ? "text-white" : "text-slate-300 group-hover:text-white"
+                      }`}
                     />
                     <div className="text-left flex-1">
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                      <div className="font-semibold text-xs tracking-wide">{item.name}</div>
+                      <div className={`text-[11px] mt-0.5 ${active ? "text-white/80" : "text-slate-300/80"}`}>
+                        {item.description}
+                      </div>
                     </div>
                   </button>
                 )
@@ -379,10 +391,10 @@ const LayoutEnhanced = () => {
       {/* Main content */}
       <div className="lg:pl-72">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white/95 backdrop-blur-sm px-4 sm:gap-x-6 sm:px-6 lg:px-8">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-[#EEEEEE] bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
           <button
             type="button"
-            className="-m-2.5 p-2.5 text-gray-700 lg:hidden rounded-lg hover:bg-gray-100 transition-colors"
+            className="-m-2.5 p-2.5 text-slate-700 lg:hidden rounded-[6px] hover:bg-[#EEEEEE] transition-colors"
             onClick={() => setSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
@@ -390,33 +402,31 @@ const LayoutEnhanced = () => {
           </button>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1"></div>
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
-              {/* Notifications */}
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <span className="sr-only">View notifications</span>
-                <BellIcon className="h-5 w-5" />
-              </button>
-
+            <div className="flex flex-1 items-center">
+              <span className="hidden md:inline-flex items-center px-3 py-1 rounded-[4px] text-xs font-semibold bg-[#EEEEEE] text-slate-700 border border-slate-200">
+                Operasional Siaga &bull; {settings.organization_name}
+              </span>
+            </div>
+            <div className="flex items-center gap-x-3 lg:gap-x-5">
               {/* User menu */}
               <div className="relative user-menu">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-x-3 text-sm font-medium text-gray-900 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-x-3 text-sm font-medium text-slate-900 hover:text-slate-700 p-1.5 rounded-[6px] hover:bg-[#EEEEEE] transition-colors"
                 >
-                  <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
-                    <UserCircleIcon className="h-5 w-5 text-white" />
+                  <div className="h-8 w-8 rounded-full bg-[#041562] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : <UserCircleIcon className="h-5 w-5" />}
                   </div>
-                  <span className="hidden lg:block">{user?.name}</span>
-                  <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                  <span className="hidden lg:block text-xs font-semibold text-slate-800">{user?.name}</span>
+                  <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-lg bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-100">
-                    <div className="px-4 py-3 text-sm border-b border-gray-100">
-                      <div className="font-medium text-gray-900">{user?.name}</div>
-                      <div className="text-gray-500 text-xs">{user?.email}</div>
-                      <div className="inline-flex items-center px-2 py-1 mt-2 rounded-md text-xs font-medium bg-blue-50 text-blue-700">
+                  <div className="absolute right-0 z-10 mt-2 w-60 origin-top-right rounded-[6px] bg-white py-2 shadow-lg border border-[#EEEEEE]">
+                    <div className="px-4 py-3 text-sm border-b border-[#EEEEEE]">
+                      <div className="font-bold text-slate-900 text-xs">{user?.name}</div>
+                      <div className="text-slate-500 text-[11px] truncate">{user?.email}</div>
+                      <div className="inline-flex items-center px-2 py-0.5 mt-2 rounded-[3px] text-[10px] font-semibold bg-[#11468F] text-white">
                         {getRoleDisplayName(user?.role)}
                       </div>
                     </div>
@@ -425,17 +435,17 @@ const LayoutEnhanced = () => {
                         setUserMenuOpen(false);
                         navigate({ to: "/profile" });
                       }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      className="flex w-full items-center px-4 py-2 text-xs font-medium text-slate-700 hover:bg-[#EEEEEE] hover:text-[#11468F] transition-colors"
                     >
-                      <UserCircleIcon className="mr-3 h-4 w-4" />
-                      Profil
+                      <UserCircleIcon className="mr-2.5 h-4 w-4 text-slate-400" />
+                      Profil Pengguna
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
+                      className="flex w-full items-center px-4 py-2 text-xs font-semibold text-[#DA1212] hover:bg-red-50 transition-colors"
                     >
-                      <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
-                      Logout
+                      <ArrowRightOnRectangleIcon className="mr-2.5 h-4 w-4" />
+                      Keluar (Logout)
                     </button>
                   </div>
                 )}

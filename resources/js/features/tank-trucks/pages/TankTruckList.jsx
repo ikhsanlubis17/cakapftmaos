@@ -184,13 +184,13 @@ const TankTruckList = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case "active":
-                return "bg-green-100 text-green-800";
+                return "bg-emerald-50 text-emerald-700 border border-emerald-200";
             case "inactive":
-                return "bg-red-100 text-red-800";
+                return "bg-red-50 text-red-700 border border-red-200";
             case "maintenance":
-                return "bg-yellow-100 text-yellow-800";
+                return "bg-amber-50 text-amber-700 border border-amber-200";
             default:
-                return "bg-gray-100 text-gray-800";
+                return "bg-slate-50 text-slate-700 border border-slate-200";
         }
     };
 
@@ -210,7 +210,7 @@ const TankTruckList = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -219,11 +219,11 @@ const TankTruckList = () => {
         <Fragment>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl">
-                                <TruckIcon className="h-6 w-6 text-blue-600" />
+                            <div className="flex items-center justify-center w-12 h-12 bg-[#041562] text-white rounded-[6px]">
+                                <TruckIcon className="h-6 w-6" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
@@ -239,8 +239,8 @@ const TankTruckList = () => {
                         <div className="flex flex-col sm:flex-row gap-3">
                             {bulkDeleteMode ? (
                                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                                    <div className="flex items-center justify-center sm:justify-start px-3 py-2 bg-gray-50 rounded-md">
-                                        <span className="text-sm text-gray-600">
+                                    <div className="flex items-center justify-center sm:justify-start px-3 py-2 bg-slate-50 border border-slate-200 rounded-[6px]">
+                                        <span className="text-sm font-medium text-slate-700">
                                             {selectedTankTrucks.length} dipilih
                                         </span>
                                     </div>
@@ -248,13 +248,13 @@ const TankTruckList = () => {
                                         onClick={handleBulkDelete}
                                         disabled={
                                             selectedTankTrucks.length === 0 ||
-                                            deleting
+                                             deleting
                                         }
-                                        className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white ${
+                                        className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white ${
                                             selectedTankTrucks.length > 0 &&
                                             !deleting
-                                                ? "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                                : "bg-gray-300 cursor-not-allowed"
+                                                ? "bg-[#DA1212] hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#DA1212]"
+                                                : "bg-slate-300 cursor-not-allowed"
                                         } transition-all duration-200`}
                                     >
                                         {deleting ? (
@@ -282,7 +282,7 @@ const TankTruckList = () => {
                                     </button>
                                     <button
                                         onClick={toggleBulkDeleteMode}
-                                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                        className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200"
                                     >
                                         <XMarkIcon className="h-4 w-4 mr-2" />
                                         <span className="hidden sm:inline">
@@ -295,7 +295,7 @@ const TankTruckList = () => {
                                 <div className="flex flex-col sm:flex-row gap-2">
                                     <button
                                         onClick={toggleBulkDeleteMode}
-                                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                        className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200"
                                     >
                                         <TrashIcon className="h-4 w-4 mr-2" />
                                         <span className="hidden sm:inline">
@@ -305,7 +305,7 @@ const TankTruckList = () => {
                                     </button>
                                     <button
                                         onClick={() => setShowModal(true)}
-                                        className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm"
+                                        className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
                                     >
                                         <PlusIcon className="h-4 w-4 mr-2" />
                                         <span className="hidden sm:inline">
@@ -322,18 +322,18 @@ const TankTruckList = () => {
                 </div>
 
                 {/* Search */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
                     <div className="flex flex-col lg:flex-row lg:items-end gap-6">
                         <div className="flex-1">
                             <label
                                 htmlFor="search"
-                                className="block text-sm font-medium text-gray-700 mb-2"
+                                className="block text-sm font-medium text-slate-700 mb-2"
                             >
                                 Cari Mobil Tangki
                             </label>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                                    <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
                                 </div>
                                 <input
                                     type="text"
@@ -343,7 +343,7 @@ const TankTruckList = () => {
                                     onChange={(e) =>
                                         setSearchTerm(e.target.value)
                                     }
-                                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200"
                                     placeholder="Nomor plat atau nama supir..."
                                 />
                             </div>
@@ -353,7 +353,7 @@ const TankTruckList = () => {
                             <div className="w-full lg:w-auto">
                                 <button
                                     onClick={() => setSearchTerm("")}
-                                    className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors duration-200"
+                                    className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-slate-600 bg-slate-100 border border-slate-300 rounded-[6px] hover:bg-slate-200 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200"
                                 >
                                     Bersihkan Pencarian
                                 </button>
@@ -363,13 +363,13 @@ const TankTruckList = () => {
                 </div>
 
                 {/* Tank Trucks List */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] overflow-hidden">
                     {/* List Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                                <TruckIcon className="h-5 w-5 text-blue-600" />
-                                <h3 className="text-lg font-semibold text-gray-900">
+                                <TruckIcon className="h-5 w-5 text-[#11468F]" />
+                                <h3 className="text-lg font-semibold text-slate-900">
                                     Daftar Mobil Tangki ({tankTrucks.length})
                                 </h3>
                             </div>
@@ -378,7 +378,7 @@ const TankTruckList = () => {
 
                     {/* Bulk Delete Header */}
                     {bulkDeleteMode && (
-                        <div className="px-6 py-3 border-b border-gray-200 bg-red-50">
+                        <div className="px-6 py-3 border-b border-red-200 bg-red-50">
                             <div className="flex items-center justify-between">
                                 <label className="flex items-center gap-3">
                                     <input
@@ -389,13 +389,13 @@ const TankTruckList = () => {
                                             tankTrucks.length > 0
                                         }
                                         onChange={handleSelectAll}
-                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                        className="h-4 w-4 text-[#DA1212] focus:ring-[#DA1212] border-slate-300 rounded-[3px]"
                                     />
-                                    <span className="text-sm font-medium text-gray-900">
+                                    <span className="text-sm font-medium text-slate-900">
                                         Pilih Semua ({tankTrucks.length})
                                     </span>
                                 </label>
-                                <span className="text-sm text-gray-500">
+                                <span className="text-sm text-slate-500">
                                     {selectedTankTrucks.length} dari{" "}
                                     {tankTrucks.length} dipilih
                                 </span>
@@ -405,8 +405,8 @@ const TankTruckList = () => {
 
                     {/* Tank Trucks Table */}
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
                                 <tr>
                                     {bulkDeleteMode && (
                                         <th
@@ -420,37 +420,37 @@ const TankTruckList = () => {
                                     )}
                                     <th
                                         scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
                                     >
                                         Mobil Tangki
                                     </th>
                                     <th
                                         scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
                                     >
                                         Supir
                                     </th>
                                     <th
                                         scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
                                     >
                                         APAR
                                     </th>
                                     <th
                                         scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
                                     >
                                         Status
                                     </th>
                                     <th
                                         scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider"
                                     >
                                         Aksi
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-slate-200">
                                 {tankTrucks.length === 0 ? (
                                     <tr>
                                         <td
@@ -458,12 +458,12 @@ const TankTruckList = () => {
                                             className="px-6 py-12 text-center"
                                         >
                                             <div className="flex flex-col items-center gap-3">
-                                                <TruckIcon className="h-12 w-12 text-gray-400" />
+                                                <TruckIcon className="h-12 w-12 text-slate-400" />
                                                 <div>
-                                                    <h3 className="text-lg font-medium text-gray-900">
+                                                    <h3 className="text-lg font-medium text-slate-900">
                                                         Tidak ada mobil tangki
                                                     </h3>
-                                                    <p className="text-gray-500">
+                                                    <p className="text-slate-500">
                                                         {searchTerm
                                                             ? "Tidak ada mobil tangki yang sesuai dengan pencarian"
                                                             : "Belum ada mobil tangki yang dibuat"}
@@ -474,7 +474,7 @@ const TankTruckList = () => {
                                                         onClick={() =>
                                                             setShowModal(true)
                                                         }
-                                                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                        className="inline-flex items-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold rounded-[6px] transition-colors shadow-sm"
                                                     >
                                                         <PlusIcon className="h-4 w-4 mr-2" />
                                                         Tambah Mobil Tangki
@@ -488,7 +488,7 @@ const TankTruckList = () => {
                                     tankTrucks.map((tankTruck) => (
                                         <tr
                                             key={tankTruck.id}
-                                            className="hover:bg-gray-50 transition-colors"
+                                            className="hover:bg-slate-50 transition-colors"
                                         >
                                             {bulkDeleteMode && (
                                                 <td className="px-6 py-4 whitespace-nowrap">
@@ -502,23 +502,23 @@ const TankTruckList = () => {
                                                                 tankTruck.id
                                                             )
                                                         }
-                                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-[#DA1212] focus:ring-[#DA1212] border-slate-300 rounded-[3px]"
                                                     />
                                                 </td>
                                             )}
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
-                                                        <TruckIcon className="h-4 w-4 text-blue-600" />
+                                                    <div className="flex items-center justify-center w-8 h-8 bg-[#11468F]/10 text-[#11468F] rounded-[6px]">
+                                                        <TruckIcon className="h-4 w-4" />
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-medium text-gray-900">
+                                                        <div className="text-sm font-semibold text-slate-900">
                                                             {
                                                                 tankTruck.plate_number
                                                             }
                                                         </div>
                                                         {tankTruck.description && (
-                                                            <div className="text-xs text-gray-500 max-w-xs truncate">
+                                                            <div className="text-xs text-slate-500 max-w-xs truncate">
                                                                 {
                                                                     tankTruck.description
                                                                 }
@@ -528,11 +528,11 @@ const TankTruckList = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">
+                                                <div className="text-sm text-slate-900 font-medium">
                                                     {tankTruck.driver_name}
                                                 </div>
                                                 {tankTruck.driver_phone && (
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-slate-500">
                                                         {tankTruck.driver_phone}
                                                     </div>
                                                 )}
@@ -540,7 +540,7 @@ const TankTruckList = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
                                                     <FireIcon className="h-4 w-4 text-red-500" />
-                                                    <span className="text-sm text-gray-900">
+                                                    <span className="text-sm text-slate-900 font-medium">
                                                         {tankTruck.apars
                                                             ?.length || 0}{" "}
                                                         APAR
@@ -549,7 +549,7 @@ const TankTruckList = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-[3px] text-xs font-semibold ${getStatusColor(
                                                         tankTruck.status
                                                     )}`}
                                                 >
@@ -559,17 +559,17 @@ const TankTruckList = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-1.5">
                                                     <Link
                                                         to={`/tank-trucks/${tankTruck.id}`}
-                                                        className="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        className="inline-flex items-center p-1.5 text-[#11468F] hover:bg-[#11468F]/10 rounded-[6px] transition-colors"
                                                         title="Lihat Detail"
                                                     >
                                                         <EyeIcon className="h-4 w-4" />
                                                     </Link>
                                                     <Link
                                                         to={`/tank-trucks/${tankTruck.id}/edit`}
-                                                        className="inline-flex items-center p-2 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        className="inline-flex items-center p-1.5 text-amber-600 hover:bg-amber-50 rounded-[6px] transition-colors"
                                                         title="Edit"
                                                     >
                                                         <PencilIcon className="h-4 w-4" />
@@ -580,7 +580,7 @@ const TankTruckList = () => {
                                                                 tankTruck.id
                                                             )
                                                         }
-                                                        className="inline-flex items-center p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                                                        className="inline-flex items-center p-1.5 text-[#DA1212] hover:bg-red-50 rounded-[6px] transition-colors"
                                                         title="Hapus"
                                                     >
                                                         <TrashIcon className="h-4 w-4" />
@@ -598,15 +598,24 @@ const TankTruckList = () => {
 
             {/* Add Tank Truck Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                    <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                        <div className="mt-3">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Tambah Mobil Tangki
-                            </h3>
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                    <div className="relative mx-auto p-6 border border-slate-200 w-full max-w-md shadow-xl rounded-[6px] bg-white">
+                        <div>
+                            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    Tambah Mobil Tangki
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowModal(false)}
+                                    className="text-slate-400 hover:text-slate-600 rounded-[6px] p-1"
+                                >
+                                    <XMarkIcon className="h-5 w-5" />
+                                </button>
+                            </div>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Nomor Plat{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -619,12 +628,13 @@ const TankTruckList = () => {
                                                 plate_number: e.target.value,
                                             })
                                         }
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
+                                        placeholder="Contoh: B 1234 ABC"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Nama Supir{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -637,12 +647,13 @@ const TankTruckList = () => {
                                                 driver_name: e.target.value,
                                             })
                                         }
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
+                                        placeholder="Nama lengkap supir"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Nomor Telepon Supir
                                     </label>
                                     <input
@@ -654,11 +665,12 @@ const TankTruckList = () => {
                                                 driver_phone: e.target.value,
                                             })
                                         }
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
+                                        placeholder="08xxxxxxxxxx"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Deskripsi
                                     </label>
                                     <textarea
@@ -670,11 +682,12 @@ const TankTruckList = () => {
                                             })
                                         }
                                         rows="3"
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
+                                        placeholder="Keterangan tambahan..."
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">
+                                    <label className="block text-sm font-semibold text-slate-700">
                                         Status
                                     </label>
                                     <select
@@ -685,7 +698,7 @@ const TankTruckList = () => {
                                                 status: e.target.value,
                                             })
                                         }
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                                     >
                                         <option value="active">Aktif</option>
                                         <option value="inactive">
@@ -696,17 +709,17 @@ const TankTruckList = () => {
                                         </option>
                                     </select>
                                 </div>
-                                <div className="flex justify-end space-x-3 pt-4">
+                                <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-[6px] hover:bg-slate-200 transition-colors"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                        className="px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold rounded-[6px] transition-colors shadow-sm"
                                     >
                                         Simpan
                                     </button>

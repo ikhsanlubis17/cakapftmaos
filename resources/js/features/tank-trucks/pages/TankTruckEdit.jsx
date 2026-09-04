@@ -89,8 +89,8 @@ const TankTruckEdit = () => {
         return (
             <div className="flex items-center justify-center min-h-64">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Memuat data mobil tangki...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F] mx-auto mb-4"></div>
+                    <p className="text-slate-600 text-sm">Memuat data mobil tangki...</p>
                 </div>
             </div>
         );
@@ -99,8 +99,8 @@ const TankTruckEdit = () => {
     if (!tankTruck) {
         return (
             <div className="text-center py-12">
-                <TruckIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Mobil Tangki Tidak Ditemukan</h3>
+                <TruckIcon className="mx-auto h-12 w-12 text-slate-400" />
+                <h3 className="mt-2 text-sm font-medium text-slate-900">Mobil Tangki Tidak Ditemukan</h3>
             </div>
         );
     }
@@ -110,15 +110,15 @@ const TankTruckEdit = () => {
             {/* Header - Responsive */}
             <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Mobil Tangki</h1>
-                    <p className="mt-1 text-sm text-gray-500 truncate">
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Edit Mobil Tangki</h1>
+                    <p className="mt-1 text-sm text-slate-500 truncate">
                         Edit data mobil tangki: {tankTruck.plate_number}
                     </p>
                 </div>
                 <div className="flex justify-start sm:justify-end">
                     <button
                         onClick={() => navigate({ to: '/tank-trucks' })}
-                        className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center justify-center px-3.5 py-2 border border-slate-300 rounded-[6px] shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#11468F]"
                     >
                         <ArrowLeftIcon className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">Kembali</span>
@@ -128,12 +128,12 @@ const TankTruckEdit = () => {
             </div>
 
             {/* Form - Responsive */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
                 <form onSubmit={handleSubmit} className="space-y-6 p-4 sm:p-6">
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                         {/* Plate Number */}
                         <div className="sm:col-span-2">
-                            <label htmlFor="plate_number" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="plate_number" className="block text-sm font-semibold text-slate-700 mb-2">
                                 Nomor Plat <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -143,14 +143,14 @@ const TankTruckEdit = () => {
                                 required
                                 value={formData.plate_number}
                                 onChange={handleChange}
-                                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2"
+                                className="block w-full border border-slate-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] px-3 py-2 text-sm"
                                 placeholder="B 1234 ABC"
                             />
                         </div>
 
                         {/* Driver Name */}
                         <div>
-                            <label htmlFor="driver_name" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="driver_name" className="block text-sm font-semibold text-slate-700 mb-2">
                                 Nama Supir <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -160,14 +160,14 @@ const TankTruckEdit = () => {
                                 required
                                 value={formData.driver_name}
                                 onChange={handleChange}
-                                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2"
+                                className="block w-full border border-slate-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] px-3 py-2 text-sm"
                                 placeholder="Nama lengkap supir"
                             />
                         </div>
 
                         {/* Driver Phone */}
                         <div>
-                            <label htmlFor="driver_phone" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="driver_phone" className="block text-sm font-semibold text-slate-700 mb-2">
                                 Nomor Telepon Supir
                             </label>
                             <input
@@ -176,14 +176,14 @@ const TankTruckEdit = () => {
                                 id="driver_phone"
                                 value={formData.driver_phone}
                                 onChange={handleChange}
-                                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2"
+                                className="block w-full border border-slate-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] px-3 py-2 text-sm"
                                 placeholder="081234567890"
                             />
                         </div>
 
                         {/* Status */}
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="status" className="block text-sm font-semibold text-slate-700 mb-2">
                                 Status <span className="text-red-500">*</span>
                             </label>
                             <select
@@ -192,7 +192,7 @@ const TankTruckEdit = () => {
                                 required
                                 value={formData.status}
                                 onChange={handleChange}
-                                className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2"
+                                className="block w-full border border-slate-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] px-3 py-2 text-sm"
                             >
                                 <option value="active">Aktif</option>
                                 <option value="inactive">Tidak Aktif</option>
@@ -203,7 +203,7 @@ const TankTruckEdit = () => {
 
                     {/* Description */}
                     <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="description" className="block text-sm font-semibold text-slate-700 mb-2">
                             Deskripsi
                         </label>
                         <textarea
@@ -212,17 +212,17 @@ const TankTruckEdit = () => {
                             rows={3}
                             value={formData.description}
                             onChange={handleChange}
-                            className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 px-3 py-2"
+                            className="block w-full border border-slate-300 rounded-[6px] shadow-sm focus:ring-[#11468F] focus:border-[#11468F] px-3 py-2 text-sm"
                             placeholder="Deskripsi mobil tangki..."
                         />
                     </div>
 
                     {/* Submit Button - Responsive */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:justify-end pt-4 border-t border-slate-200">
                         <button
                             type="button"
                             onClick={() => navigate({ to: '/tank-trucks' })}
-                            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                            className="px-4 py-2 border border-slate-300 rounded-[6px] shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#11468F]"
                         >
                             <span className="hidden sm:inline">Batal</span>
                             <span className="sm:hidden">Batal</span>
@@ -230,7 +230,7 @@ const TankTruckEdit = () => {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-[6px] shadow-sm text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[#11468F]"
                         >
                             {saving ? (
                                 <>

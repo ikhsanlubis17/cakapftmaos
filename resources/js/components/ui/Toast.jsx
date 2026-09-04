@@ -57,34 +57,34 @@ const Toast = ({
     const toastConfig = {
         success: {
             icon: CheckCircleIcon,
-            bgColor: 'bg-emerald-500',
+            bgColor: 'bg-emerald-600',
             iconColor: 'text-emerald-100',
             textColor: 'text-white',
-            borderColor: 'border-emerald-400',
+            borderColor: 'border-emerald-700',
             shadowColor: 'shadow-emerald-500/20'
         },
         error: {
             icon: ExclamationTriangleIcon,
-            bgColor: 'bg-red-500',
+            bgColor: 'bg-[#DA1212]',
             iconColor: 'text-red-100',
             textColor: 'text-white',
-            borderColor: 'border-red-400',
+            borderColor: 'border-red-700',
             shadowColor: 'shadow-red-500/20'
         },
         warning: {
             icon: ExclamationTriangleIcon,
-            bgColor: 'bg-amber-500',
+            bgColor: 'bg-amber-600',
             iconColor: 'text-amber-100',
             textColor: 'text-white',
-            borderColor: 'border-amber-400',
+            borderColor: 'border-amber-700',
             shadowColor: 'shadow-amber-500/20'
         },
         info: {
             icon: InformationCircleIcon,
-            bgColor: 'bg-blue-500',
+            bgColor: 'bg-[#11468F]',
             iconColor: 'text-blue-100',
             textColor: 'text-white',
-            borderColor: 'border-blue-400',
+            borderColor: 'border-blue-700',
             shadowColor: 'shadow-blue-500/20'
         }
     };
@@ -107,9 +107,9 @@ const Toast = ({
                 className={`
                     ${config.bgColor} ${config.textColor}
                     border ${config.borderColor}
-                    rounded-2xl shadow-2xl ${config.shadowColor}
-                    max-w-sm w-80 backdrop-blur-sm
-                    transform transition-all duration-300 ease-out
+                    rounded-[6px] shadow-lg ${config.shadowColor}
+                    max-w-sm w-80
+                    transform transition-all duration-150 ease-in-out
                     ${isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-2 opacity-0 scale-95'}
                     pointer-events-auto
                 `}
@@ -133,7 +133,7 @@ const Toast = ({
 
                         <button
                             onClick={handleClose}
-                            className="text-white/80 hover:text-white transition-all duration-200 p-1.5 rounded-lg hover:bg-white/10 hover:scale-110 flex-shrink-0"
+                            className="text-white/80 hover:text-white transition-colors duration-150 p-1.5 rounded-[4px] hover:bg-white/10 flex-shrink-0"
                             aria-label="Close toast"
                         >
                             <XMarkIcon className="h-4 w-4" />
@@ -143,7 +143,7 @@ const Toast = ({
 
                 {/* Progress bar for auto-close */}
                 {duration > 0 && (
-                    <div className="h-1 bg-white/20 rounded-b-2xl overflow-hidden">
+                    <div className="h-1 bg-white/20 rounded-b-[6px] overflow-hidden">
                         <div 
                             className="h-full bg-white/60 transition-all duration-100 ease-linear"
                             style={{ width: `${progress}%` }}

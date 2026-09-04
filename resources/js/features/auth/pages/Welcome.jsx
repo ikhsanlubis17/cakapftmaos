@@ -48,7 +48,7 @@ const Welcome = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white text-slate-900 selection:bg-[#11468F] selection:text-white">
             <WelcomeNav
                 scrollY={scrollY}
                 activeSection={activeSection}

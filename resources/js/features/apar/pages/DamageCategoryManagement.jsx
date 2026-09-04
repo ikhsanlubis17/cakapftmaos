@@ -322,7 +322,7 @@ const DamageCategoryManagement = () => {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
             </div>
         );
     }
@@ -331,11 +331,11 @@ const DamageCategoryManagement = () => {
         <div className="space-y-6">
             <div className="max-w-7xl mx-auto p-6 space-y-6">
                 {/* Header */}
-                <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-6">
-                    <div className="flex items-center justify-between">
+                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center space-x-4">
-                            <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center shadow-lg">
-                                <FireIcon className="h-7 w-7 text-white" />
+                            <div className="h-12 w-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center shadow-sm">
+                                <FireIcon className="h-7 w-7" />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
@@ -349,7 +349,7 @@ const DamageCategoryManagement = () => {
                         <div className="flex items-center space-x-3">
                             {bulkDeleteMode ? (
                                 <>
-                                    <div className="flex items-center px-3 py-2 bg-gray-50 rounded-md">
+                                    <div className="flex items-center px-3 py-2 bg-gray-50 rounded-[6px]">
                                         <span className="text-sm text-gray-600">
                                             {selectedCategories.length} dipilih
                                         </span>
@@ -357,9 +357,9 @@ const DamageCategoryManagement = () => {
                                     <button
                                         onClick={handleBulkDelete}
                                         disabled={selectedCategories.length === 0 || deleting}
-                                        className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white ${
+                                        className={`inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-[6px] text-white ${
                                             selectedCategories.length > 0 && !deleting
-                                                ? "bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                ? "bg-[#DA1212] hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                                 : "bg-gray-300 cursor-not-allowed"
                                         } transition-all duration-200`}
                                     >
@@ -377,20 +377,29 @@ const DamageCategoryManagement = () => {
                                     </button>
                                     <button
                                         onClick={toggleBulkDeleteMode}
-                                        className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
+                                        className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all duration-200"
                                     >
                                         <XMarkIcon className="h-4 w-4 mr-2" />
                                         Batal
                                     </button>
                                 </>
                             ) : (
-                                <button
-                                    onClick={toggleBulkDeleteMode}
-                                    className="inline-flex items-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200"
-                                >
-                                    <TrashIcon className="h-4 w-4 mr-2" />
-                                    Hapus Massal
-                                </button>
+                                <>
+                                    <button
+                                        onClick={toggleBulkDeleteMode}
+                                        className="inline-flex items-center px-4 py-2.5 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all duration-200 shadow-sm"
+                                    >
+                                        <TrashIcon className="h-4 w-4 mr-2" />
+                                        Hapus Massal
+                                    </button>
+                                    <button
+                                        onClick={() => setShowForm(true)}
+                                        className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
+                                    >
+                                        <PlusIcon className="h-4 w-4 mr-2" />
+                                        Tambah Kategori
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -398,8 +407,8 @@ const DamageCategoryManagement = () => {
 
                 {/* Form Modal */}
                 {showForm && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                        <div className="relative mx-auto p-6 border border-slate-200 w-full max-w-md shadow-xl rounded-[6px] bg-white">
                             <div className="mt-3 mb-4 flex items-center justify-between">
                                 <h2 className="text-lg font-medium text-gray-900">
                                     {editingCategory
@@ -416,7 +425,7 @@ const DamageCategoryManagement = () => {
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Nama Kategori{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -429,14 +438,14 @@ const DamageCategoryManagement = () => {
                                                 name: e.target.value,
                                             })
                                         }
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                                         placeholder="Contoh: Cat tabung rusak/pudar"
                                         required
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Tipe Aset{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -448,7 +457,7 @@ const DamageCategoryManagement = () => {
                                                 type: e.target.value,
                                             })
                                         }
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                                         required
                                     >
                                         {availableTypes.map((type) => (
@@ -460,7 +469,7 @@ const DamageCategoryManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Tingkat Keparahan{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -472,7 +481,7 @@ const DamageCategoryManagement = () => {
                                                 severity: e.target.value,
                                             })
                                         }
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F]"
                                         required
                                     >
                                         <option value="low">Rendah</option>
@@ -482,7 +491,7 @@ const DamageCategoryManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">
                                         Deskripsi
                                     </label>
                                     <textarea
@@ -494,7 +503,7 @@ const DamageCategoryManagement = () => {
                                             })
                                         }
                                         rows={3}
-                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+                                        className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] resize-none"
                                         placeholder="Jelaskan detail kategori kerusakan..."
                                     />
                                 </div>
@@ -510,11 +519,11 @@ const DamageCategoryManagement = () => {
                                                 is_active: e.target.checked,
                                             })
                                         }
-                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                                        className="h-4 w-4 text-[#11468F] focus:ring-[#11468F] border-slate-300 rounded-[3px]"
                                     />
                                     <label
                                         htmlFor="is_active"
-                                        className="ml-2 text-sm text-gray-700"
+                                        className="ml-2 text-sm text-slate-700"
                                     >
                                         Kategori aktif
                                     </label>
@@ -523,14 +532,14 @@ const DamageCategoryManagement = () => {
                                 <div className="flex space-x-3 pt-4">
                                     <button
                                         type="submit"
-                                        className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
+                                        className="flex-1 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold border border-transparent px-4 py-2 rounded-[6px] transition-colors shadow-sm text-sm"
                                     >
                                         {editingCategory ? "Update" : "Simpan"}
                                     </button>
                                     <button
                                         type="button"
                                         onClick={resetForm}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                                        className="px-4 py-2 border border-slate-300 rounded-[6px] text-slate-700 hover:bg-slate-50 transition-colors font-medium text-sm"
                                     >
                                         Batal
                                     </button>
@@ -546,85 +555,85 @@ const DamageCategoryManagement = () => {
                         {Object.entries(groupedCategories).map(([type, typeCategories]) => (
                             <div
                                 key={type}
-                                className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+                                className="bg-white border border-slate-200 rounded-[6px] shadow-sm overflow-hidden"
                             >
                                 {/* Card Header - Type Name */}
-                                <div className="bg-gradient-to-r from-red-500 to-red-600 px-5 py-4 flex items-center justify-between">
+                                <div className="bg-[#041562] border-b-2 border-[#11468F] px-5 py-4 flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                        <div className="h-10 w-10 rounded-lg bg-white/20 flex items-center justify-center">
-                                            <FireIcon className="h-6 w-6 text-white" />
+                                        <div className="h-10 w-10 rounded-[6px] bg-white/10 flex items-center justify-center text-white">
+                                            <FireIcon className="h-6 w-6" />
                                         </div>
                                         <div>
-                                            <h3 className="text-white font-bold text-lg capitalize">
+                                            <h3 className="text-white font-bold text-lg capitalize tracking-tight">
                                                 {type}
                                             </h3>
-                                            <p className="text-white/80 text-xs">
+                                            <p className="text-slate-300 text-xs">
                                                 {typeCategories.length} item checklist
                                             </p>
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => handleAddForType(type)}
-                                        className="h-8 w-8 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                                        className="h-8 w-8 rounded-[6px] bg-[#11468F] hover:bg-[#0d3873] text-white flex items-center justify-center transition-colors shadow-sm"
                                         title="Tambah Item"
                                     >
-                                        <PlusIcon className="h-5 w-5 text-white" />
+                                        <PlusIcon className="h-5 w-5" />
                                     </button>
                                 </div>
 
                                 {/* Card Body - Categories List */}
                                 <div className="max-h-96 overflow-y-auto">
                                     {typeCategories.length > 0 ? (
-                                        <div className="divide-y divide-gray-100">
+                                        <div className="divide-y divide-slate-100">
                                             {typeCategories.map((category, index) => (
                                                 <div
                                                     key={category.id}
-                                                    className={`px-5 py-3 hover:bg-gray-50 transition-colors ${
+                                                    className={`px-5 py-3 hover:bg-slate-50 transition-colors ${
                                                         selectedCategories.includes(category.id)
-                                                            ? "bg-red-50"
+                                                            ? "bg-amber-50/50"
                                                             : ""
                                                     }`}
                                                 >
                                                     <div className="flex items-start space-x-3">
                                                         {/* Drag Handle */}
                                                         <div className="flex items-center space-x-2 pt-1">
-                                                            <div className="cursor-move text-gray-400 hover:text-gray-600">
+                                                            <div className="cursor-move text-slate-400 hover:text-slate-600">
                                                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                                     <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path>
                                                                 </svg>
                                                             </div>
                                                             {bulkDeleteMode && (
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={selectedCategories.includes(category.id)}
-                                                                    onChange={() => handleSelectCategory(category.id)}
-                                                                    className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                                                />
+                                                                 <input
+                                                                     type="checkbox"
+                                                                     checked={selectedCategories.includes(category.id)}
+                                                                     onChange={() => handleSelectCategory(category.id)}
+                                                                     className="h-4 w-4 text-[#11468F] focus:ring-[#11468F] border-slate-300 rounded-[3px]"
+                                                                 />
                                                             )}
                                                         </div>
 
                                                         {/* Item Number */}
                                                         <div className="flex-shrink-0 pt-1">
-                                                            <span className="inline-flex items-center justify-center h-6 w-6 rounded bg-gray-100 text-gray-600 text-xs font-medium">
+                                                            <span className="inline-flex items-center justify-center h-6 w-6 rounded-[3px] bg-slate-100 text-slate-600 text-xs font-semibold">
                                                                 #{index + 1}
                                                             </span>
                                                         </div>
 
                                                         {/* Category Content */}
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-medium text-gray-900 line-clamp-2">
+                                                            <p className="text-sm font-medium text-slate-900 line-clamp-2">
                                                                 {category.name}
                                                             </p>
                                                             {category.description && (
-                                                                <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                                                                <p className="text-xs text-slate-500 mt-1 line-clamp-1">
                                                                     {category.description}
                                                                 </p>
                                                             )}
-                                                            <div className="mt-1">
-                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                                                    category.severity === 'high' ? 'bg-red-100 text-red-800' :
-                                                                    category.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                                                    'bg-green-100 text-green-800'
+                                                            <div className="mt-1.5">
+                                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-semibold ${
+                                                                    category.severity === 'high' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                                                    category.severity === 'medium' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                                                    'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                                                 }`}>
                                                                     {category.severity === 'high' ? 'Tinggi' :
                                                                      category.severity === 'medium' ? 'Sedang' : 'Rendah'}
@@ -636,14 +645,14 @@ const DamageCategoryManagement = () => {
                                                         <div className="flex items-center space-x-1">
                                                             <button
                                                                 onClick={() => handleEdit(category)}
-                                                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                className="p-1.5 text-slate-600 hover:text-[#11468F] hover:bg-slate-100 rounded-[3px] transition-colors"
                                                                 title="Edit"
                                                             >
                                                                 <PencilIcon className="h-4 w-4" />
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDelete(category)}
-                                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-[3px] transition-colors"
                                                                 title="Hapus"
                                                             >
                                                                 <TrashIcon className="h-4 w-4" />
@@ -655,15 +664,15 @@ const DamageCategoryManagement = () => {
                                         </div>
                                     ) : (
                                         <div className="px-5 py-8 text-center">
-                                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                                                <FireIcon className="h-6 w-6 text-gray-400" />
+                                            <div className="inline-flex items-center justify-center w-12 h-12 rounded-[6px] bg-slate-100 mb-3">
+                                                <FireIcon className="h-6 w-6 text-slate-400" />
                                             </div>
-                                            <p className="text-sm text-gray-500 mb-3">
+                                            <p className="text-sm text-slate-500 mb-3">
                                                 Belum ada item checklist
                                             </p>
                                             <button
                                                 onClick={() => handleAddForType(type)}
-                                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 transition-colors"
+                                                className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-[#11468F] hover:text-[#041562] transition-colors"
                                             >
                                                 <PlusIcon className="h-4 w-4 mr-1" />
                                                 Tambah Item
@@ -673,26 +682,26 @@ const DamageCategoryManagement = () => {
                                 </div>
 
                                 {/* Card Footer */}
-                                <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 text-center text-xs text-gray-500">
+                                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 text-center text-xs text-slate-500 font-medium">
                                     {typeCategories.length} item checklist
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white border border-gray-200 rounded-xl p-16 text-center">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-                            <FireIcon className="h-8 w-8 text-red-600" />
+                    <div className="bg-white border border-slate-200 rounded-[6px] p-16 text-center shadow-sm">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-[6px] bg-[#041562]/10 text-[#041562] mb-4">
+                            <FireIcon className="h-8 w-8" />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">
                             Belum ada kategori
                         </h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            Mulai dengan menambahkan kategori kerusakan pertama.
+                        <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+                            Mulai dengan menambahkan kategori kerusakan pertama untuk inspeksi APAR.
                         </p>
                         <button
                             onClick={() => setShowForm(true)}
-                            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 shadow-sm"
+                            className="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
                         >
                             <PlusIcon className="h-5 w-5 mr-2" />
                             Tambah Kategori Pertama
@@ -701,7 +710,7 @@ const DamageCategoryManagement = () => {
                 )}
 
                 {/* Info Card */}
-                <div className="bg-white border border-gray-100 rounded-xl p-4">
+                <div className="bg-white border border-slate-200 rounded-[6px] p-4 shadow-sm">
                     <div className="flex items-start space-x-3">
                         <div className="text-gray-600 text-lg">💡</div>
                         <div className="text-sm text-gray-800">

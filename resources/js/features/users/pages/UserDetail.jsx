@@ -102,23 +102,23 @@ const UserDetail = () => {
         }
     };
 
-    const getRoleColor = (role) => {
+    const getRoleBadgeClasses = (role) => {
         switch (role) {
             case "admin":
-                return "bg-red-100 text-red-800";
+                return "bg-[#041562] text-white";
             case "supervisor":
-                return "bg-blue-100 text-blue-800";
+                return "bg-[#11468F] text-white";
             case "teknisi":
-                return "bg-green-100 text-green-800";
+                return "bg-[#EEEEEE] text-[#041562]";
             default:
-                return "bg-gray-100 text-gray-800";
+                return "bg-[#EEEEEE] text-slate-700";
         }
     };
 
     const getStatusColor = (isActive) => {
         return isActive
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-800";
+            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+            : "bg-red-50 text-[#DA1212] border border-red-200";
     };
 
     const getStatusText = (isActive) => {
@@ -131,21 +131,21 @@ const UserDetail = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+            <div className="flex items-center justify-center min-h-64 py-12">
+                <div className="w-12 h-12 border-4 border-slate-200 border-t-[#11468F] rounded-full animate-spin"></div>
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className="text-center py-12">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="text-center py-16 bg-white rounded-[6px] border border-[#EEEEEE] shadow-sm">
+                <h3 className="text-base font-bold text-[#041562] mb-2">
                     Pengguna tidak ditemukan
                 </h3>
                 <Link
                     to="/users"
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                    className="inline-flex items-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold text-xs uppercase tracking-wider rounded-[6px] shadow-sm transition-all"
                 >
                     Kembali ke Daftar Pengguna
                 </Link>
@@ -160,99 +160,99 @@ const UserDetail = () => {
         <Fragment>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="sm:flex sm:items-center sm:justify-between">
+                <div className="bg-white rounded-[6px] shadow-sm border border-[#EEEEEE] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center">
                         <Link
                             to="/users"
-                            className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="mr-4 p-2 rounded-[6px] text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-[#041562] tracking-tight">
                                 Detail Pengguna
                             </h1>
-                            <p className="mt-1 text-sm text-gray-500">
+                            <p className="mt-0.5 text-xs text-slate-500">
                                 Informasi lengkap pengguna {user.name}
                             </p>
                         </div>
                     </div>
-                    <div className="mt-4 sm:mt-0 flex space-x-3">
+                    <div className="flex items-center space-x-2.5">
                         <Link
                             to={`/users/${id}/edit`}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700"
+                            className="inline-flex items-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold text-xs uppercase tracking-wider rounded-[6px] shadow-sm transition-all"
                         >
-                            <PencilIcon className="h-4 w-4 mr-2" />
+                            <PencilIcon className="h-4 w-4 mr-1.5" />
                             Edit
                         </Link>
                         <button
                             onClick={handleDelete}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                            className="inline-flex items-center px-4 py-2 bg-[#DA1212] hover:bg-red-700 text-white font-semibold text-xs uppercase tracking-wider rounded-[6px] shadow-sm transition-all"
                         >
-                            <TrashIcon className="h-4 w-4 mr-2" />
+                            <TrashIcon className="h-4 w-4 mr-1.5" />
                             Hapus
                         </button>
                     </div>
                 </div>
 
                 {/* User Information */}
-                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div className="px-4 py-5 sm:px-6">
+                <div className="bg-white rounded-[6px] shadow-sm border border-[#EEEEEE] overflow-hidden">
+                    <div className="px-6 py-5 border-b border-slate-100">
                         <div className="flex items-center">
-                            <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
-                                <UserIcon className="h-8 w-8 text-gray-600" />
+                            <div className="h-16 w-16 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold text-2xl shadow-sm">
+                                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                             </div>
-                            <div className="ml-4">
-                                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                            <div className="ml-5">
+                                <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                                     {user.name}
                                 </h3>
-                                <div className="mt-1 flex items-center space-x-4">
+                                <div className="mt-1.5 flex items-center space-x-2">
                                     <span
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-[3px] text-xs font-semibold tracking-wider uppercase ${getRoleBadgeClasses(
                                             user.role
                                         )}`}
                                     >
-                                        <RoleIcon className="h-3 w-3 mr-1" />
+                                        <RoleIcon className="h-3.5 w-3.5 mr-1" />
                                         {getRoleText(user.role)}
                                     </span>
                                     <span
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-[3px] text-xs font-semibold ${getStatusColor(
                                             user.is_active
                                         )}`}
                                     >
-                                        <StatusIcon className="h-3 w-3 mr-1" />
+                                        <StatusIcon className="h-3.5 w-3.5 mr-1" />
                                         {getStatusText(user.is_active)}
                                     </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div className="border-t border-gray-200">
-                        <dl>
-                            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt className="text-sm font-medium text-gray-500 flex items-center">
-                                    <EnvelopeIcon className="h-4 w-4 mr-2" />
+                    <div>
+                        <dl className="divide-y divide-slate-100">
+                            <div className="bg-slate-50/50 px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center">
+                                    <EnvelopeIcon className="h-4 w-4 mr-2 text-slate-400" />
                                     Email
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
                                     {user.email}
                                 </dd>
                             </div>
-                            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt className="text-sm font-medium text-gray-500 flex items-center">
-                                    <PhoneIcon className="h-4 w-4 mr-2" />
+                            <div className="bg-white px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center">
+                                    <PhoneIcon className="h-4 w-4 mr-2 text-slate-400" />
                                     Nomor Telepon
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
                                     {user.phone || "Tidak ada"}
                                 </dd>
                             </div>
-                            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt className="text-sm font-medium text-gray-500 flex items-center">
-                                    <CalendarIcon className="h-4 w-4 mr-2" />
+                            <div className="bg-slate-50/50 px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center">
+                                    <CalendarIcon className="h-4 w-4 mr-2 text-slate-400" />
                                     Tanggal Bergabung
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
                                     {new Date(
                                         user.created_at
                                     ).toLocaleDateString("id-ID", {
@@ -263,19 +263,19 @@ const UserDetail = () => {
                                     })}
                                 </dd>
                             </div>
-                            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt className="text-sm font-medium text-gray-500">
+                            <div className="bg-white px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                     ID Pengguna
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    {user.id}
+                                <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
+                                    #{user.id}
                                 </dd>
                             </div>
-                            <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                                <dt className="text-sm font-medium text-gray-500">
+                            <div className="bg-slate-50/50 px-6 py-4 sm:grid sm:grid-cols-3 sm:gap-4">
+                                <dt className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                     Terakhir Diperbarui
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
                                     {new Date(
                                         user.updated_at
                                     ).toLocaleDateString("id-ID", {
@@ -293,56 +293,52 @@ const UserDetail = () => {
                 </div>
 
                 {/* Role Information */}
-                <div className="bg-white shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                            Informasi Role
-                        </h3>
-                        <div className="space-y-4">
-                            <div className="flex items-center">
-                                <RoleIcon className="h-5 w-5 text-gray-400 mr-3" />
-                                <div>
-                                    <p className="text-sm font-medium text-gray-900">
-                                        {getRoleText(user.role)}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        {user.role === "admin" &&
-                                            "Memiliki akses penuh ke semua fitur sistem"}
-                                        {user.role === "supervisor" &&
-                                            "Dapat mengelola APAR, mobil tangki, dan melihat laporan"}
-                                        {user.role === "teknisi" &&
-                                            "Dapat melakukan inspeksi dan melihat data terbatas"}
-                                    </p>
-                                </div>
-                            </div>
+                <div className="bg-white rounded-[6px] shadow-sm border border-[#EEEEEE] p-6">
+                    <h3 className="text-base font-bold text-[#041562] tracking-tight mb-3">
+                        Informasi Peran & Hak Akses
+                    </h3>
+                    <div className="flex items-center">
+                        <div className="p-3 bg-[#041562] text-white rounded-[6px] mr-4 shadow-sm">
+                            <RoleIcon className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">
+                                {getRoleText(user.role)}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {user.role === "admin" &&
+                                    "Memiliki akses penuh ke semua modul sistem dan konfigurasi."}
+                                {user.role === "supervisor" &&
+                                    "Dapat mengelola APAR, mobil tangki, menjadwalkan inspeksi, dan meninjau laporan."}
+                                {user.role === "teknisi" &&
+                                    "Dapat melaksanakan jadwal inspeksi dan melaporkan temuan kondisi APAR."}
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Account Status */}
-                <div className="bg-white shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                            Status Akun
-                        </h3>
-                        <div className="flex items-center">
-                            <StatusIcon
-                                className={`h-5 w-5 mr-3 ${
-                                    user.is_active
-                                        ? "text-green-500"
-                                        : "text-red-500"
-                                }`}
-                            />
-                            <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                    {getStatusText(user.is_active)}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    {user.is_active
-                                        ? "Pengguna dapat login dan mengakses sistem"
-                                        : "Pengguna tidak dapat login ke sistem"}
-                                </p>
-                            </div>
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-6">
+                    <h3 className="text-base font-bold text-slate-900 tracking-tight mb-3">
+                        Status Akun
+                    </h3>
+                    <div className="flex items-center">
+                        <div className={`p-3 rounded-[6px] mr-4 shadow-sm ${
+                            user.is_active 
+                                ? "bg-emerald-50 text-emerald-600 border border-emerald-200" 
+                                : "bg-rose-50 text-rose-600 border border-rose-200"
+                        }`}>
+                            <StatusIcon className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">
+                                {getStatusText(user.is_active)}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                {user.is_active
+                                    ? "Pengguna terverifikasi dan dapat login ke aplikasi."
+                                    : "Pengguna saat ini dinonaktifkan dan diblokir dari login."}
+                            </p>
                         </div>
                     </div>
                 </div>

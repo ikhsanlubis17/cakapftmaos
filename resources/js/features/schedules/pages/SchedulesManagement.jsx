@@ -342,29 +342,29 @@ const SchedulesManagement = () => {
         return (
             <div className="flex items-center justify-center min-h-96">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-red-500 border-t-transparent"></div>
-                    <p className="text-gray-600 font-medium">Memuat data...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#11468F] border-t-transparent"></div>
+                    <p className="text-slate-600 font-medium text-sm">Memuat data...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-3 sm:p-4 lg:p-6">
+        <div className="space-y-6">
             {/* Header Section */}
-            <div className="mb-4 sm:mb-6 lg:mb-8">
-                <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
+            <div>
+                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
                         <div>
-                            <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                                    <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-[#041562] text-white rounded-[6px] flex items-center justify-center shadow-sm">
+                                    <CalendarIcon className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                                    <h1 className="text-2xl font-bold text-slate-900">
                                         Kelola Jadwal Inspeksi
                                     </h1>
-                                    <p className="text-gray-600 text-xs sm:text-sm lg:text-base">
+                                    <p className="text-slate-600 text-sm mt-0.5">
                                         Kelola jadwal inspeksi APAR untuk teknisi
                                     </p>
                                 </div>
@@ -374,23 +374,23 @@ const SchedulesManagement = () => {
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                             {bulkDeleteMode ? (
                                 <>
-                                    <div className="flex items-center px-3 py-2 bg-gray-50 rounded-md">
-                                        <span className="text-sm text-gray-600">
+                                    <div className="flex items-center px-3 py-2 bg-slate-50 border border-slate-200 rounded-[6px]">
+                                        <span className="text-sm font-medium text-slate-700">
                                             {selectedSchedules.length} dipilih
                                         </span>
                                     </div>
                                     <button
                                         onClick={handleBulkDelete}
                                         disabled={selectedSchedules.length === 0 || deleting}
-                                        className={`inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 border border-transparent text-sm sm:text-base font-medium rounded-lg sm:rounded-xl text-white ${
+                                        className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-semibold rounded-[6px] text-white ${
                                             selectedSchedules.length > 0 && !deleting
-                                                ? "bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-500/20"
-                                                : "bg-gray-300 cursor-not-allowed"
+                                                ? "bg-[#DA1212] hover:bg-red-700 focus:ring-2 focus:ring-[#DA1212]/20"
+                                                : "bg-slate-300 cursor-not-allowed"
                                         } transition-all duration-200`}
                                     >
                                         {deleting ? (
                                             <>
-                                                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-white border-t-transparent mr-2"></div>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
                                                 Menghapus...
                                             </>
                                         ) : (
@@ -402,7 +402,7 @@ const SchedulesManagement = () => {
                                     </button>
                                     <button
                                         onClick={toggleBulkDeleteMode}
-                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200"
+                                        className="inline-flex items-center justify-center px-4 py-2 bg-white border border-slate-300 rounded-[6px] text-slate-700 text-sm font-medium hover:bg-slate-50 focus:ring-2 focus:ring-[#11468F] transition-all duration-200"
                                     >
                                         <XMarkIcon className="w-4 h-4 mr-2" />
                                         Batal
@@ -412,7 +412,7 @@ const SchedulesManagement = () => {
                                 <>
                                     <button
                                         onClick={toggleBulkDeleteMode}
-                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200"
+                                        className="inline-flex items-center justify-center px-4 py-2 bg-white border border-slate-300 rounded-[6px] text-slate-700 text-sm font-medium hover:bg-slate-50 focus:ring-2 focus:ring-[#11468F] transition-all duration-200"
                                     >
                                         <TrashIcon className="w-4 h-4 mr-2" />
                                         <span className="hidden sm:inline">Hapus Massal</span>
@@ -421,11 +421,11 @@ const SchedulesManagement = () => {
                                     <button
                                         onClick={handleSendNotifications}
                                         disabled={sendingNotifications}
-                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-300 rounded-lg sm:rounded-xl text-gray-700 text-sm sm:text-base font-medium hover:bg-gray-50 focus:ring-2 focus:ring-gray-500/20 transition-all duration-200 disabled:opacity-50"
+                                        className="inline-flex items-center justify-center px-4 py-2 bg-white border border-slate-300 rounded-[6px] text-slate-700 text-sm font-medium hover:bg-slate-50 focus:ring-2 focus:ring-[#11468F] transition-all duration-200 disabled:opacity-50"
                                     >
                                         {sendingNotifications ? (
                                             <>
-                                                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-2 border-gray-600 border-t-transparent mr-2"></div>
+                                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-600 border-t-transparent mr-2"></div>
                                                 <span className="hidden sm:inline">
                                                     Mengirim...
                                                 </span>
@@ -433,7 +433,7 @@ const SchedulesManagement = () => {
                                             </>
                                         ) : (
                                             <>
-                                                <BellIcon className="w-4 h-4 mr-2" />
+                                                <BellIcon className="w-4 h-4 mr-2 text-slate-500" />
                                                 <span className="hidden sm:inline">
                                                     Kirim Notifikasi
                                                 </span>
@@ -444,9 +444,9 @@ const SchedulesManagement = () => {
 
                                     <button
                                         onClick={openCreateModal}
-                                        className="inline-flex items-center justify-center px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg sm:rounded-xl text-sm sm:text-base font-medium hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500/20 transition-all duration-200"
+                                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent bg-[#11468F] hover:bg-[#0d3873] text-white rounded-[6px] text-sm font-semibold shadow-sm focus:ring-2 focus:ring-[#11468F] transition-all duration-200"
                                     >
-                                        <PlusIcon className="w-4 h-4 mr-2" />
+                                        <PlusIcon className="w-4 h-4 mr-2 stroke-[2.5]" />
                                         <span className="hidden sm:inline">Buat Jadwal</span>
                                         <span className="sm:hidden">Buat</span>
                                     </button>

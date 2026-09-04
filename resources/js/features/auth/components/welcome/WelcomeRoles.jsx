@@ -3,85 +3,138 @@ import { Link } from '@tanstack/react-router';
 import { 
     ShieldCheckIcon, 
     CheckCircleIcon, 
-    ArrowRightIcon 
+    ArrowRightIcon,
+    WrenchScrewdriverIcon,
+    ClipboardDocumentCheckIcon,
+    AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 
 const WelcomeRoles = () => {
     const roles = [
         {
             title: 'Teknisi',
-            description: 'Inspeksi lapangan via QR',
-            features: ['Scan QR Code APAR', 'Ambil foto dengan kamera', 'Validasi lokasi GPS', 'Submit inspeksi real-time'],
-            gradient: 'from-blue-500 to-cyan-500'
+            subtitle: 'Inspeksi & Eksekusi Lapangan',
+            icon: WrenchScrewdriverIcon,
+            description: 'Petugas lapangan yang melakukan pemeriksaan langsung terhadap unit APAR statis & mobil tangki.',
+            features: [
+                'Scan QR Code APAR di lokasi',
+                'Pengambilan foto kamera langsung',
+                'Validasi geofencing GPS 30m',
+                'Pelaporan temuan kerusakan instan'
+            ],
+            highlight: false
         },
         {
             title: 'Supervisor',
-            description: 'Lihat laporan & pantau teknisi',
-            features: ['Monitor inspeksi teknisi', 'Lihat dashboard statistik', 'Generate laporan', 'Pantau status APAR'],
-            gradient: 'from-purple-500 to-pink-500'
+            subtitle: 'Validasi & Persetujuan',
+            icon: ClipboardDocumentCheckIcon,
+            description: 'Pengawas yang memantau kualitas inspeksi, mengevaluasi kerusakan, dan memberi persetujuan perbaikan.',
+            features: [
+                'Monitoring status inspeksi real-time',
+                'Persetujuan permintaan perbaikan tabung',
+                'Akses ringkasan statistik & laporan',
+                'Verifikasi kepatuhan jadwal teknisi'
+            ],
+            highlight: true
         },
         {
-            title: 'Admin',
-            description: 'Kelola data, jadwal, user, laporan',
-            features: ['Kelola data APAR', 'Manajemen user', 'Set jadwal inspeksi', 'Generate laporan lengkap'],
-            gradient: 'from-orange-500 to-red-500'
+            title: 'Administrator',
+            subtitle: 'Kendali Penuh Sistem',
+            icon: AdjustmentsHorizontalIcon,
+            description: 'Pengelola utama seluruh aset, pengguna, master data APAR, jadwal periode, dan konfigurasi global.',
+            features: [
+                'Manajemen data APAR & Mobil Tangki',
+                'Pengelolaan user & hak akses peran',
+                'Pengaturan jadwal & interval reminder',
+                'Audit log aktivitas & konfigurasi sistem'
+            ],
+            highlight: false
         }
     ];
 
     return (
-        <section id="roles" className="py-20 lg:py-32 bg-gray-50">
+        <section id="roles" className="py-24 bg-white text-slate-900 border-t border-[#EEEEEE]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-16 lg:mb-20">
-                    <div className="inline-flex items-center px-4 py-2 bg-purple-100 rounded-full mb-6">
-                        <ShieldCheckIcon className="h-4 w-4 text-purple-600 mr-2" />
-                        <span className="text-sm font-semibold text-purple-700">Akses Terkontrol</span>
+                {/* Header */}
+                <div className="text-center mb-16">
+                    <div className="inline-flex items-center px-3.5 py-1.5 bg-[#EEEEEE] border border-slate-200 rounded-[6px] mb-4">
+                        <span className="text-xs font-bold text-[#041562] tracking-wider uppercase">
+                            Hierarki Akses
+                        </span>
                     </div>
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                        Peran Pengguna
+                    <h2 className="text-3xl sm:text-4xl lg:text-[40px] font-bold text-[#041562] tracking-tight leading-tight mb-4">
+                        Peran & Tanggung Jawab Terintegrasi
                     </h2>
-                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                        Setiap pengguna memiliki akses dan fungsi yang sesuai dengan peran mereka
+                    <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto">
+                        Setiap personel memiliki antarmuka dan hak fungsi yang disesuaikan secara presisi untuk efisiensi operasional.
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-8">
+                {/* Roles Grid */}
+                <div className="grid md:grid-cols-3 gap-6">
                     {roles.map((role, index) => (
                         <div
                             key={index}
-                            className="group bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+                            className={`group bg-white rounded-[6px] p-7 border transition-all duration-200 flex flex-col justify-between ${
+                                role.highlight 
+                                    ? 'border-[#11468F] ring-1 ring-[#11468F]/20 shadow-md shadow-[#041562]/5' 
+                                    : 'border-[#EEEEEE] hover:border-slate-300 hover:shadow-sm'
+                            }`}
                         >
-                            <div className={`inline-flex items-center px-4 py-2 bg-gradient-to-r ${role.gradient} text-white rounded-xl mb-6 shadow-lg group-hover:scale-105 transition-all duration-300`}>
-                                <span className="text-sm font-bold">{role.title.toUpperCase()}</span>
+                            <div>
+                                {/* Header tag */}
+                                <div className="flex items-center justify-between mb-5">
+                                    <div className={`w-11 h-11 rounded-[6px] flex items-center justify-center ${
+                                        role.highlight 
+                                            ? 'bg-[#11468F] text-white' 
+                                            : 'bg-[#041562] text-white'
+                                    }`}>
+                                        <role.icon className="h-6 w-6" />
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-[20px] text-xs font-bold uppercase tracking-wider ${
+                                        role.highlight
+                                            ? 'bg-[#11468F] text-white'
+                                            : 'bg-[#EEEEEE] text-[#041562]'
+                                    }`}>
+                                        {role.title}
+                                    </span>
+                                </div>
+
+                                <h3 className="text-xl font-bold text-[#041562] mb-1 tracking-tight">
+                                    {role.title}
+                                </h3>
+                                <p className="text-xs text-[#11468F] font-semibold mb-3">
+                                    {role.subtitle}
+                                </p>
+                                <p className="text-sm text-slate-600 leading-relaxed mb-6 font-normal">
+                                    {role.description}
+                                </p>
+
+                                {/* Features List */}
+                                <ul className="space-y-2.5 mb-8">
+                                    {role.features.map((feature, fIdx) => (
+                                        <li key={fIdx} className="flex items-start text-xs font-medium text-slate-700">
+                                            <div className="w-4 h-4 rounded-[3px] bg-[#11468F]/10 text-[#11468F] flex items-center justify-center mr-2.5 mt-0.5 flex-shrink-0">
+                                                <CheckCircleIcon className="w-3.5 h-3.5" />
+                                            </div>
+                                            <span>{feature}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
 
-                            <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-red-600 transition-colors duration-300">
-                                {role.title}
-                            </h3>
-
-                            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
-                                {role.description}
-                            </p>
-
-                            <ul className="space-y-4">
-                                {role.features.map((feature, featureIndex) => (
-                                    <li key={featureIndex} className="flex items-start group/item">
-                                        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-2 mr-4 mt-0.5 shadow-md group-hover/item:scale-110 transition-all duration-300 flex-shrink-0">
-                                            <CheckCircleIcon className="w-4 h-4 text-white" />
-                                        </div>
-                                        <span className="text-gray-700 font-medium group-hover/item:text-gray-900 transition-colors duration-300">
-                                            {feature}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="mt-8 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            {/* Action Link */}
+                            <div className="pt-4 border-t border-[#EEEEEE]">
                                 <Link
                                     to="/login"
-                                    className="inline-flex items-center text-red-600 font-semibold hover:text-red-700 transition-colors duration-300"
+                                    className={`w-full inline-flex items-center justify-center px-4 py-2.5 rounded-[6px] text-xs font-bold tracking-wide transition-colors duration-150 ${
+                                        role.highlight
+                                            ? 'bg-[#11468F] text-white hover:bg-[#0d3873]'
+                                            : 'bg-[#EEEEEE] text-[#041562] hover:bg-[#11468F] hover:text-white'
+                                    }`}
                                 >
                                     Masuk sebagai {role.title}
-                                    <ArrowRightIcon className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform duration-300" />
+                                    <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
                                 </Link>
                             </div>
                         </div>

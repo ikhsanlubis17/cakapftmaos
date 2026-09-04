@@ -7,7 +7,7 @@ import StatsCard from "@/components/common/StatsCard";
 import FilterSection from "@/components/common/FilterSection";
 import UsersTable from "@/features/users/components/UsersTable";
 import UserModal from "@/features/users/components/UserModal";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const UsersManagement = () => {
@@ -201,10 +201,10 @@ const UsersManagement = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="loading-spinner h-32 w-32 mx-auto"></div>
-                    <p className="mt-4 text-lg text-gray-600">
+                    <div className="w-12 h-12 border-4 border-slate-200 border-t-[#11468F] rounded-full animate-spin mx-auto"></div>
+                    <p className="mt-4 text-sm font-semibold text-slate-600">
                         Memuat data pengguna...
                     </p>
                 </div>
@@ -214,11 +214,11 @@ const UsersManagement = () => {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-center max-w-md mx-auto px-4">
-                    <div className="bg-red-100 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center max-w-md mx-auto px-4 bg-white p-8 rounded-[6px] border border-[#EEEEEE] shadow-sm">
+                    <div className="bg-red-50 text-[#DA1212] rounded-[6px] p-3 w-14 h-14 mx-auto mb-4 flex items-center justify-center border border-red-200">
                         <svg
-                            className="w-10 h-10 text-red-600"
+                            className="w-8 h-8 text-[#DA1212]"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -231,11 +231,14 @@ const UsersManagement = () => {
                             />
                         </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-base font-bold text-slate-900 mb-1">
                         Terjadi Kesalahan
                     </h3>
-                    <p className="text-gray-600 mb-6">{error}</p>
-                    <button onClick={fetchUsers} className="btn-primary">
+                    <p className="text-sm text-slate-600 mb-6">{error}</p>
+                    <button
+                        onClick={fetchUsers}
+                        className="inline-flex items-center justify-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold text-sm rounded-[6px] shadow-sm transition-all"
+                    >
                         Coba Lagi
                     </button>
                 </div>
@@ -244,24 +247,29 @@ const UsersManagement = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <div className="min-h-screen bg-slate-50 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
                 {/* Header */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8 animate-fade-in-up">
+                <div className="bg-white rounded-[6px] shadow-sm border border-[#EEEEEE] p-6 lg:p-8 animate-fade-in-up">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
-                                Manajemen Pengguna
-                            </h1>
-                            <p className="text-gray-600 mt-2 text-lg">
-                                Kelola pengguna teknisi dan supervisor
-                            </p>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-[#041562] text-white rounded-[6px] shadow-sm">
+                                <UserGroupIcon className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl lg:text-3xl font-bold text-[#041562] tracking-tight">
+                                    Manajemen Pengguna
+                                </h1>
+                                <p className="text-slate-600 mt-1 text-sm">
+                                    Kelola pengguna, penetapan peran teknisi dan supervisor
+                                </p>
+                            </div>
                         </div>
                         <button
                             onClick={openCreateModal}
-                            className="btn-primary"
+                            className="inline-flex items-center justify-center px-4 py-2.5 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold text-sm rounded-[6px] shadow-sm transition-all"
                         >
-                            <PlusIcon className="h-6 w-6 mr-2" />
+                            <PlusIcon className="h-5 w-5 mr-2" />
                             Tambah Pengguna
                         </button>
                     </div>
@@ -290,9 +298,9 @@ const UsersManagement = () => {
                         )}
                         title="Total Pengguna"
                         value={totalUsers}
-                        color="text-blue-600"
-                        bgColor="bg-blue-100"
-                        iconColor="text-blue-600"
+                        color="text-[#041562]"
+                        bgColor="bg-[#EEEEEE]"
+                        iconColor="text-[#041562]"
                     />
 
                     <StatsCard
@@ -313,9 +321,9 @@ const UsersManagement = () => {
                         )}
                         title="Teknisi"
                         value={teknisiCount}
-                        color="text-green-600"
-                        bgColor="bg-green-100"
-                        iconColor="text-green-600"
+                        color="text-slate-900"
+                        bgColor="bg-slate-100"
+                        iconColor="text-slate-700"
                     />
 
                     <StatsCard
@@ -336,9 +344,9 @@ const UsersManagement = () => {
                         )}
                         title="Supervisor"
                         value={supervisorCount}
-                        color="text-blue-600"
-                        bgColor="bg-blue-100"
-                        iconColor="text-blue-600"
+                        color="text-[#11468F]"
+                        bgColor="bg-blue-50"
+                        iconColor="text-[#11468F]"
                     />
 
                     <StatsCard
@@ -359,9 +367,9 @@ const UsersManagement = () => {
                         )}
                         title="Aktif"
                         value={activeCount}
-                        color="text-green-600"
-                        bgColor="bg-green-100"
-                        iconColor="text-green-600"
+                        color="text-emerald-700"
+                        bgColor="bg-emerald-50"
+                        iconColor="text-emerald-600"
                     />
                 </div>
 
