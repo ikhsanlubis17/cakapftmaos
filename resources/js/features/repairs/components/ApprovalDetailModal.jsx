@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import {
     XMarkIcon,
     FireIcon,
-    MapPinIcon,
-    UserIcon,
-    CalendarIcon,
     ClockIcon,
     ChatBubbleLeftRightIcon,
     ExclamationTriangleIcon,
@@ -15,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline';
 import ApprovalStatusBadge from './ApprovalStatusBadge';
 import ApprovalTimeline from './ApprovalTimeline';
+import { formatStorageUrl } from '@/utils/imageUrl';
+import { formatDateTime } from '@/utils/dateUtils';
 
 const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState('overview');
@@ -22,18 +21,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
 
     if (!isOpen || !approval) return null;
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
+    const formatDate = (dateString) => formatDateTime(dateString, { weekday: 'long', month: 'long' });
 
     const tabs = [
         { id: 'overview', name: 'Overview', icon: FireIcon },
@@ -364,7 +352,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                         >
                                             <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                 <img
-                                                    src={approval.inspection.photo_url}
+                                                    src={formatStorageUrl(approval.inspection.photo_url)}
                                                     alt="Foto APAR"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
@@ -384,7 +372,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                         >
                                             <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                 <img
-                                                    src={approval.inspection.selfie_url}
+                                                    src={formatStorageUrl(approval.inspection.selfie_url)}
                                                     alt="Foto Selfie"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                 />
@@ -406,7 +394,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                                             >
                                                 <div className="aspect-video w-full overflow-hidden rounded-[6px] border border-slate-200 bg-slate-100">
                                                     <img
-                                                        src={damage.damage_photo_url}
+                                                        src={formatStorageUrl(damage.damage_photo_url)}
                                                         alt={`Kerusakan ${idx + 1}`}
                                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                     />
@@ -457,7 +445,7 @@ const ApprovalDetailModal = ({ approval, isOpen, onClose }) => {
                 >
                     <div className="max-w-5xl max-h-full">
                         <img
-                            src={selectedPhoto}
+                            src={formatStorageUrl(selectedPhoto)}
                             alt="Foto inspeksi"
                             className="max-w-full max-h-[90vh] object-contain rounded-lg"
                         />

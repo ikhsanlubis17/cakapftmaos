@@ -20,6 +20,7 @@ const UsersManagement = () => {
     const [roleFilter, setRoleFilter] = useState("all");
     const [statusFilter, setStatusFilter] = useState("all");
     const [showModal, setShowModal] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
@@ -52,6 +53,7 @@ const UsersManagement = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
             if (editingUser) {
                 await apiClient.put(`/api/users/${editingUser.id}`, formData);
@@ -71,6 +73,8 @@ const UsersManagement = () => {
             } else {
                 showError(error.response?.data?.message || "Gagal menyimpan data pengguna");
             }
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -401,6 +405,7 @@ const UsersManagement = () => {
                 formData={formData}
                 setFormData={setFormData}
                 onSubmit={handleSubmit}
+                loading={submitting}
             />
 
             {/* Confirm Dialog */}

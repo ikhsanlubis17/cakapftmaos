@@ -1,22 +1,46 @@
 import React, { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { tokenStorage } from '@/services/tokenStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
-import { EyeIcon, EyeSlashIcon, ArrowLeftIcon, ShieldCheckIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, ArrowLeftIcon, ShieldCheckIcon, KeyIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { AxiosError } from 'axios';
 import axios from 'axios';
 
 const Login = () => {
-    const [email, setEmail] = useState('');
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    const queryEmail = searchParams.get('email') || '';
+    const isActivated = searchParams.get('activated') === 'true' || searchParams.get('activated') === '1';
+    const isReset = searchParams.get('reset') === 'true' || searchParams.get('reset') === '1';
+
+    const [email, setEmail] = useState(queryEmail);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
     const [forgotEmail, setForgotEmail] = useState('');
     const [forgotLoading, setForgotLoading] = useState(false);
-    const { login, isLoading } = useAuth();
+    const { login, isLoading, isAuthenticated, user } = useAuth();
     const { showSuccess, showError } = useToast();
     const { settings } = useSiteSettings();
+    const navigate = useNavigate();
+
+    // If arrived with activation/reset/email params, force purge any stale tokens
+    React.useEffect(() => {
+        if (queryEmail || isActivated || isReset) {
+            tokenStorage.remove();
+        }
+    }, [queryEmail, isActivated, isReset]);
+
+    // If user is already authenticated, redirect straight to dashboard (unless arriving to activate/reset)
+    React.useEffect(() => {
+        if (isActivated || isReset || queryEmail) {
+            return;
+        }
+        if (isAuthenticated || user) {
+            navigate({ to: '/', replace: true });
+        }
+    }, [isAuthenticated, user, navigate, isActivated, isReset, queryEmail]);
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
@@ -47,6 +71,21 @@ const Login = () => {
         try {
             await login({ email: email, password: password });
             showSuccess('Login berhasil. Selamat datang kembali!');
+
+            const params = new URLSearchParams(window.location.search);
+            const redirectUrl = params.get('redirect');
+            let targetUrl = '/';
+            if (
+                redirectUrl &&
+                redirectUrl.startsWith('/') &&
+                !redirectUrl.startsWith('//') &&
+                !redirectUrl.startsWith('/login') &&
+                !redirectUrl.startsWith('/welcome')
+            ) {
+                targetUrl = redirectUrl;
+            }
+
+            await navigate({ to: targetUrl, replace: true });
         } catch (error) {
             if (error instanceof AxiosError) {
                 showError(error.response?.data?.message || 'Gagal melakukan login. Silakan coba lagi.');
@@ -109,6 +148,32 @@ const Login = () => {
                         </p>
                     </div>
 
+                    {/* Activation Banner */}
+                    {isActivated && (
+                        <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-[6px] flex items-start gap-3 text-emerald-800 text-xs">
+                            <CheckCircleIcon className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold text-emerald-900 mb-0.5">Aktivasi Akun Berhasil!</p>
+                                <p className="text-emerald-700 leading-relaxed">
+                                    Akun Anda telah diaktifkan. Silakan masukkan kata sandi yang baru saja Anda buat untuk masuk ke sistem.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Reset Password Banner */}
+                    {isReset && (
+                        <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-[6px] flex items-start gap-3 text-emerald-800 text-xs">
+                            <CheckCircleIcon className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold text-emerald-900 mb-0.5">Kata Sandi Berhasil Diperbarui!</p>
+                                <p className="text-emerald-700 leading-relaxed">
+                                    Silakan masukkan kata sandi baru Anda untuk masuk ke sistem.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Email Field */}
                         <div>
@@ -123,6 +188,7 @@ const Login = () => {
                                     id="email"
                                     name="email"
                                     type="email"
+                                    data-testid="login-email-input"
                                     autoComplete="email"
                                     required
                                     value={email}
@@ -146,8 +212,10 @@ const Login = () => {
                                     id="password"
                                     name="password"
                                     type={showPassword ? "text" : "password"}
+                                    data-testid="login-password-input"
                                     autoComplete="current-password"
                                     required
+                                    autoFocus={Boolean(queryEmail)}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="appearance-none block w-full px-4 py-2.5 pr-12 bg-white border border-slate-300 placeholder-slate-400 text-slate-900 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-sm transition-all duration-150"
@@ -172,6 +240,7 @@ const Login = () => {
                         <div className="pt-2">
                             <button
                                 type="submit"
+                                data-testid="login-submit-btn"
                                 disabled={isLoading}
                                 className="group relative w-full flex justify-center items-center py-3 px-4 text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150"
                             >

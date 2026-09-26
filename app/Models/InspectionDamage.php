@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InspectionDamage extends Model
@@ -51,5 +52,32 @@ class InspectionDamage extends Model
             'critical' => 'Kritis',
             default => 'Tidak Diketahui'
         };
+    }
+
+    /**
+     * Normalize storage URL to relative path.
+     */
+    protected function damagePhotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    protected function repairPhotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    private function normalizeStorageUrl(?string $url): ?string
+    {
+        if (!$url) return null;
+        if (str_contains($url, '/storage/')) {
+            $pos = strpos($url, '/storage/');
+            return substr($url, $pos);
+        }
+        return $url;
     }
 }

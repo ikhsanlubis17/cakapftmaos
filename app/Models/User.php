@@ -2,17 +2,17 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -99,6 +99,14 @@ class User extends Authenticatable implements JWTSubject
     public function assignedSchedules(): HasMany
     {
         return $this->hasMany(InspectionSchedule::class, 'assigned_user_id');
+    }
+
+    /**
+     * Get the repair approvals assigned to this user.
+     */
+    public function assignedRepairApprovals(): HasMany
+    {
+        return $this->hasMany(RepairApproval::class, 'assigned_user_id');
     }
 
     /**

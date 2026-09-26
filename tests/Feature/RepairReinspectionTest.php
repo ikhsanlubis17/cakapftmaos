@@ -35,11 +35,14 @@ class RepairReinspectionTest extends TestCase
         ]);
 
         // 3. Create Approved Repair Approval
+        // assigned_user_id harus sesuai dengan teknisi yang submit laporan perbaikan
+        // agar lolos validasi identitas di StoreRepairReportRequest::authorize()
         $approval = RepairApproval::factory()->create([
-            'inspection_id' => $inspection->id,
-            'status' => 'approved',
-            'approved_by' => $supervisor->id,
-            'approved_at' => now(),
+            'inspection_id'    => $inspection->id,
+            'status'           => 'approved',
+            'approved_by'      => $supervisor->id,
+            'approved_at'      => now(),
+            'assigned_user_id' => $technician->id,
         ]);
 
         // 4. Submit Repair Report with needs_reinspection = true

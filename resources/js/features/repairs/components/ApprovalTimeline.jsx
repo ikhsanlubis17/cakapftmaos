@@ -1,5 +1,6 @@
 import React from 'react';
-import { CheckCircleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { formatDate } from '@/utils/dateUtils';
 
 const ApprovalTimeline = ({ status, approvedAt, rejectedAt, completedAt, createdAt }) => {
     const steps = [
@@ -43,10 +44,8 @@ const ApprovalTimeline = ({ status, approvedAt, rejectedAt, completedAt, created
         },
     ];
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
+    const formatTimelineDate = (dateString) => {
+        return formatDate(dateString, {
             day: 'numeric',
             month: 'short',
             hour: '2-digit',
@@ -115,7 +114,7 @@ const ApprovalTimeline = ({ status, approvedAt, rejectedAt, completedAt, created
                                     </span>
                                     {step.date && (
                                         <span className="block text-xs text-gray-400 mt-0.5">
-                                            {formatDate(step.date)}
+                                            {formatTimelineDate(step.date)}
                                         </span>
                                     )}
                                 </span>

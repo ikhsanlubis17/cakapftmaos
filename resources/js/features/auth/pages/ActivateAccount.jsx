@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createApiClient } from '../../../services/api';
+import { tokenStorage } from '../../../services/tokenStorage';
 import { CheckCircleIcon, XCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 
 const api = createApiClient();
@@ -7,6 +8,7 @@ const api = createApiClient();
 const ActivateAccount = () => {
     const [status, setStatus] = useState('input'); // input, submitting, success, error
     const [message, setMessage] = useState('');
+    const [activatedUser, setActivatedUser] = useState(null);
     const [formData, setFormData] = useState({
         password: '',
         password_confirmation: ''
@@ -15,6 +17,8 @@ const ActivateAccount = () => {
     const token = new URLSearchParams(window.location.search).get('token');
 
     useEffect(() => {
+        // Purge any preexisting session to prevent cross-account contamination
+        tokenStorage.remove();
         if (!token) {
             setStatus('error');
             setMessage('Token aktivasi tidak ditemukan dalam URL.');
@@ -38,6 +42,8 @@ const ActivateAccount = () => {
                 password: formData.password,
                 password_confirmation: formData.password_confirmation
             });
+            tokenStorage.remove();
+            setActivatedUser(response.data.user || null);
             setStatus('success');
             setMessage(response.data.message || 'Akun berhasil diaktivasi!');
         } catch (err) {
@@ -131,12 +137,29 @@ const ActivateAccount = () => {
                     {/* Success State */}
                     {status === 'success' && (
                         <div className="flex flex-col items-center py-6 text-center">
-                            <CheckCircleIcon className="h-14 w-14 text-emerald-500 mb-4" />
-                            <h2 className="text-xl font-bold text-[#041562] mb-2">Aktivasi Berhasil</h2>
-                            <p className="text-sm text-slate-600 mb-6">{message}</p>
+                            <div className="h-16 w-16 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mb-4">
+                                <CheckCircleIcon className="h-10 w-10 text-emerald-600" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#041562] mb-1">Aktivasi Berhasil!</h2>
+                            {activatedUser?.name && (
+                                <p className="text-sm font-bold text-slate-800 mb-1">
+                                    Selamat datang, {activatedUser.name}
+                                </p>
+                            )}
+                            <p className="text-xs text-slate-600 mb-6 max-w-sm">
+                                {activatedUser?.email
+                                    ? `Akun (${activatedUser.email}) telah aktif. Silakan masuk menggunakan kata sandi baru Anda.`
+                                    : 'Akun Anda telah aktif dan dapat langsung digunakan untuk masuk ke sistem.'}
+                            </p>
                             <button
-                                onClick={() => window.location.href = '/login'}
-                                className="w-full flex justify-center py-2.5 px-4 rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-all duration-150"
+                                onClick={() => {
+                                    tokenStorage.remove();
+                                    const emailParam = activatedUser?.email
+                                        ? `?email=${encodeURIComponent(activatedUser.email)}&activated=1`
+                                        : '?activated=1';
+                                    window.location.href = `/login${emailParam}`;
+                                }}
+                                className="w-full flex justify-center py-2.5 px-4 rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-all duration-150 cursor-pointer"
                             >
                                 Ke Halaman Login
                             </button>

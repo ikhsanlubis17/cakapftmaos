@@ -235,7 +235,7 @@
                             <td>{{ $inspection->created_at ? \Carbon\Carbon::parse($inspection->created_at)->format('H:i') : '-' }}</td>
                             <td>{{ $inspection->apar ? $inspection->apar->serial_number : '-' }}</td>
                             <td>{{ $inspection->apar ? $inspection->apar->location_name : '-' }}</td>
-                            <td>{{ $inspection->apar ? strtoupper($inspection->apar->type) : '-' }}</td>
+                            <td>{{ $inspection->apar ? strtoupper((string) ($inspection->apar->aparType?->name ?? $inspection->apar->type ?? '-')) : '-' }}</td>
                             <td>
                                 @if($inspection->apar)
                                     <span class="status-badge {{ getAparStatusClass($inspection->apar->status) }}">

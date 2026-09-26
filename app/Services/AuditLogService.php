@@ -3,9 +3,6 @@
 namespace App\Services;
 
 use App\Models\InspectionLog;
-use App\Models\Inspection;
-use App\Models\User;
-use App\Models\Apar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -24,16 +21,33 @@ class AuditLogService
             $query->where('user_id', $filters['user_id']);
         }
 
+        if (!empty($filters['user_name'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['user_name'] . '%');
+            });
+        }
+
         if (!empty($filters['apar_id'])) {
             $query->where('apar_id', $filters['apar_id']);
+        }
+
+        if (!empty($filters['apar_serial'])) {
+            $query->whereHas('apar', function ($q) use ($filters) {
+                $q->where('serial_number', 'like', '%' . $filters['apar_serial'] . '%');
+            });
         }
 
         if (!empty($filters['action'])) {
             $query->where('action', $filters['action']);
         }
 
-        if (!empty($filters['is_successful'])) {
-            $query->where('is_successful', $filters['is_successful'] === 'true');
+        if (!empty($filters['ip_address'])) {
+            $query->where('ip_address', 'like', '%' . $filters['ip_address'] . '%');
+        }
+
+        if (isset($filters['is_successful']) && $filters['is_successful'] !== '' && $filters['is_successful'] !== null) {
+            $isSuccess = in_array($filters['is_successful'], ['1', 1, 'true', true], true);
+            $query->where('is_successful', $isSuccess);
         }
 
         if (!empty($filters['start_date'])) {
@@ -66,6 +80,7 @@ class AuditLogService
         $total = $query->count();
         $successful = (clone $query)->where('is_successful', true)->count();
         $failed = (clone $query)->where('is_successful', false)->count();
+        $uniqueUsers = (clone $query)->whereNotNull('user_id')->distinct('user_id')->count('user_id');
 
         $byAction = (clone $query)
             ->selectRaw('action, COUNT(*) as count')
@@ -85,8 +100,12 @@ class AuditLogService
 
         return [
             'total' => $total,
+            'total_logs' => $total,
             'successful' => $successful,
+            'successful_logs' => $successful,
             'failed' => $failed,
+            'failed_logs' => $failed,
+            'unique_users' => $uniqueUsers,
             'success_rate' => $total > 0 ? round(($successful / $total) * 100, 2) : 0,
             'by_action' => $byAction,
             'by_user' => $byUser,
@@ -120,101 +139,6 @@ class AuditLogService
     }
 
     /**
-     * Detect anomalies in audit logs
-     */
-    public function detectAnomalies(array $filters): array
-    {
-        $logs = $this->getAuditLogs($filters);
-        $anomalies = [];
-
-        // Detect multiple failed attempts
-        $failedAttempts = $logs->where('is_successful', false)
-            ->groupBy('user_id')
-            ->filter(function ($userLogs) {
-                return $userLogs->count() >= 3;
-            });
-
-        foreach ($failedAttempts as $userId => $userLogs) {
-            $user = User::find($userId);
-            $anomalies[] = [
-                'type' => 'multiple_failed_attempts',
-                'severity' => 'high',
-                'user' => $user?->name ?? 'Unknown',
-                'count' => $userLogs->count(),
-                'details' => "User has {$userLogs->count()} failed attempts",
-            ];
-        }
-
-        // Detect unusual time patterns (inspections outside normal hours)
-        $unusualTimes = $logs->filter(function ($log) {
-            $hour = Carbon::parse($log->created_at)->hour;
-            return $hour < 6 || $hour > 22;
-        });
-
-        if ($unusualTimes->count() > 0) {
-            $anomalies[] = [
-                'type' => 'unusual_time_pattern',
-                'severity' => 'medium',
-                'count' => $unusualTimes->count(),
-                'details' => "{$unusualTimes->count()} actions performed outside normal hours (6 AM - 10 PM)",
-            ];
-        }
-
-        // Detect suspicious location changes
-        $locationChanges = $logs->where('action', 'submit_inspection')
-            ->groupBy('user_id')
-            ->filter(function ($userLogs) {
-                if ($userLogs->count() < 2) {
-                    return false;
-                }
-
-                $locations = $userLogs->filter(function ($log) {
-                    return $log->lat && $log->lng;
-                });
-
-                if ($locations->count() < 2) {
-                    return false;
-                }
-
-                // Check for rapid location changes (more than 100km in less than 1 hour)
-                $sorted = $locations->sortBy('created_at');
-                $previous = null;
-
-                foreach ($sorted as $log) {
-                    if ($previous) {
-                        $distance = $this->calculateDistance(
-                            $previous->lat,
-                            $previous->lng,
-                            $log->lat,
-                            $log->lng
-                        );
-
-                        $timeDiff = Carbon::parse($log->created_at)->diffInMinutes(Carbon::parse($previous->created_at));
-
-                        if ($distance > 100000 && $timeDiff < 60) {
-                            return true;
-                        }
-                    }
-                    $previous = $log;
-                }
-
-                return false;
-            });
-
-        foreach ($locationChanges as $userId => $userLogs) {
-            $user = User::find($userId);
-            $anomalies[] = [
-                'type' => 'suspicious_location_change',
-                'severity' => 'critical',
-                'user' => $user?->name ?? 'Unknown',
-                'details' => 'Rapid location changes detected (>100km in <1 hour)',
-            ];
-        }
-
-        return $anomalies;
-    }
-
-    /**
      * Clean up old audit logs
      */
     public function cleanupOldLogs(int $daysToKeep): array
@@ -237,16 +161,29 @@ class AuditLogService
      */
     public function getCleanupStats(): array
     {
+        $now = Carbon::now();
         $total = InspectionLog::count();
-        $last30Days = InspectionLog::where('created_at', '>=', Carbon::now()->subDays(30))->count();
-        $last90Days = InspectionLog::where('created_at', '>=', Carbon::now()->subDays(90))->count();
-        $older = $total - $last90Days;
+
+        $older30 = InspectionLog::where('created_at', '<', (clone $now)->subDays(30))->count();
+        $older60 = InspectionLog::where('created_at', '<', (clone $now)->subDays(60))->count();
+        $older90 = InspectionLog::where('created_at', '<', (clone $now)->subDays(90))->count();
+        $older180 = InspectionLog::where('created_at', '<', (clone $now)->subDays(180))->count();
+        $older365 = InspectionLog::where('created_at', '<', (clone $now)->subDays(365))->count();
+
+        $last30Days = InspectionLog::where('created_at', '>=', (clone $now)->subDays(30))->count();
+        $last90Days = InspectionLog::where('created_at', '>=', (clone $now)->subDays(90))->count();
 
         return [
             'total' => $total,
+            'total_logs' => $total,
             'last_30_days' => $last30Days,
             'last_90_days' => $last90Days,
-            'older_than_90_days' => $older,
+            'older_than_90_days' => $older90,
+            'logs_older_than_30_days' => $older30,
+            'logs_older_than_60_days' => $older60,
+            'logs_older_than_90_days' => $older90,
+            'logs_older_than_180_days' => $older180,
+            'logs_older_than_365_days' => $older365,
         ];
     }
 
@@ -306,16 +243,7 @@ class AuditLogService
      */
     public function getActionLabel(string $action): string
     {
-        $labels = [
-            'start_inspection' => 'Mulai Inspeksi',
-            'submit_inspection' => 'Submit Inspeksi',
-            'validation_failed' => 'Validasi Gagal',
-            'update_inspection' => 'Update Inspeksi',
-            'delete_inspection' => 'Hapus Inspeksi',
-            'view_inspection' => 'Lihat Inspeksi',
-        ];
-
-        return $labels[$action] ?? ucfirst(str_replace('_', ' ', $action));
+        return getActionLabel($action);
     }
 
     /**
@@ -338,17 +266,6 @@ class AuditLogService
      */
     protected function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
-        $earthRadius = 6371000; // meters
-
-        $latDelta = deg2rad($lat2 - $lat1);
-        $lngDelta = deg2rad($lng2 - $lng1);
-
-        $a = sin($latDelta / 2) * sin($latDelta / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($lngDelta / 2) * sin($lngDelta / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
+        return haversine_distance_meters($lat1, $lng1, $lat2, $lng2);
     }
 }

@@ -18,11 +18,9 @@ import {
     ExclamationTriangleIcon,
     TruckIcon,
     MagnifyingGlassIcon,
-    FunnelIcon,
     BellIcon,
     UserIcon,
     CalendarDaysIcon,
-    ArrowRightIcon,
 } from '@heroicons/react/24/outline';
 
 const MySchedules = () => {

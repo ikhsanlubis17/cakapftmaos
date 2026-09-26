@@ -22,7 +22,8 @@ const UserModal = ({
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-600 rounded-[6px] p-1 transition-colors"
+                        disabled={loading}
+                        className="text-slate-400 hover:text-slate-600 rounded-[6px] p-1 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         <XMarkIcon className="h-5 w-5" />
                     </button>
@@ -161,20 +162,20 @@ const UserModal = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-[6px] transition-colors"
+                            className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-[6px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={loading}
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] rounded-[6px] shadow-sm transition-all flex items-center"
+                            className="px-5 py-2 min-h-[38px] text-xs font-semibold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] disabled:opacity-60 disabled:cursor-not-allowed rounded-[6px] shadow-sm transition-all flex items-center justify-center gap-2"
                             disabled={loading}
                         >
                             {loading ? (
                                 <div className="flex items-center">
-                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white mr-2"></div>
-                                    {editingUser ? 'Menyimpan...' : 'Membuat...'}
+                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent mr-2"></div>
+                                    <span>{editingUser ? 'Menyimpan...' : 'Membuat...'}</span>
                                 </div>
                             ) : (
                                 editingUser ? 'Simpan Perubahan' : 'Buat Pengguna'

@@ -1,415 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, getRouteApi, useLocation } from '@tanstack/react-router';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-    CameraIcon,
     MapPinIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
-    XMarkIcon,
-    TruckIcon,
     FireIcon,
-    PlusIcon,
-    TrashIcon,
-    MagnifyingGlassIcon,
+    ShieldCheckIcon,
+    InformationCircleIcon,
     UserIcon,
+    CalendarIcon,
+    ClockIcon,
+    WrenchScrewdriverIcon,
+    EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 import { AparSelector } from '../components/AparSelector';
+import Header from '../components/InspectionHeader';
+import APARPhotoCapture from '../components/APARPhotoCapture';
+import SelfieCapture from '../components/SelfieCapture';
+import DamageSection from '../components/DamageSection';
+import { calculateDistance } from '@/utils/geolocation';
 
-// Small subcomponents kept in this file for clarity
-const Header = ({ apar }) => {
-    // Guard against null/undefined apar
-    if (!apar) {
-        return null;
-    }
-    
-    return (
-        <div className="bg-[#041562] shadow-sm rounded-[6px] p-4 sm:p-6 border-b-4 border-[#11468F]">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="flex-shrink-0">
-                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-[6px] bg-white/10 flex items-center justify-center shadow-sm text-white">
-                        <FireIcon className="h-6 w-6 sm:h-7 sm:w-7" />
-                    </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 sm:mb-1 tracking-tight">Inspeksi APAR</h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
-                        <p className="text-sm sm:text-lg font-bold text-white truncate">{apar.serial_number || 'N/A'}</p>
-                        <span className="hidden sm:inline text-slate-400">•</span>
-                        <p className="text-xs sm:text-base text-slate-200 truncate">{apar.location_name || 'N/A'}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-const APARPhotoCapture = ({ photo, cameraActive, cameraLoading, startCamera, capturePhoto, stopCamera, videoRef, canvasRef, captureCountdown, showFlash, setPhoto }) => (
-    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
-        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
-                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-            </div>
-            <span>Foto APAR <span className="text-[#DA1212]">*</span></span>
-        </label>
-
-        {!photo && !cameraActive && (
-            <button
-                type="button"
-                onClick={startCamera}
-                disabled={cameraLoading}
-                className="w-full aspect-[3/4] bg-slate-50 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/60 transition-all duration-300 group shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-[6px] bg-white border border-slate-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 text-[#041562] shadow-xs">
-                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-                </div>
-                <p className="mt-4 text-base sm:text-lg font-bold text-slate-800 group-hover:text-[#041562]">Ambil Foto APAR</p>
-                <p className="mt-1 text-xs sm:text-sm text-slate-500 px-4 text-center">Pastikan APAR terlihat jelas dalam frame</p>
-            </button>
-        )}
-
-        {cameraActive && !photo && (
-            <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4]">
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                <canvas ref={canvasRef} className="hidden" />
-
-                {/* Grid Overlay */}
-                <div className="absolute inset-0 pointer-events-none opacity-30">
-                    <div className="w-full h-full grid grid-cols-3 grid-rows-3">
-                        <div className="border-r border-b border-white/50"></div>
-                        <div className="border-r border-b border-white/50"></div>
-                        <div className="border-b border-white/50"></div>
-                        <div className="border-r border-b border-white/50"></div>
-                        <div className="border-r border-b border-white/50"></div>
-                        <div className="border-b border-white/50"></div>
-                        <div className="border-r border-b border-white/50"></div>
-                        <div className="border-r border-b border-white/50"></div>
-                        <div></div>
-                    </div>
-                </div>
-
-                {captureCountdown > 0 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                        <div className="text-white text-6xl sm:text-8xl font-bold animate-ping">{captureCountdown}</div>
-                    </div>
-                )}
-
-                {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
-
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
-                    <button
-                        type="button"
-                        onClick={stopCamera}
-                        className="p-3 sm:p-4 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
-                        title="Batal"
-                    >
-                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={capturePhoto}
-                        disabled={captureCountdown > 0}
-                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
-                    >
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#11468F] hover:bg-[#0d3873] border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center text-white">
-                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-                        </div>
-                    </button>
-                </div>
-
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#041562]/90 backdrop-blur-md text-white border border-[#041562] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold flex items-center shadow-lg">
-                    Live Camera
-                </div>
-            </div>
-        )}
-
-        {photo && (
-            <div className="space-y-3">
-                <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
-                    <img src={URL.createObjectURL(photo)} alt="APAR Photo" className="w-full h-full object-contain" />
-                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-emerald-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
-                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-                        Foto Tersimpan
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => setPhoto(null)}
-                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
-                >
-                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Ulangi Foto APAR
-                </button>
-            </div>
-        )}
-    </div>
-);
-
-const SelfieCapture = ({ selfie, selfieCameraActive, selfieLoading, startSelfieCamera, captureSelfie, stopSelfieCamera, selfieVideoRef, selfieCanvasRef, captureCountdown, showFlash, setSelfie }) => (
-    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
-        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
-            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
-                <CameraIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-            </div>
-            <span>Selfie Teknisi <span className="text-[#DA1212]">*</span></span>
-        </label>
-
-        {!selfie && !selfieCameraActive && (
-            <button
-                type="button"
-                onClick={startSelfieCamera}
-                disabled={selfieLoading}
-                className="w-full aspect-[3/4] bg-slate-50 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/60 transition-all duration-300 group shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-[6px] bg-white border border-slate-200 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 text-[#041562] shadow-xs">
-                    <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-                </div>
-                <p className="mt-4 text-base sm:text-lg font-bold text-slate-800 group-hover:text-[#041562]">Ambil Selfie</p>
-                <p className="mt-1 text-xs sm:text-sm text-slate-500 px-4 text-center">Wajib selfie di lokasi inspeksi</p>
-            </button>
-        )}
-
-        {selfieCameraActive && !selfie && (
-            <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4]">
-                <video ref={selfieVideoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-                <canvas ref={selfieCanvasRef} className="hidden" />
-
-                {captureCountdown > 0 && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                        <div className="text-white text-6xl sm:text-8xl font-bold animate-ping">{captureCountdown}</div>
-                    </div>
-                )}
-
-                {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
-
-                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4 sm:space-x-6">
-                    <button
-                        type="button"
-                        onClick={stopSelfieCamera}
-                        className="p-3 sm:p-4 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all backdrop-blur-md"
-                        title="Batal"
-                    >
-                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={captureSelfie}
-                        disabled={captureCountdown > 0}
-                        className="p-1 rounded-full border-4 border-white/30 hover:border-white/50 transition-all disabled:opacity-50"
-                    >
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-[#11468F] hover:bg-[#0d3873] border-4 border-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center text-white">
-                            <CameraIcon className="h-7 w-7 sm:h-8 sm:w-8" />
-                        </div>
-                    </button>
-                </div>
-
-                <div className="absolute top-3 left-3 sm:top-4 sm:left-4 bg-[#041562]/90 backdrop-blur-md text-white border border-[#041562] px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold flex items-center shadow-lg">
-                    Selfie Mode
-                </div>
-            </div>
-        )}
-
-        {selfie && (
-            <div className="space-y-3">
-                <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
-                    <img src={URL.createObjectURL(selfie)} alt="Selfie" className="w-full h-full object-contain transform scale-x-[-1]" />
-                    <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-emerald-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
-                        <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-                        Selfie Tersimpan
-                    </div>
-                </div>
-                <button
-                    type="button"
-                    onClick={() => setSelfie(null)}
-                    className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
-                >
-                    <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                    Ulangi Selfie
-                </button>
-            </div>
-        )}
-    </div>
-);
-
-const DamageSection = ({ selectedDamages, removeDamage, showDamageForm, setShowDamageForm, newDamage, setNewDamage, damageCategories, startDamageCamera, damageCameraActive, damageCameraLoading, damageVideoRef, damageCanvasRef, captureCountdown, showFlash, captureDamagePhoto, stopDamageCamera, addDamage }) => (
-    <div className="bg-white p-6 rounded-[6px] border border-slate-200 shadow-sm">
-        <label className="block text-xl font-bold text-slate-900 mb-6 flex items-center">
-            🚨 Kategori Kerusakan
-        </label>
-
-        {selectedDamages.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {selectedDamages.map((damage) => (
-                    <div key={damage.id} className="bg-slate-50 border border-slate-200 rounded-[6px] p-4 shadow-sm hover:shadow-md transition-all">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className="space-y-1">
-                                <span className="inline-block bg-rose-100 text-[#DA1212] border border-rose-200 px-3 py-1 rounded-[3px] text-xs font-bold">{damage.category_name}</span>
-                                <div className="flex items-center mt-1">
-                                    <span className={`px-2 py-0.5 rounded-[3px] text-xs font-semibold uppercase tracking-wide ${damage.severity === 'low' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
-                                        damage.severity === 'medium' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                                            damage.severity === 'high' ? 'bg-orange-50 text-orange-800 border border-orange-200' :
-                                                'bg-rose-50 text-[#DA1212] border border-rose-200'
-                                        }`}>
-                                        {damage.severity === 'low' ? 'Rendah' : damage.severity === 'medium' ? 'Sedang' : damage.severity === 'high' ? 'Tinggi' : 'Kritis'}
-                                    </span>
-                                </div>
-                            </div>
-                            <button type="button" onClick={() => removeDamage(damage.id)} className="text-slate-400 hover:text-[#DA1212] transition-colors p-1">
-                                <TrashIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        {damage.notes && <p className="text-sm text-slate-600 mb-4 bg-white p-2.5 rounded-[3px] border border-slate-200">{damage.notes}</p>}
-
-                        {damage.damage_photo && (
-                            <div className="relative rounded-[6px] overflow-hidden aspect-video bg-black">
-                                <img src={URL.createObjectURL(damage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                <div className="absolute bottom-1 left-1 bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-[3px] text-[10px] font-semibold">
-                                    Foto Kerusakan
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
-            </div>
-        )}
-
-        {!showDamageForm ? (
-            <button
-                type="button"
-                onClick={() => setShowDamageForm(true)}
-                className="w-full py-8 border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-50 transition-all duration-300 group"
-            >
-                <div className="h-14 w-14 rounded-[6px] bg-slate-100 flex items-center justify-center group-hover:bg-[#041562] group-hover:text-white transition-colors duration-300 mb-3 text-slate-500">
-                    <PlusIcon className="h-8 w-8" />
-                </div>
-                <p className="text-lg font-bold text-slate-800 group-hover:text-[#041562]">Tambah Kategori Kerusakan</p>
-                <p className="text-sm text-slate-500">Klik untuk melaporkan kerusakan baru</p>
-            </button>
-        ) : (
-            <div className="border border-slate-200 rounded-[6px] p-6 bg-slate-50/70 animate-fadeIn">
-                <div className="flex justify-between items-center mb-6">
-                    <h4 className="text-lg font-bold text-slate-900">Form Laporan Kerusakan</h4>
-                    <button onClick={() => setShowDamageForm(false)} className="text-slate-400 hover:text-slate-600">
-                        <XMarkIcon className="h-6 w-6" />
-                    </button>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Kategori Kerusakan <span className="text-[#DA1212]">*</span></label>
-                            <select
-                                value={newDamage.category_id}
-                                onChange={(e) => {
-                                    const category = damageCategories.find(c => c.id === parseInt(e.target.value));
-                                    setNewDamage({
-                                        ...newDamage,
-                                        category_id: e.target.value,
-                                        severity: category ? category.severity : 'medium'
-                                    });
-                                }}
-                                className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] bg-white text-sm" required>
-                                <option value="">Pilih kategori kerusakan</option>
-                                {damageCategories.map((category) => (<option key={category.id} value={category.id}>{category.name}</option>))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Tingkat Keparahan</label>
-                            <select
-                                value={newDamage.severity}
-                                disabled
-                                className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] bg-slate-100 cursor-not-allowed text-slate-500 text-sm"
-                            >
-                                <option value="low">Rendah</option>
-                                <option value="medium">Sedang</option>
-                                <option value="high">Tinggi</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan Tambahan</label>
-                        <textarea value={newDamage.notes} onChange={(e) => setNewDamage({ ...newDamage, notes: e.target.value })} rows={3} className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] resize-none bg-white text-sm" placeholder="Jelaskan detail kerusakan..." />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        {/* Damage Photo Section */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Foto Kerusakan <span className="text-[#DA1212]">*</span></label>
-
-                            {!newDamage.damage_photo && !damageCameraActive && (
-                                <button
-                                    type="button"
-                                    onClick={() => startDamageCamera()}
-                                    disabled={damageCameraLoading}
-                                    className="w-full aspect-[3/4] border-2 border-dashed border-slate-300 rounded-[6px] flex flex-col items-center justify-center hover:border-[#11468F] hover:bg-slate-100/50 transition-all duration-300 group disabled:opacity-50"
-                                >
-                                    <div className="h-12 w-12 rounded-[6px] bg-slate-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-300 mb-3 text-[#041562]">
-                                        <CameraIcon className="h-6 w-6" />
-                                    </div>
-                                    <p className="font-bold text-slate-800 group-hover:text-[#041562]">Ambil Foto Kerusakan</p>
-                                </button>
-                            )}
-
-                            {damageCameraActive && !newDamage.damage_photo && (
-                                <div className="relative bg-black rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] group">
-                                    <video ref={damageVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-                                    <canvas ref={damageCanvasRef} className="hidden" />
-
-                                    {captureCountdown > 0 && (
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm z-20">
-                                            <div className="text-white text-6xl font-bold animate-ping">{captureCountdown}</div>
-                                        </div>
-                                    )}
-
-                                    {showFlash && <div className="absolute inset-0 bg-white z-30 animate-flash"></div>}
-
-                                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent flex justify-center items-center space-x-4">
-                                        <button onClick={stopDamageCamera} className="p-3 rounded-[6px] bg-gray-800/80 text-white hover:bg-gray-700 transition-all"><XMarkIcon className="h-5 w-5" /></button>
-                                        <button onClick={captureDamagePhoto} disabled={captureCountdown > 0} className="p-1 rounded-full border-2 border-white/30">
-                                            <div className="h-12 w-12 rounded-full bg-[#11468F] hover:bg-[#0d3873] text-white border-2 border-white flex items-center justify-center"><CameraIcon className="h-6 w-6" /></div>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {newDamage.damage_photo && (
-                                <div className="space-y-3">
-                                    <div className="relative rounded-[6px] overflow-hidden shadow-lg aspect-[3/4] bg-black">
-                                        <img src={URL.createObjectURL(newDamage.damage_photo)} alt="Damage Photo" className="w-full h-full object-contain" />
-                                        <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 bg-orange-600 text-white px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-[3px] text-xs sm:text-sm font-bold shadow-lg flex items-center">
-                                            <CheckCircleIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
-                                            Foto Kerusakan
-                                        </div>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setNewDamage({ ...newDamage, damage_photo: null })}
-                                        className="w-full flex items-center justify-center px-4 py-2.5 sm:py-3 bg-white border border-slate-300 text-slate-700 rounded-[6px] hover:bg-slate-50 transition-all font-bold text-sm sm:text-base shadow-sm"
-                                    >
-                                        <CameraIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                                        Ulangi Foto
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex space-x-3 pt-4">
-                        <button type="button" onClick={addDamage} className="flex-1 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold px-6 py-2.5 rounded-[6px] transition-all shadow-sm">Simpan Kerusakan</button>
-                        <button type="button" onClick={() => { stopDamageCamera(); setShowDamageForm(false); setNewDamage({ category_id: '', notes: '', severity: 'medium', damage_photo: null }); }} className="px-6 py-2.5 border border-slate-300 rounded-[6px] hover:bg-slate-50 transition-colors font-medium text-slate-700">Batal</button>
-                    </div>
-                </div>
-            </div>
-        )}
-    </div>
-);
 
 const InspectionFormEnhanced = () => {
     const location = useLocation();
@@ -433,6 +46,7 @@ const InspectionFormEnhanced = () => {
     const [apar, setApar] = useState(null);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [submitSuccess, setSubmitSuccess] = useState(false);
     const [damageCategories, setDamageCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [aparList, setAparList] = useState([]);
@@ -475,10 +89,50 @@ const InspectionFormEnhanced = () => {
         damage_photo: null
     });
 
-    // State for teknisi and schedule selection (admin/supervisor only)
-    const [selectedTeknisiId, setSelectedTeknisiId] = useState('');
-    const [scheduleDate, setScheduleDate] = useState('');
-    const [scheduleTime, setScheduleTime] = useState('');
+    // Supervisor direct repair assignment state
+    const isSupervisor = user?.role === 'supervisor';
+    const tomorrowStr = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0];
+    }, []);
+    const [assignedTeknisiId, setAssignedTeknisiId] = useState('');
+    const [scheduleDate, setScheduleDate] = useState(tomorrowStr);
+    const [scheduleTime, setScheduleTime] = useState('09:00');
+    const [supervisorNotes, setSupervisorNotes] = useState('');
+
+    // Fetch technicians with conflict check for the selected date & time
+    const availableTechniciansQuery = useQuery({
+        queryKey: ['available-technicians', scheduleDate, scheduleTime],
+        queryFn: async () => {
+            const resp = await apiClient.get('/api/schedules/available-technicians', {
+                params: {
+                    schedule_date: scheduleDate,
+                    schedule_time: scheduleTime,
+                    only_available: true,
+                },
+            });
+            const list = resp.data?.data || [];
+            // Strictly filter to ONLY available technicians without schedule conflicts
+            return list.filter((t) => t.is_available !== false);
+        },
+        enabled: isSupervisor && condition === 'damaged' && Boolean(scheduleDate) && Boolean(scheduleTime),
+        staleTime: 1000 * 30,
+    });
+
+    // Auto-reset assignedTeknisiId if the selected technician is no longer available when date/time changes
+    useEffect(() => {
+        if (assignedTeknisiId) {
+            const availableList = availableTechniciansQuery.data || [];
+            const isStillAvailable = availableList.some(
+                (t) => String(t.id) === String(assignedTeknisiId)
+            );
+            if (!isStillAvailable) {
+                setAssignedTeknisiId('');
+            }
+        }
+    }, [availableTechniciansQuery.data, assignedTeknisiId]);
+
 
     useEffect(() => {
         // Only handle media cleanup on unmount
@@ -512,7 +166,8 @@ const InspectionFormEnhanced = () => {
         queryKey: ['apars'],
         queryFn: async () => {
             const res = await apiClient.get('/api/apar');
-            return res.data.data ?? res.data;
+            const data = res.data?.data ?? res.data;
+            return Array.isArray(data) ? data : [];
         },
         enabled: !qrCode,
         staleTime: 1000 * 60 * 2,
@@ -572,12 +227,15 @@ const InspectionFormEnhanced = () => {
         if (!searchTerm.trim()) {
             setFilteredAparList(aparList);
         } else {
+            const searchLower = searchTerm.toLowerCase();
             const filtered = aparList.filter((apar) => {
-                const searchLower = searchTerm.toLowerCase();
+                const aparType = apar.apar_type?.name || apar.aparType?.name || '';
                 return (
                     apar.serial_number?.toLowerCase().includes(searchLower) ||
                     apar.location_name?.toLowerCase().includes(searchLower) ||
-                    apar.aparType?.name?.toLowerCase().includes(searchLower)
+                    aparType.toLowerCase().includes(searchLower) ||
+                    apar.tank_truck?.license_plate?.toLowerCase().includes(searchLower) ||
+                    apar.tankTruck?.license_plate?.toLowerCase().includes(searchLower)
                 );
             });
             setFilteredAparList(filtered);
@@ -592,6 +250,35 @@ const InspectionFormEnhanced = () => {
             console.error('Error fetching damage categories');
         }
     }, [damageCategoriesQuery.data, damageCategoriesQuery.isError]);
+
+    // Filter damage categories based on APAR type with resilient fallback
+    const filteredDamageCategories = useMemo(() => {
+        const categories = damageCategoriesQuery.data || damageCategories || [];
+        if (!categories.length) return [];
+
+        // Check both apar_type (snake_case from Eloquent) and aparType (camelCase)
+        const aparTypeName = (apar?.apar_type?.name || apar?.aparType?.name || '').toLowerCase().trim();
+
+        if (!aparTypeName) {
+            return categories;
+        }
+
+        // 1. Direct match (case-insensitive)
+        let matched = categories.filter(
+            (cat) => cat.type?.toLowerCase() === aparTypeName
+        );
+
+        // 2. Cross-match for DCP / Powder variants
+        if (matched.length === 0 && (aparTypeName.includes('dcp') || aparTypeName.includes('powder'))) {
+            matched = categories.filter((cat) => {
+                const cType = cat.type?.toLowerCase() || '';
+                return cType === 'powder' || cType.includes('dcp') || cType === aparTypeName;
+            });
+        }
+
+        // 3. Fallback: if no specific categories match, return all active categories so inspection is never blocked
+        return matched.length > 0 ? matched : categories;
+    }, [damageCategoriesQuery.data, damageCategories, apar]);
 
     // Handler untuk memilih APAR dari selector
     const handleAparSelect = (selectedApar) => {
@@ -608,23 +295,12 @@ const InspectionFormEnhanced = () => {
     // Re-validate location when APAR data loads or location updates
     useEffect(() => {
         if (apar?.latitude && apar?.longitude && currentLocation) {
-            // Calculate distance inline to ensure validation runs even if helper is defined lower down
-            const lat1 = currentLocation.lat;
-            const lon1 = currentLocation.lng;
-            const lat2 = parseFloat(apar.latitude);
-            const lon2 = parseFloat(apar.longitude);
-
-            const R = 6371e3; // Earth's radius in meters
-            const φ1 = lat1 * Math.PI / 180;
-            const φ2 = lat2 * Math.PI / 180;
-            const Δφ = (lat2 - lat1) * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distance = R * c; // in meters
+            const distance = calculateDistance(
+                currentLocation.lat,
+                currentLocation.lng,
+                parseFloat(apar.latitude),
+                parseFloat(apar.longitude)
+            );
 
             // Ensure valid_radius is treated as number
             const validRadius = parseInt(apar.valid_radius) || 30;
@@ -1159,21 +835,6 @@ const InspectionFormEnhanced = () => {
         setSelfieLoading(false);
     };
 
-    // Helper function to calculate distance between two points
-    const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // Earth's radius in meters
-        const φ1 = lat1 * Math.PI / 180;
-        const φ2 = lat2 * Math.PI / 180;
-        const Δφ = (lat2 - lat1) * Math.PI / 180;
-        const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) *
-            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return R * c; // Distance in meters
-    };
 
     const submitInspectionMutation = useMutation({
         mutationFn: async (payload) => {
@@ -1184,13 +845,16 @@ const InspectionFormEnhanced = () => {
             return res.data;
         },
         onSuccess: () => {
+            setSubmitSuccess(true);
             showSuccess('Inspeksi berhasil disimpan!');
             queryClient.invalidateQueries({ queryKey: ['inspections'] });
             queryClient.invalidateQueries({ queryKey: ['apar'] });
-            setTimeout(() => navigate({ to: '/' }), 2000);
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            setTimeout(() => navigate({ to: '/' }), 1800);
         },
 
         onError: (error) => {
+            setSubmitSuccess(false);
             console.error('Error submitting inspection:', error);
 
             if (error.response?.status === 422 && error.response?.data?.error) {
@@ -1212,6 +876,7 @@ const InspectionFormEnhanced = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitSuccess(false);
 
         // Validate damage report
         if (condition === 'damaged' && selectedDamages.length === 0) {
@@ -1219,18 +884,30 @@ const InspectionFormEnhanced = () => {
             return;
         }
 
-        // Validate teknisi and schedule for admin/supervisor
-        if (isAdminOrSupervisor && condition === 'damaged') {
-            if (!selectedTeknisiId) {
-                showError('Pilih teknisi yang akan melakukan perbaikan');
+
+        // Validate supervisor repair assignment if supervisor and damaged
+        if (isSupervisor && condition === 'damaged') {
+            if (!scheduleDate || !scheduleTime) {
+                showError('Tanggal dan waktu jadwal perbaikan wajib diisi.');
                 return;
             }
-            if (!scheduleDate) {
-                showError('Pilih tanggal jadwal perbaikan');
+            if (!assignedTeknisiId) {
+                const availableList = availableTechniciansQuery.data || [];
+                if (availableList.length === 0) {
+                    showError('Tidak ada teknisi yang tersedia pada waktu yang dipilih. Silakan ubah tanggal atau waktu perbaikan.');
+                } else {
+                    showError('Pilih teknisi pelaksana perbaikan dari daftar teknisi yang tersedia.');
+                }
                 return;
             }
-            if (!scheduleTime) {
-                showError('Pilih waktu jadwal perbaikan');
+
+            const chosenTech = (availableTechniciansQuery.data || []).find(
+                (t) => String(t.id) === String(assignedTeknisiId)
+            );
+            if (chosenTech && chosenTech.is_available === false) {
+                showError(
+                    `Teknisi ${chosenTech.name} memiliki bentrok jadwal tugas lain pada waktu tersebut. Silakan pilih teknisi lain atau sesuaikan waktu perbaikan.`
+                );
                 return;
             }
         }
@@ -1260,6 +937,9 @@ const InspectionFormEnhanced = () => {
         // Use QR code from route or from selected APAR
         const finalQrCode = qrCode || apar.qr_code || '';
         fd.append('apar_qrCode', finalQrCode);
+        const urlParams = new URLSearchParams(location.search);
+        const identificationMethod = urlParams.get('method') || 'qr_scan';
+        fd.append('identification_method', identificationMethod);
         fd.append('condition', condition);
         fd.append('notes', notes);
         fd.append('photo', finalPhoto, 'apar_photo.jpg');
@@ -1279,20 +959,49 @@ const InspectionFormEnhanced = () => {
             });
         }
 
-        // Add teknisi and schedule data for admin/supervisor
-        if (isAdminOrSupervisor && condition === 'damaged') {
-            fd.append('assigned_teknisi_id', selectedTeknisiId);
+        if (isSupervisor && condition === 'damaged') {
+            fd.append('assigned_teknisi_id', assignedTeknisiId);
             fd.append('schedule_date', scheduleDate);
             fd.append('schedule_time', scheduleTime);
+            if (supervisorNotes) {
+                fd.append('supervisor_notes', supervisorNotes);
+            }
         }
 
         submitInspectionMutation.mutate(fd);
     };
 
+    // Role guard: Admin dilarang melakukan inspeksi
+    if (user?.role === 'admin') {
+        return (
+            <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 rounded-[10px] p-6 sm:p-8 text-center shadow-sm">
+                <div className="h-12 w-12 rounded-full bg-rose-50 border border-rose-200 text-[#DA1212] flex items-center justify-center mx-auto mb-3">
+                    <ShieldCheckIcon className="h-6 w-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Akses Dibatasi</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-5 leading-relaxed">
+                    Sesuai kebijakan HSSE Terminal, pelaksanaan inspeksi fisik lapangan hanya dapat dilakukan oleh peran <strong>Teknisi</strong> dan <strong>Supervisor</strong>. Akun Administrator bertugas mengelola master data dan konfigurasi sistem.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => navigate({ to: '/apar' })}
+                    className="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] bg-[#11468F] hover:bg-[#041562] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
+                >
+                    Kembali ke Manajemen APAR
+                </button>
+            </div>
+        );
+    }
+
     if (aparQuery.isLoading || damageCategoriesQuery.isLoading || (aparListQuery.isLoading && !qrCode)) {
         return (
-            <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="text-center space-y-3">
+                    <div className="animate-spin rounded-full h-10 w-10 border-3 border-slate-200 border-t-[#11468F] mx-auto" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Memuat data formulir inspeksi...
+                    </p>
+                </div>
             </div>
         );
     }
@@ -1303,7 +1012,7 @@ const InspectionFormEnhanced = () => {
             <AparSelector
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
-                aparList={filteredAparList}
+                aparList={aparList}
                 onAparSelect={handleAparSelect}
                 isLoading={aparListQuery.isLoading}
             />
@@ -1313,13 +1022,18 @@ const InspectionFormEnhanced = () => {
     // Show error if QR code is provided but APAR not found
     if (!apar && qrCode && aparQuery.isError) {
         return (
-            <div className="text-center py-12">
-                <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">APAR Tidak Ditemukan</h3>
-                <p className="mt-1 text-sm text-gray-500">QR Code tidak valid atau APAR tidak terdaftar.</p>
+            <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 rounded-[10px] p-6 sm:p-8 text-center shadow-sm">
+                <div className="h-12 w-12 rounded-full bg-rose-50 border border-rose-200 text-[#DA1212] flex items-center justify-center mx-auto mb-3">
+                    <FireIcon className="h-6 w-6" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">APAR Tidak Ditemukan</h3>
+                <p className="text-xs text-slate-500 mt-1 mb-5 leading-relaxed">
+                    QR Code tidak valid atau data tabung APAR tidak terdaftar dalam sistem.
+                </p>
                 <button
+                    type="button"
                     onClick={() => navigate({ to: '/inspections/new' })}
-                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    className="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] bg-[#11468F] hover:bg-[#041562] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer"
                 >
                     Pilih APAR Manual
                 </button>
@@ -1330,42 +1044,137 @@ const InspectionFormEnhanced = () => {
     // Don't render form if apar is not available yet
     if (!apar) {
         return (
-            <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-600"></div>
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="text-center space-y-3">
+                    <div className="animate-spin rounded-full h-10 w-10 border-3 border-slate-200 border-t-[#11468F] mx-auto" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Menyiapkan formulir...
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50/60 pb-12">
             <div className="max-w-4xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
                 <Header apar={apar} />
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-[6px] p-4 sm:p-6 space-y-6 sm:space-y-8 border border-slate-200">
-                    <APARPhotoCapture photo={photo} cameraActive={cameraActive} cameraLoading={cameraLoading} startCamera={startCamera} capturePhoto={capturePhoto} stopCamera={stopCamera} videoRef={videoRef} canvasRef={canvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setPhoto={setPhoto} />
+                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                    {/* Section 1: Visual Verification Photos (2-col on desktop, stacked on mobile) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                        <APARPhotoCapture
+                            photo={photo}
+                            cameraActive={cameraActive}
+                            cameraLoading={cameraLoading}
+                            startCamera={startCamera}
+                            capturePhoto={capturePhoto}
+                            stopCamera={stopCamera}
+                            videoRef={videoRef}
+                            canvasRef={canvasRef}
+                            captureCountdown={captureCountdown}
+                            showFlash={showFlash}
+                            setPhoto={setPhoto}
+                        />
 
-                    <SelfieCapture selfie={selfie} selfieCameraActive={selfieCameraActive} selfieLoading={selfieLoading} startSelfieCamera={startSelfieCamera} captureSelfie={captureSelfie} stopSelfieCamera={stopSelfieCamera} selfieVideoRef={selfieVideoRef} selfieCanvasRef={selfieCanvasRef} captureCountdown={captureCountdown} showFlash={showFlash} setSelfie={setSelfie} />
-
-                    {/* Condition */}
-                    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
-                        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
-                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
-                                <ExclamationTriangleIcon className="h-5 w-5 sm:h-6 sm:w-6" />
-                            </div>
-                            <span>Kondisi APAR <span className="text-[#DA1212]">*</span></span>
-                        </label>
-                        <select
-                            value={condition}
-                            onChange={(e) => setCondition(e.target.value)}
-                            className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-bold bg-white shadow-sm"
-                            required
-                        >
-                            <option value="good">✅ Baik</option>
-                            <option value="damaged">⚠️ Butuh Perbaikan</option>
-                        </select>
+                        <SelfieCapture
+                            selfie={selfie}
+                            selfieCameraActive={selfieCameraActive}
+                            selfieLoading={selfieLoading}
+                            startSelfieCamera={startSelfieCamera}
+                            captureSelfie={captureSelfie}
+                            stopSelfieCamera={stopSelfieCamera}
+                            selfieVideoRef={selfieVideoRef}
+                            selfieCanvasRef={selfieCanvasRef}
+                            captureCountdown={captureCountdown}
+                            showFlash={showFlash}
+                            setSelfie={setSelfie}
+                        />
                     </div>
 
+                    {/* Section 2: APAR Condition (Interactive Radio Tiles) */}
+                    <div className="bg-white p-4 sm:p-5 rounded-[8px] border border-slate-200 shadow-xs space-y-3.5">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center space-x-2.5">
+                                <div className="h-8 w-8 rounded-[6px] bg-blue-50 text-[#11468F] ring-1 ring-blue-200 flex items-center justify-center flex-shrink-0">
+                                    <ShieldCheckIcon className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center">
+                                        Status & Kondisi Fisik APAR
+                                        <span className="text-[#DA1212] ml-1">*</span>
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500">
+                                        Tentukan status kesiapan tabung setelah pemeriksaan visual
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600">
+                                Langkah 3
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label
+                                className={`relative flex items-start p-3.5 sm:p-4 rounded-[8px] border-2 cursor-pointer transition-all ${
+                                    condition === 'good'
+                                        ? 'border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20 shadow-xs'
+                                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="condition"
+                                    value="good"
+                                    checked={condition === 'good'}
+                                    onChange={() => setCondition('good')}
+                                    className="mt-0.5 h-4 w-4 text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer flex-shrink-0"
+                                />
+                                <div className="ml-3 min-w-0">
+                                    <div className="flex items-center space-x-1.5">
+                                        <CheckCircleIcon className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900">
+                                            Kondisi Baik (Siap Pakai)
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                                        Segel utuh, jarum manometer pada zona hijau, tabung bersih bebas korosi.
+                                    </p>
+                                </div>
+                            </label>
+
+                            <label
+                                className={`relative flex items-start p-3.5 sm:p-4 rounded-[8px] border-2 cursor-pointer transition-all ${
+                                    condition === 'damaged'
+                                        ? 'border-rose-500 bg-rose-50/50 ring-2 ring-rose-500/20 shadow-xs'
+                                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                                }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="condition"
+                                    value="damaged"
+                                    checked={condition === 'damaged'}
+                                    onChange={() => setCondition('damaged')}
+                                    className="mt-0.5 h-4 w-4 text-rose-600 border-slate-300 focus:ring-rose-500 cursor-pointer flex-shrink-0"
+                                />
+                                <div className="ml-3 min-w-0">
+                                    <div className="flex items-center space-x-1.5">
+                                        <ExclamationTriangleIcon className="w-4 h-4 text-[#DA1212] flex-shrink-0" />
+                                        <span className="text-xs sm:text-sm font-bold text-slate-900">
+                                            Butuh Perbaikan / Rusak
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                                        Tekanan turun, segel/pin hilang, selang retak, atau tabung penyok/berkarat.
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {/* Section 3: Damage Section (when condition is damaged) */}
                     {condition === 'damaged' && (
                         <DamageSection
                             selectedDamages={selectedDamages}
@@ -1374,7 +1183,7 @@ const InspectionFormEnhanced = () => {
                             setShowDamageForm={setShowDamageForm}
                             newDamage={newDamage}
                             setNewDamage={setNewDamage}
-                            damageCategories={damageCategories.filter(cat => cat.type === apar?.apar_type?.name)}
+                            damageCategories={filteredDamageCategories}
                             startDamageCamera={startDamageCamera}
                             damageCameraActive={damageCameraActive}
                             damageCameraLoading={damageCameraLoading}
@@ -1388,160 +1197,269 @@ const InspectionFormEnhanced = () => {
                         />
                     )}
 
-                    {/* Teknisi and Schedule Selection (Admin/Supervisor only) */}
-                    {isAdminOrSupervisor && condition === 'damaged' && (
-                        <div className="bg-slate-50 p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
-                            <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
-                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
-                                    <UserIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    {/* Penugasan Perbaikan Khusus Supervisor */}
+                    {condition === 'damaged' && isSupervisor && (
+                        <div className="bg-white p-4 sm:p-5 rounded-[8px] border-2 border-[#11468F]/30 shadow-xs space-y-4">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center space-x-2.5">
+                                    <div className="h-8 w-8 rounded-[6px] bg-[#11468F] text-white flex items-center justify-center flex-shrink-0">
+                                        <WrenchScrewdriverIcon className="h-4.5 w-4.5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center">
+                                            Penugasan Teknisi & Jadwal Perbaikan
+                                            <span className="text-[#DA1212] ml-1">*</span>
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500">
+                                            Sebagai Supervisor, tentukan teknisi pelaksana yang bebas bentrok jadwal operasional
+                                        </p>
+                                    </div>
                                 </div>
-                                <span>Penugasan Perbaikan <span className="text-[#DA1212]">*</span></span>
-                            </label>
-                            
-                            <div className="space-y-4">
-                                {/* Teknisi Selection */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Pilih Teknisi yang Akan Melakukan Perbaikan <span className="text-[#DA1212]">*</span>
-                                    </label>
-                                    <select
-                                        value={selectedTeknisiId}
-                                        onChange={(e) => setSelectedTeknisiId(e.target.value)}
-                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
-                                        required={isAdminOrSupervisor && condition === 'damaged'}
-                                    >
-                                        <option value="">Pilih Teknisi</option>
-                                        {teknisiListQuery.data?.map((teknisi) => (
-                                            <option key={teknisi.id} value={teknisi.id}>
-                                                {teknisi.name} {teknisi.email ? `(${teknisi.email})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {teknisiListQuery.isLoading && (
-                                        <p className="mt-2 text-sm text-slate-500 font-medium">Memuat daftar teknisi...</p>
-                                    )}
-                                </div>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-blue-100 text-[#041562] border border-blue-200">
+                                    Wewenang Supervisor
+                                </span>
+                            </div>
 
-                                {/* Schedule Date */}
+                            <div className="bg-blue-50/70 border border-blue-200/80 rounded-[8px] p-3.5 flex items-start space-x-3 text-xs text-[#041562]">
+                                <InformationCircleIcon className="h-5 w-5 text-[#11468F] flex-shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                    <p className="font-bold">SOP Pelaksanaan HSSE Terminal:</p>
+                                    <p className="text-slate-600 leading-relaxed">
+                                        Supervisor tidak melakukan perbaikan fisik tabung secara langsung. Sistem memvalidasi ketersediaan waktu teknisi terpilih secara real-time untuk memastikan tidak ada tumpang tindih penugasan.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Date & Time Selection Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Tanggal Jadwal Perbaikan <span className="text-[#DA1212]">*</span>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                        <CalendarIcon className="h-3.5 w-3.5 text-[#11468F]" />
+                                        Tanggal Pelaksanaan Perbaikan <span className="text-[#DA1212]">*</span>
                                     </label>
                                     <input
                                         type="date"
+                                        min={new Date().toISOString().split('T')[0]}
                                         value={scheduleDate}
                                         onChange={(e) => setScheduleDate(e.target.value)}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
-                                        required={isAdminOrSupervisor && condition === 'damaged'}
+                                        className="w-full h-11 px-3.5 text-xs sm:text-sm font-medium border border-slate-300 rounded-[6px] focus:ring-2 focus:ring-[#11468F] focus:border-transparent bg-white shadow-2xs"
+                                        required
                                     />
                                 </div>
 
-                                {/* Schedule Time */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                                        Waktu Jadwal Perbaikan <span className="text-[#DA1212]">*</span>
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                        <ClockIcon className="h-3.5 w-3.5 text-[#11468F]" />
+                                        Waktu Mulai Perbaikan (WIB) <span className="text-[#DA1212]">*</span>
                                     </label>
                                     <input
                                         type="time"
                                         value={scheduleTime}
                                         onChange={(e) => setScheduleTime(e.target.value)}
-                                        className="w-full border border-slate-300 rounded-[6px] px-4 py-3 sm:py-3.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] text-base sm:text-lg font-medium bg-white shadow-sm"
-                                        required={isAdminOrSupervisor && condition === 'damaged'}
+                                        className="w-full h-11 px-3.5 text-xs sm:text-sm font-medium border border-slate-300 rounded-[6px] focus:ring-2 focus:ring-[#11468F] focus:border-transparent bg-white shadow-2xs"
+                                        required
                                     />
                                 </div>
+                            </div>
+
+                            {/* Technician Selection */}
+                            <div className="space-y-2">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
+                                    <span className="flex items-center gap-1.5">
+                                        <UserIcon className="h-3.5 w-3.5 text-[#11468F]" />
+                                        Pilih Teknisi Pelaksana Perbaikan <span className="text-[#DA1212]">*</span>
+                                    </span>
+                                    {availableTechniciansQuery.isLoading && (
+                                        <span className="text-[11px] font-normal text-[#11468F] animate-pulse">
+                                            Memeriksa jadwal teknisi...
+                                        </span>
+                                    )}
+                                </label>
+
+                                {availableTechniciansQuery.isLoading ? (
+                                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-[8px] text-center text-xs text-slate-500">
+                                        Memeriksa ketersediaan jadwal teknisi...
+                                    </div>
+                                ) : (availableTechniciansQuery.data || []).length === 0 ? (
+                                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-[8px] text-xs text-amber-900 flex items-start gap-2.5">
+                                        <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="font-bold text-amber-900">Tidak ada teknisi yang tersedia pada waktu ini.</p>
+                                            <p className="mt-0.5 text-amber-800 text-[11px] leading-relaxed">
+                                                Semua teknisi sedang memiliki jadwal tugas lain pada {scheduleDate} pukul {scheduleTime}. Silakan pilih tanggal atau jam perbaikan yang berbeda di atas.
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                                        {(availableTechniciansQuery.data || []).map((tech) => {
+                                            const isSelected = String(assignedTeknisiId) === String(tech.id);
+
+                                            return (
+                                                <button
+                                                    key={tech.id}
+                                                    type="button"
+                                                    onClick={() => setAssignedTeknisiId(tech.id)}
+                                                    className={`p-3 rounded-[8px] border text-left flex flex-col justify-between transition-all select-none cursor-pointer ${
+                                                        isSelected
+                                                            ? 'border-[#11468F] bg-blue-50/70 ring-2 ring-[#11468F]/30 shadow-xs'
+                                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-slate-900 truncate">
+                                                                {tech.name}
+                                                            </p>
+                                                            <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                                                                {tech.phone ? `${tech.phone} • ` : ''}{tech.email}
+                                                            </p>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] shrink-0 border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                                            Tersedia
+                                                        </span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Supervisor Notes for Repair */}
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                    Instruksi & Catatan Khusus untuk Teknisi
+                                </label>
+                                <textarea
+                                    value={supervisorNotes}
+                                    onChange={(e) => setSupervisorNotes(e.target.value)}
+                                    rows={2}
+                                    className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-[#11468F] focus:border-transparent resize-none bg-white shadow-2xs placeholder:text-slate-400"
+                                    placeholder="Instruksi spesifik bagian mana yang harus diganti atau diperbaiki oleh teknisi..."
+                                />
                             </div>
                         </div>
                     )}
 
-                    {/* Location Status */}
-                    <div className="bg-white rounded-[6px] p-4 sm:p-6 border border-slate-200 shadow-sm">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
-                            <label className="block text-lg sm:text-xl font-bold text-slate-900 flex items-center">
-                                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-[6px] bg-[#041562] text-white flex items-center justify-center mr-3 shadow-sm">
-                                    <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    {/* Alur Tindak Lanjut Penugasan Perbaikan untuk Teknisi Lapangan */}
+                    {condition === 'damaged' && !isSupervisor && (
+                        <div className="bg-amber-50/60 border border-amber-200/80 rounded-[8px] p-4 sm:p-4.5 flex items-start space-x-3.5 shadow-2xs">
+                            <div className="h-8 w-8 rounded-[6px] bg-amber-100 text-amber-800 ring-1 ring-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <InformationCircleIcon className="h-4.5 w-4.5" />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="flex items-center space-x-2">
+                                    <h4 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wider">
+                                        Alur Tindak Lanjut Penugasan Perbaikan
+                                    </h4>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-amber-100 text-amber-800 border border-amber-200">
+                                        SOP HSSE
+                                    </span>
                                 </div>
-                                <span>Lokasi Inspeksi</span>
-                            </label>
-                            {locationLoading && (
-                                <span className="text-sm text-slate-500 font-medium flex items-center">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#11468F] mr-2"></div>
-                                    Mencari lokasi...
+                                <p className="text-xs text-amber-800 leading-relaxed">
+                                    Temuan kerusakan fisik yang dilaporkan akan otomatis diteruskan ke portal <strong>Supervisor</strong> untuk peninjauan teknis, persetujuan tindakan, dan penetapan jadwal penugasan teknisi perbaikan.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Section 5: Location Status */}
+                    <div className="bg-white p-4 sm:p-5 rounded-[8px] border border-slate-200 shadow-xs space-y-3.5">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center space-x-2.5">
+                                <div className="h-8 w-8 rounded-[6px] bg-blue-50 text-[#11468F] ring-1 ring-blue-200 flex items-center justify-center flex-shrink-0">
+                                    <MapPinIcon className="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center">
+                                        Validasi Geofence & Lokasi GPS
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500">
+                                        Integritas anti-fraud koordinat lokasi inspeksi
+                                    </p>
+                                </div>
+                            </div>
+                            {locationLoading ? (
+                                <span className="inline-flex items-center text-xs text-[#11468F] font-bold">
+                                    <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-[#11468F] border-t-transparent mr-1.5" />
+                                    Mencari GPS...
+                                </span>
+                            ) : (
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600">
+                                    Anti-Fraud GPS
                                 </span>
                             )}
                         </div>
 
                         {currentLocation ? (
-                            <div className="space-y-3">
-                                <div className="flex items-center text-sm text-slate-700 font-medium">
-                                    <CheckCircleIcon className="h-5 w-5 text-emerald-600 mr-2" />
-                                    <span>Koordinat: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</span>
+                            <div className="space-y-2.5">
+                                <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-slate-100 text-xs">
+                                    <span className="text-slate-500 font-medium">Koordinat Terdeteksi:</span>
+                                    <span className="font-mono font-bold text-slate-800 break-all">
+                                        {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
+                                    </span>
                                 </div>
 
                                 {apar?.latitude && apar?.longitude && (
-                                    <div className={`flex items-center p-3 rounded-[6px] ${locationValid ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}`}>
+                                    <div
+                                        data-testid="gps-status-badge"
+                                        className={`flex items-start p-3 rounded-[6px] border ${
+                                            locationValid
+                                                ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                                                : 'bg-rose-50 text-rose-900 border-rose-200'
+                                        }`}
+                                    >
                                         {locationValid ? (
-                                            <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0 text-emerald-600" />
+                                            <CheckCircleIcon className="h-5 w-5 mr-2.5 flex-shrink-0 text-emerald-600 mt-0.5" />
                                         ) : (
-                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2 flex-shrink-0 text-[#DA1212]" />
+                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2.5 flex-shrink-0 text-[#DA1212] mt-0.5" />
                                         )}
-                                        <div>
-                                            <p className="font-bold">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs sm:text-sm font-bold">
                                                 {locationValid ? 'Lokasi Valid' : 'Lokasi Tidak Valid'}
                                             </p>
-                                            <p className="text-sm mt-0.5">
-                                                Jarak ke APAR: <strong>{locationDistance}m</strong> (Maks: {locationValidRadius}m)
+                                            <p className="text-xs mt-0.5 leading-relaxed">
+                                                Jarak ke APAR: <strong className="font-mono">{locationDistance}m</strong> (Toleransi Maks: <span className="font-mono">{locationValidRadius}m</span>)
                                             </p>
                                         </div>
                                     </div>
                                 )}
                             </div>
                         ) : locationSkipped ? (
-                            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-4">
-                                <div className="flex items-start">
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-slate-600 mr-2 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-900">
-                                            Lokasi Dilewati
-                                        </p>
-                                        <p className="text-sm text-slate-600 mt-1">
-                                            Inspeksi akan disimpan tanpa data lokasi.
-                                        </p>
-                                    </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-3 text-xs flex items-start">
+                                <ExclamationTriangleIcon className="h-4 w-4 text-slate-500 mr-2 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-bold text-slate-800">Lokasi Dilewati</p>
+                                    <p className="text-slate-600 mt-0.5">Inspeksi akan disimpan tanpa verifikasi koordinat GPS.</p>
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-amber-50 border border-amber-200 rounded-[6px] p-4">
-                                <div className="flex items-start">
-                                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mr-2 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-bold text-amber-900">
-                                            Lokasi belum terdeteksi
-                                        </p>
-                                        <p className="text-sm text-amber-800 mt-1">
-                                            {locationError || 'Pastikan GPS aktif dan izin lokasi diberikan.'}
-                                        </p>
-                                    </div>
+                            <div className="bg-amber-50 border border-amber-200 rounded-[6px] p-3 text-xs flex items-start">
+                                <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <p className="font-bold text-amber-900">Lokasi GPS Belum Terdeteksi</p>
+                                    <p className="text-amber-800 mt-0.5">{locationError || 'Pastikan GPS perangkat aktif dan izin lokasi telah diberikan.'}</p>
                                 </div>
                             </div>
                         )}
 
-                        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-1">
                             <button
                                 type="button"
                                 onClick={getCurrentLocation}
                                 disabled={locationLoading}
-                                className="flex-1 flex items-center justify-center px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-bold rounded-[6px] text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] disabled:opacity-50"
+                                className="inline-flex items-center justify-center flex-1 px-4 py-2.5 min-h-[44px] border border-slate-300 rounded-[6px] text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
                             >
-                                <MapPinIcon className="h-4 w-4 mr-2" />
-                                {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi'}
+                                <MapPinIcon className="w-4 h-4 mr-1.5 text-[#11468F]" />
+                                {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi GPS'}
                             </button>
 
                             {!currentLocation && !locationLoading && (
                                 <button
                                     type="button"
                                     onClick={skipLocation}
-                                    className="flex-1 flex items-center justify-center px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-bold rounded-[6px] text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F]"
+                                    className="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] border border-slate-200 rounded-[6px] text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
                                 >
                                     Lanjutkan Tanpa Lokasi
                                 </button>
@@ -1549,44 +1467,139 @@ const InspectionFormEnhanced = () => {
                         </div>
                     </div>
 
-                    {/* Notes */}
-                    <div className="bg-white p-4 sm:p-6 rounded-[6px] border border-slate-200 shadow-sm">
-                        <label className="block text-lg sm:text-xl font-bold text-slate-900 mb-4">Catatan Tambahan</label>
+                    {/* Section 6: Notes */}
+                    <div className="bg-white p-4 sm:p-5 rounded-[8px] border border-slate-200 shadow-xs space-y-2.5">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                            Catatan Khusus Inspeksi
+                        </label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            rows={4}
-                            className="w-full border border-slate-300 rounded-[6px] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] resize-none bg-white shadow-sm text-sm sm:text-base"
-                            placeholder="Tambahkan catatan inspeksi jika diperlukan..."
+                            rows={3}
+                            className="w-full border border-slate-300 rounded-[6px] px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-transparent resize-none bg-white shadow-2xs text-xs sm:text-sm text-slate-900 placeholder:text-slate-400"
+                            placeholder="Tuliskan catatan teknis tambahan mengenai kondisi tabung atau lokasi penempatan (opsional)..."
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="w-full sm:flex-1 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold px-6 py-3.5 sm:py-4 rounded-[6px] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-base sm:text-lg shadow-sm"
-                        >
-                            {submitting ? (
-                                <div className="flex items-center justify-center space-x-2">
-                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    <span>Menyimpan...</span>
-                                </div>
-                            ) : (
-                                'Simpan Inspeksi'
-                            )}
-                        </button>
+                    {/* Bottom Action Buttons */}
+                    <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
                         <button
                             type="button"
-                            onClick={() => navigate({ to: '/' })}
-                            className="w-full sm:w-auto px-6 py-3.5 sm:py-4 border border-slate-300 rounded-[6px] hover:bg-slate-50 transition-all duration-200 font-bold text-base sm:text-lg shadow-sm text-slate-700"
+                            disabled={submitInspectionMutation.isPending || submitSuccess}
+                            onClick={() => navigate({ to: '/inspections' })}
+                            className="inline-flex items-center justify-center px-6 py-3 min-h-[48px] border border-slate-300 rounded-[6px] hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-bold text-xs uppercase tracking-wider shadow-xs text-slate-700 cursor-pointer"
                         >
                             Batal
+                        </button>
+                        <button
+                            type="submit"
+                            data-testid="inspection-submit-btn"
+                            disabled={submitInspectionMutation.isPending || submitSuccess}
+                            className="w-full sm:flex-1 inline-flex items-center justify-center bg-[#041562] hover:bg-[#11468F] text-white font-bold px-6 py-3 min-h-[48px] rounded-[6px] disabled:opacity-80 disabled:cursor-not-allowed transition-all text-xs sm:text-sm uppercase tracking-wider shadow-md cursor-pointer"
+                        >
+                            {submitInspectionMutation.isPending ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white" />
+                                    <span>Menyimpan & Mengirim Notifikasi...</span>
+                                </div>
+                            ) : submitSuccess ? (
+                                <div className="flex items-center justify-center space-x-2">
+                                    <CheckCircleIcon className="h-5 w-5 text-emerald-400" />
+                                    <span>Tersimpan! Mengalihkan...</span>
+                                </div>
+                            ) : (
+                                'Simpan & Selesaikan Inspeksi'
+                            )}
                         </button>
                     </div>
                 </form>
             </div>
+
+            {/* Fullscreen Loading & Notification Dispatch Modal */}
+            {(submitInspectionMutation.isPending || submitSuccess) && (
+                <div
+                    className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="submission-loading-title"
+                >
+                    <div className="bg-white rounded-xl shadow-2xl border border-slate-200/80 max-w-md w-full p-6 text-center relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        {/* Industrial Pertamina Accent Header */}
+                        <div className="h-1.5 bg-gradient-to-r from-[#041562] via-[#11468F] to-[#DA1212] absolute top-0 left-0 right-0" />
+
+                        {!submitSuccess ? (
+                            <>
+                                {/* Animated Radar/Pulse Ripple Center */}
+                                <div className="relative mx-auto my-3 w-20 h-20 flex items-center justify-center">
+                                    <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping" />
+                                    <div className="absolute inset-1 rounded-full bg-blue-100 animate-pulse" />
+                                    <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-[#041562] to-[#11468F] text-white flex items-center justify-center shadow-lg shadow-blue-900/30">
+                                        <div className="absolute inset-0 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                                        <EnvelopeIcon className="w-8 h-8 animate-pulse text-white" />
+                                    </div>
+                                </div>
+
+                                <h3 id="submission-loading-title" className="text-base font-bold text-slate-900 tracking-tight">
+                                    Menyimpan & Memproses Inspeksi
+                                </h3>
+                                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                                    Mohon tunggu sejenak, sistem sedang mencatat data inspeksi dan <span className="font-semibold text-[#11468F]">mengirimkan notifikasi email</span> ke tim operasional...
+                                </p>
+
+                                {/* Step Progression Indicators */}
+                                <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-3 text-left space-y-2.5 text-xs">
+                                    <div className="flex items-center space-x-2.5 text-slate-700">
+                                        <CheckCircleIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                                        <span className="font-medium">Data fisik & verifikasi foto diproses</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2.5 text-slate-700">
+                                        <CheckCircleIcon className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                                        <span className="font-medium">Validasi geofence & status APAR diperbarui</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2.5 text-[#11468F]">
+                                        <span className="h-4 w-4 flex items-center justify-center flex-shrink-0">
+                                            <span className="animate-spin h-3.5 w-3.5 border-2 border-blue-400 border-t-[#11468F] rounded-full" />
+                                        </span>
+                                        <span className="font-bold">
+                                            Mengirimkan notifikasi ke pihak terkait...
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Animated Progress Bar */}
+                                <div className="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-[#11468F] via-[#041562] to-[#11468F] w-full animate-pulse" />
+                                </div>
+
+                                <p className="text-[11px] text-slate-400 mt-3 font-medium">
+                                    ⚠️ Jangan menutup atau memuat ulang peramban hingga proses selesai.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                {/* Success Animation */}
+                                <div className="relative mx-auto my-3 w-20 h-20 flex items-center justify-center">
+                                    <div className="h-16 w-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 scale-100 transition-all">
+                                        <CheckCircleIcon className="w-10 h-10 text-white" />
+                                    </div>
+                                </div>
+
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Inspeksi Berhasil Disimpan!
+                                </h3>
+                                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                                    Seluruh data inspeksi telah tercatat dan notifikasi tugas telah terkirim. Mengalihkan ke dashboard...
+                                </p>
+
+                                <div className="mt-4 flex items-center justify-center space-x-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg py-2 px-3 font-medium">
+                                    <span className="animate-spin h-3 w-3 border-2 border-emerald-600 border-t-transparent rounded-full" />
+                                    <span>Sedang mengalihkan ke dashboard...</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

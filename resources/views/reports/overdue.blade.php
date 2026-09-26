@@ -266,7 +266,7 @@
                             <td>{{ $scheduledDate->format('H:i') }}</td>
                             <td>{{ $schedule->apar ? $schedule->apar->serial_number : '-' }}</td>
                             <td>{{ $schedule->apar ? $schedule->apar->location_name : '-' }}</td>
-                            <td>{{ $schedule->apar ? strtoupper($schedule->apar->type) : '-' }}</td>
+                            <td>{{ $schedule->apar ? strtoupper((string) ($schedule->apar->aparType?->name ?? $schedule->apar->type ?? '-')) : '-' }}</td>
                             <td>{{ $schedule->assignedUser ? $schedule->assignedUser->name : '-' }}</td>
                             <td>
                                 <span class="frequency-badge">

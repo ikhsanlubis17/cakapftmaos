@@ -1,0 +1,44 @@
+# ==============================================================================
+# Docker Compose Development Override for CAKAP FT MAOS
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ==============================================================================
+
+services:
+  app:
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      AUTO_MIGRATE: "true"
+      CACHE_ON_STARTUP: "false"
+    volumes:
+      # Live sync local code into container
+      - .:/var/www/html
+      - app_storage:/var/www/html/storage/app/public
+      # Prevent host node_modules and vendor from overriding container if differing architectures
+      - /var/www/html/node_modules
+    ports:
+      - "${APP_PORT:-8000}:80"
+      - "5173:5173" # Vite HMR port
+
+  db:
+    ports:
+      - "3306:3306" # Expose MySQL to host (DBeaver / TablePlus / GUI)
+
+  redis:
+    ports:
+      - "6379:6379" # Expose Redis to host GUI tools
+
+  queue:
+    volumes:
+      - .:/var/www/html
+      - app_storage:/var/www/html/storage/app/public
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+
+  scheduler:
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"

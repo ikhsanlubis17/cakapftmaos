@@ -212,6 +212,106 @@ class DamageCategorySeeder extends Seeder
                 'description' => 'Gauge pressure rusak atau tidak menunjukkan tekanan yang akurat',
                 'is_active' => true,
             ],
+
+            // DCP Cartridge Type
+            [
+                'name' => 'Cartridge CO₂ bocor atau berat berkurang',
+                'type' => 'dcp_cartridge',
+                'description' => 'Gas cartridge pendorong CO₂ mengalami kebocoran atau berat di bawah toleransi',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Pin pengaman / seal cartridge rusak atau hilang',
+                'type' => 'dcp_cartridge',
+                'description' => 'Pin pengaman atau segel pada tuas/cartridge rusak atau tidak terpasang',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Mekanisme penusuk cartridge (plunger) macet / berkarat',
+                'type' => 'dcp_cartridge',
+                'description' => 'Mekanisme penusuk seal cartridge macet, aus, atau berkarat',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Bubuk dry chemical menggumpal (cakey)',
+                'type' => 'dcp_cartridge',
+                'description' => 'Media serbuk kimia kering di dalam tabung mengalami pemadatan / gumpalan',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Selang discharge retak, pecah, atau getas',
+                'type' => 'dcp_cartridge',
+                'description' => 'Selang penyemprot mengalami keretakan, kaku, atau getas',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Nozzle corong tersumbat',
+                'type' => 'dcp_cartridge',
+                'description' => 'Ujung nozzle tersumbat serbuk atau kotoran luar',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Body tabung berkarat, korosi, atau penyok',
+                'type' => 'dcp_cartridge',
+                'description' => 'Tabung utama mengalami korosi, karat parah, atau deformasi fisik',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Label identitas / SOP penggunaan rusak atau hilang',
+                'type' => 'dcp_cartridge',
+                'description' => 'Stiker identitas atau petunjuk operasional tabung tidak terbaca',
+                'is_active' => true,
+            ],
+
+            // DCP Pressure (Stored Pressure) Type
+            [
+                'name' => 'Tekanan turun di bawah standar (jarum merah)',
+                'type' => 'dcp_pressure',
+                'description' => 'Jarum pressure gauge berada di bawah zona hijau (kurang tekanan)',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Pressure gauge rusak, retak, atau tidak akurat',
+                'type' => 'dcp_pressure',
+                'description' => 'Kaca manometer retak, kemasukan air, atau jarum indikator macet',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Valve discharge bocor atau macet',
+                'type' => 'dcp_pressure',
+                'description' => 'Katup tuas penyemprot mengalami kebocoran gas pendorong N₂',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Bubuk dry chemical menggumpal (cakey)',
+                'type' => 'dcp_pressure',
+                'description' => 'Media serbuk kimia kering di dalam tabung mengalami pemadatan / gumpalan',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Selang discharge retak, pecah, atau kaku',
+                'type' => 'dcp_pressure',
+                'description' => 'Selang penyemprot mengalami keretakan atau menjadi kaku',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Nozzle tersumbat bubuk',
+                'type' => 'dcp_pressure',
+                'description' => 'Nozzle tersumbat oleh bubuk kimia kering',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Body tabung berkarat atau penyok',
+                'type' => 'dcp_pressure',
+                'description' => 'Body tabung mengalami korosi atau terdapat penyok fisik',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Pin pengaman atau segel putus / hilang',
+                'type' => 'dcp_pressure',
+                'description' => 'Pin pengaman tidak terkunci atau segel pengaman telah terputus',
+                'is_active' => true,
+            ],
         ];
 
         foreach ($categories as $category) {

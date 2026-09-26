@@ -19,11 +19,7 @@ const refreshClient = createApiClient();
 
 export function setupInterceptors(
     apiClient: AxiosInstance,
-    setup: {
-        getToken: () => string | null;
-        onTokenRefresh: (newToken: string) => Promise<void> | void;
-        onAuthError: () => void;
-    }
+    setup: InterceptorSetup
 ) {
     let isRefreshing = false;
     let refreshPromise: Promise<string | null> | null = null;
@@ -44,6 +40,18 @@ export function setupInterceptors(
             // Only handle 401 errors once per request
             if (error.response?.status === 401 && !originalRequest._retry) {
                 originalRequest._retry = true;
+
+                // Avoid refresh loop for auth-specific endpoints
+                if (
+                    originalRequest?.url?.includes('/api/login') ||
+                    originalRequest?.url?.includes('/api/logout') ||
+                    originalRequest?.url?.includes('/api/refresh')
+                ) {
+                    if (originalRequest?.url?.includes('/api/refresh')) {
+                        setup.onAuthError();
+                    }
+                    return Promise.reject(error);
+                }
 
                 // ✅ If refresh already in progress — wait for it
                 if (isRefreshing && refreshPromise) {

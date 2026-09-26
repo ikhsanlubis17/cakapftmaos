@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Fragment } from "react";
+import React, { useState, Fragment, useMemo } from "react";
 import { Apar } from "@/types/api";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,57 +7,40 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import {
     FireIcon,
-    MagnifyingGlassIcon,
     PlusIcon,
-    MapPinIcon,
-    TruckIcon,
-    QrCodeIcon,
-    PencilIcon,
     TrashIcon,
-    EyeIcon,
-    CheckIcon,
     XMarkIcon,
-    ClipboardDocumentCheckIcon,
     DocumentArrowDownIcon,
+    QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import AparFilterBar from "../components/AparFilterBar";
+import AparTable from "../components/AparTable";
+import AparQrDownloadModal from "../components/AparQrDownloadModal";
 
-// Local types for confirm dialog (hook is implemented in plain JS)
-interface ConfirmConfig {
-    onConfirm?: () => void;
-    onCancel?: () => void;
-    title?: string;
-    message?: string;
-    type?: "warning" | "info" | "danger" | string;
-    confirmText?: string;
-    cancelText?: string;
-    confirmButtonColor?: string;
-}
-
-type ConfirmOptions = Omit<ConfirmConfig, "onConfirm" | "onCancel">;
-
-const AparList = () => {
+export const AparList: React.FC = () => {
     const { user, apiClient } = useAuth();
     const { showSuccess, showError } = useToast();
-    const { isOpen, config, confirm, close } = useConfirmDialog() as {
-        isOpen: boolean;
-        config: ConfirmConfig;
-        confirm: (options: ConfirmOptions) => Promise<boolean>;
-        close: () => void;
-    };
+    const { isOpen, config, confirm, close } = useConfirmDialog();
+    const queryClient = useQueryClient();
+
+    // Filters state
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [locationFilter, setLocationFilter] = useState<string>("all");
+
+    // Bulk selection & deletion
     const [selectedApars, setSelectedApars] = useState<number[]>([]);
     const [bulkDeleteMode, setBulkDeleteMode] = useState<boolean>(false);
     const [deleting, setDeleting] = useState<boolean>(false);
-    const [showQrDownloadModal, setShowQrDownloadModal] =
-        useState<boolean>(false);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
+    // QR Download modal
+    const [showQrDownloadModal, setShowQrDownloadModal] = useState<boolean>(false);
     const [downloadingQr, setDownloadingQr] = useState<boolean>(false);
     const [qrDownloadApars, setQrDownloadApars] = useState<Apar[]>([]);
 
-    const queryClient = useQueryClient();
-
+    // Query: fetch APAR list
     const {
         data: apars = [],
         isLoading,
@@ -66,132 +49,103 @@ const AparList = () => {
         queryKey: ["apars"],
         queryFn: async () => {
             const response = await apiClient.get("/api/apar");
-            // API sometimes returns { data: [...] } or directly the array
             return response.data.data ?? response.data;
         },
-        staleTime: 1 * 60 * 1000,
+        staleTime: 60 * 1000,
     });
 
-    const filteredApars = apars.filter((apar) => {
-        const matchesSearch =
-            apar.serial_number
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            apar.location_name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus =
-            statusFilter === "all" || apar.status === statusFilter;
-        const matchesLocation =
-            locationFilter === "all" || apar.location_type === locationFilter;
+    // Client-side filtering
+    const filteredApars = useMemo(() => {
+        return apars.filter((apar) => {
+            const matchesSearch =
+                !searchTerm ||
+                apar.serial_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                apar.location_name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus =
+                statusFilter === "all" || apar.status === statusFilter;
+            const matchesLocation =
+                locationFilter === "all" || apar.location_type === locationFilter;
 
-        return matchesSearch && matchesStatus && matchesLocation;
-    });
+            return matchesSearch && matchesStatus && matchesLocation;
+        });
+    }, [apars, searchTerm, statusFilter, locationFilter]);
 
-    const getStatusColor = (status?: string): string => {
-        switch (status) {
-            case "active":
-                return "bg-green-100 text-green-800";
-            case "needs_repair":
-                return "bg-yellow-100 text-yellow-800";
-            case "inactive":
-                return "bg-red-100 text-red-800";
-            case "under_repair":
-                return "bg-blue-100 text-blue-800";
-            default:
-                return "bg-gray-100 text-gray-800";
+    const hasActiveFilters = Boolean(
+        searchTerm || statusFilter !== "all" || locationFilter !== "all"
+    );
+
+    const handleResetFilters = () => {
+        setSearchTerm("");
+        setStatusFilter("all");
+        setLocationFilter("all");
+    };
+
+    // Bulk delete selection toggles
+    const handleToggleSelectApar = (id: number) => {
+        setSelectedApars((prev) =>
+            prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleToggleSelectAll = () => {
+        if (selectedApars.length === filteredApars.length) {
+            setSelectedApars([]);
+        } else {
+            setSelectedApars(filteredApars.map((a) => a.id));
         }
     };
 
-    const getStatusText = (status?: string): string => {
-        switch (status) {
-            case "active":
-                return "Aktif";
-            case "needs_repair":
-                return "Perlu Perbaikan";
-            case "inactive":
-                return "Nonaktif";
-            case "under_repair":
-                return "Sedang Perbaikan";
-            default:
-                return status ?? "Unknown";
-        }
-    };
-
-    const getLocationTypeText = (type: Apar["location_type"]): string => {
-        return type === "statis" ? "Statis" : "Mobil";
-    };
-
-    const getLocationTypeIcon = (
-        type: Apar["location_type"]
-    ): React.ComponentType<any> => {
-        return type === "statis" ? MapPinIcon : TruckIcon;
-    };
-
-    const getLocationTypeColor = (type: Apar["location_type"]): string => {
-        return type === "statis" ? "text-blue-600" : "text-purple-600";
-    };
-
-    const handleQrDownload = () => {
-        setQrDownloadApars(filteredApars);
-        setShowQrDownloadModal(true);
-    };
-
-    const downloadQrPdf = async (selectedApars: Apar[]) => {
-        setDownloadingQr(true);
-        try {
-            // Create PDF content
-            const pdfContent = {
-                title: "QR Code APAR - CAKAP FT MAOS",
-                apars: selectedApars,
-                generatedAt: new Date().toLocaleString("id-ID"),
-                totalApars: selectedApars.length,
-            };
-
-            // For now, we'll use a simple approach
-            // In a real implementation, you might want to use a library like jsPDF or make an API call
-            const response = await apiClient.post(
-                "/api/apar/download-qr-pdf",
-                pdfContent,
-                {
-                    responseType: "blob",
-                }
-            );
-
-            // Create download link
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute(
-                "download",
-                `qr-code-apar-${new Date().toISOString().split("T")[0]}.pdf`
-            );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-
-            showSuccess("QR Code APAR berhasil diunduh!");
-            setShowQrDownloadModal(false);
-        } catch (error) {
-            console.error("Error downloading QR PDF:", error);
-            showError("Gagal mengunduh QR Code APAR");
-        } finally {
-            setDownloadingQr(false);
-        }
-    };
-
-    const deleteMutation = useMutation<void, unknown, number>({
+    // Mutations
+    const deleteMutation = useMutation<void, any, number>({
         mutationFn: async (aparId: number) => {
             await apiClient.delete(`/api/apar/${aparId}`);
         },
-        onSuccess: () => {
+        onMutate: async (aparId: number) => {
+            // Cancel outgoing refetches agar tidak menimpa optimistic update
+            await queryClient.cancelQueries({ queryKey: ["apars"] });
+            const previousApars = queryClient.getQueryData<Apar[]>(["apars"]);
+            // Optimistic update: langsung hapus APAR dari cache tampilan
+            queryClient.setQueryData<Apar[]>(["apars"], (old) =>
+                old ? old.filter((a) => a.id !== aparId) : []
+            );
+            return { previousApars };
+        },
+        onError: (err, aparId, context: any) => {
+            if (context?.previousApars) {
+                queryClient.setQueryData(["apars"], context.previousApars);
+            }
+        },
+        onSettled: () => {
             queryClient.invalidateQueries({ queryKey: ["apars"] });
         },
     });
 
-    const handleDelete = async (
-        aparId: number,
-        serialNumber: string
-    ): Promise<void> => {
+    const bulkDeleteMutation = useMutation<any, any, number[]>({
+        mutationFn: async (ids: number[]) => {
+            const response = await apiClient.post("/api/apar/bulk-delete", { ids });
+            return response.data;
+        },
+        onMutate: async (ids: number[]) => {
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({ queryKey: ["apars"] });
+            const previousApars = queryClient.getQueryData<Apar[]>(["apars"]);
+            // Optimistic update: langsung kosongkan tabung terpilih dari cache tampilan
+            queryClient.setQueryData<Apar[]>(["apars"], (old) =>
+                old ? old.filter((a) => !ids.includes(a.id)) : []
+            );
+            return { previousApars };
+        },
+        onError: (err, ids, context: any) => {
+            if (context?.previousApars) {
+                queryClient.setQueryData(["apars"], context.previousApars);
+            }
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ["apars"] });
+        },
+    });
+
+    const handleDelete = async (aparId: number, serialNumber: string) => {
         const confirmed = await confirm({
             title: "Konfirmasi Hapus APAR",
             message: `Apakah Anda yakin ingin menghapus APAR ${serialNumber}? Tindakan ini tidak dapat dibatalkan.`,
@@ -202,35 +156,31 @@ const AparList = () => {
         });
 
         if (confirmed) {
+            setDeletingId(aparId);
             try {
                 await deleteMutation.mutateAsync(aparId);
-                showSuccess("APAR berhasil dihapus");
+                showSuccess(`APAR ${serialNumber} berhasil dihapus`);
             } catch (error: any) {
                 console.error("Gagal menghapus APAR:", error);
                 showError(
-                    error?.response?.data?.message ||
-                        "Gagal menghapus APAR. Silakan coba lagi."
+                    error?.response?.data?.message || "Gagal menghapus APAR. Silakan coba lagi."
                 );
+            } finally {
+                setDeletingId(null);
             }
         }
     };
 
-    const handleBulkDelete = async (): Promise<void> => {
+    const handleBulkDelete = async () => {
         if (selectedApars.length === 0) {
             showError("Pilih APAR yang akan dihapus terlebih dahulu");
             return;
         }
 
-        const aparList = selectedApars
-            .map((id) => {
-                const apar = apars.find((a) => a.id === id);
-                return apar?.serial_number || "Unknown";
-            })
-            .join(", ");
-
+        const countToDelete = selectedApars.length;
         const confirmed = await confirm({
             title: "Konfirmasi Hapus Massal",
-            message: `Apakah Anda yakin ingin menghapus ${selectedApars.length} APAR sekaligus?\n\nAPAR yang akan dihapus:\n${aparList}`,
+            message: `Apakah Anda yakin ingin menghapus ${countToDelete} APAR sekaligus? Tindakan ini tidak dapat dibatalkan.`,
             type: "warning",
             confirmText: "Ya, Hapus Semua",
             cancelText: "Batal",
@@ -240,49 +190,14 @@ const AparList = () => {
         if (confirmed) {
             setDeleting(true);
             try {
-                // Use deleteMutation.mutateAsync for each and collect results
-                const results = await Promise.all(
-                    selectedApars.map(async (aparId) => {
-                        try {
-                            await deleteMutation.mutateAsync(aparId);
-                            return { success: true, id: aparId };
-                        } catch (error: any) {
-                            console.error(
-                                `Error deleting APAR ${aparId}:`,
-                                error
-                            );
-                            return {
-                                success: false,
-                                id: aparId,
-                                error:
-                                    error.response?.data?.message ||
-                                    "Unknown error",
-                            };
-                        }
-                    })
-                );
-
-                const successful = results.filter((r) => r.success);
-                const failed = results.filter((r) => !r.success);
-
-                if (successful.length > 0) {
-                    showSuccess(
-                        `${successful.length} APAR berhasil dihapus${
-                            failed.length > 0 ? `, ${failed.length} gagal` : ""
-                        }`
-                    );
-                } else {
-                    showError("Gagal menghapus semua APAR yang dipilih");
-                }
-
+                await bulkDeleteMutation.mutateAsync(selectedApars);
+                showSuccess(`${countToDelete} APAR berhasil dihapus.`);
                 setSelectedApars([]);
                 setBulkDeleteMode(false);
-                // invalidate once (already invalidated by individual successes but ensure)
-                queryClient.invalidateQueries({ queryKey: ["apars"] });
-            } catch (error) {
-                console.error("Gagal dalam bulk delete:", error);
+            } catch (error: any) {
+                console.error("Gagal menghapus APAR massal:", error);
                 showError(
-                    "Gagal menghapus APAR yang dipilih. Silakan coba lagi."
+                    error?.response?.data?.message || "Gagal menghapus APAR terpilih."
                 );
             } finally {
                 setDeleting(false);
@@ -290,708 +205,295 @@ const AparList = () => {
         }
     };
 
-    const toggleBulkDeleteMode = () => {
-        setBulkDeleteMode(!bulkDeleteMode);
-        setSelectedApars([]);
+    // QR Download action
+    const handleOpenQrModal = () => {
+        setQrDownloadApars(filteredApars);
+        setShowQrDownloadModal(true);
     };
 
-    const handleSelectApar = (aparId: number) => {
-        setSelectedApars((prev) =>
-            prev.includes(aparId)
-                ? prev.filter((id) => id !== aparId)
-                : [...prev, aparId]
-        );
-    };
+    const handleDownloadQrPdf = async (
+        aparsToDownload: Apar[],
+        printFormat: "both" | "qr_only" | "serial_only" = "both"
+    ) => {
+        setDownloadingQr(true);
+        try {
+            const pdfPayload = {
+                title: "Label & QR Code APAR - CAKAP FT MAOS",
+                apars: aparsToDownload,
+                print_format: printFormat,
+                generatedAt: new Date().toLocaleString("id-ID"),
+                totalApars: aparsToDownload.length,
+            };
 
-    const handleSelectAll = () => {
-        if (selectedApars.length === filteredApars.length) {
-            setSelectedApars([]);
-        } else {
-            setSelectedApars(filteredApars.map((apar) => apar.id));
+            const response = await apiClient.post(
+                "/api/apar/download-qr-pdf",
+                pdfPayload,
+                { responseType: "blob" }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            const filenamePrefix =
+                printFormat === "qr_only"
+                    ? "qr-code-apar"
+                    : printFormat === "serial_only"
+                    ? "nomor-seri-apar"
+                    : "label-apar";
+            link.setAttribute(
+                "download",
+                `${filenamePrefix}-${new Date().toISOString().split("T")[0]}.pdf`
+            );
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            showSuccess("Dokumen label APAR berhasil diunduh!");
+            setShowQrDownloadModal(false);
+        } catch (error) {
+            console.error("Error downloading QR PDF:", error);
+            showError("Gagal mengunduh dokumen label APAR.");
+        } finally {
+            setDownloadingQr(false);
         }
     };
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
-            </div>
-        );
-    }
 
     return (
         <Fragment>
             <div className="space-y-6">
-                {/* Header */}
-                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-12 h-12 bg-[#041562] text-white rounded-[6px] shadow-sm">
-                                <FireIcon className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900">
-                                    Manajemen APAR
-                                </h1>
-                                <p className="text-sm text-gray-600 mt-1">
-                                    Kelola dan pantau semua APAR dalam sistem
-                                </p>
-                            </div>
+                {/* Header Section */}
+                <div className="bg-white border border-slate-200 rounded-[8px] p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold shadow-sm">
+                            <FireIcon className="w-6 h-6" />
                         </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            {/* Download QR Button */}
-                            {(user?.role === "admin" ||
-                                user?.role === "supervisor") && (
-                                <button
-                                    onClick={handleQrDownload}
-                                    className="inline-flex items-center px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-[6px] text-[#11468F] bg-white hover:bg-slate-50 transition-all duration-200 shadow-sm"
-                                >
-                                    <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
-                                    Unduh QR Code APAR
-                                </button>
-                            )}
-
-                            {/* Bulk Delete Toggle */}
-                            {user?.role === "admin" && (
-                                <button
-                                    onClick={() =>
-                                        setBulkDeleteMode(!bulkDeleteMode)
-                                    }
-                                    className={`inline-flex items-center px-4 py-2.5 border text-sm font-medium rounded-[6px] transition-all duration-200 ${
-                                        bulkDeleteMode
-                                            ? "border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
-                                            : "border-slate-300 text-slate-700 bg-white hover:bg-slate-50 shadow-sm"
-                                    }`}
-                                >
-                                    {bulkDeleteMode ? (
-                                        <>
-                                            <XMarkIcon className="h-4 w-4 mr-2" />
-                                            Keluar Mode Hapus Massal
-                                        </>
-                                    ) : (
-                                        <>
-                                            <TrashIcon className="h-4 w-4 mr-2" />
-                                            Hapus Massal
-                                        </>
-                                    )}
-                                </button>
-                            )}
-
-                            {/* QR Scan Button - Teknisi only */}
-                            {user?.role === "teknisi" && (
-                                <Link
-                                    to="/scan"
-                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
-                                >
-                                    <QrCodeIcon className="h-4 w-4 mr-2" />
-                                    Scan QR & Inspeksi
-                                </Link>
-                            )}
-
-                            {/* Add New APAR Button */}
-                            {(user?.role === "admin" ||
-                                user?.role === "supervisor") && (
-                                <Link
-                                    to="/apar/create"
-                                    className="inline-flex items-center px-4 py-2.5 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-all duration-200 shadow-sm"
-                                >
-                                    <PlusIcon className="h-4 w-4 mr-2" />
-                                    Tambah APAR
-                                </Link>
-                            )}
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                                Manajemen APAR
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Kelola seluruh data master tabung pemadam api, titik koordinat, dan status kesiapan
+                            </p>
                         </div>
                     </div>
-                </div>
 
-                {/* Filters */}
-                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-end gap-6">
-                        {/* Search */}
-                        <div className="flex-1">
-                            <label
-                                htmlFor="search"
-                                className="block text-sm font-medium text-gray-700 mb-2"
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Download QR Button */}
+                        {(user?.role === "admin" || user?.role === "supervisor") && (
+                            <button
+                                type="button"
+                                onClick={handleOpenQrModal}
+                                className="inline-flex items-center px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-[#11468F] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 rounded-[6px] shadow-xs transition-colors"
                             >
-                                Cari APAR
-                            </label>
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <input
-                                    type="text"
-                                    name="search"
-                                    id="search"
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
-                                    placeholder="Nomor seri atau lokasi..."
-                                />
-                            </div>
-                        </div>
+                                <DocumentArrowDownIcon className="h-4 w-4 mr-2" />
+                                Unduh QR Code APAR
+                            </button>
+                        )}
 
-                        {/* Status Filter */}
-                        <div className="w-full lg:w-48">
-                            <label
-                                htmlFor="status"
-                                className="block text-sm font-medium text-gray-700 mb-2"
+                        {/* Bulk Delete Mode Toggle */}
+                        {user?.role === "admin" && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setBulkDeleteMode(!bulkDeleteMode);
+                                    if (bulkDeleteMode) setSelectedApars([]);
+                                }}
+                                className={`inline-flex items-center px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider border rounded-[6px] transition-colors shadow-xs ${
+                                    bulkDeleteMode
+                                        ? "bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100"
+                                        : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
+                                }`}
                             >
-                                Status
-                            </label>
-                            <select
-                                id="status"
-                                name="status"
-                                value={statusFilter}
-                                onChange={(e) =>
-                                    setStatusFilter(e.target.value)
-                                }
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
-                            >
-                                <option value="all">Semua Status</option>
-                                <option value="active">Aktif</option>
-                                <option value="needs_repair">
-                                    Perlu Perbaikan
-                                </option>
-                                <option value="inactive">Nonaktif</option>
-                                <option value="under_repair">
-                                    Sedang Perbaikan
-                                </option>
-                            </select>
-                        </div>
+                                {bulkDeleteMode ? (
+                                    <>
+                                        <XMarkIcon className="h-4 w-4 mr-2" />
+                                        Keluar Hapus Massal
+                                    </>
+                                ) : (
+                                    <>
+                                        <TrashIcon className="h-4 w-4 mr-2" />
+                                        Hapus Massal
+                                    </>
+                                )}
+                            </button>
+                        )}
 
-                        {/* Location Type Filter */}
-                        <div className="w-full lg:w-48">
-                            <label
-                                htmlFor="location"
-                                className="block text-sm font-medium text-gray-700 mb-2"
+                        {/* Scan QR for Teknisi */}
+                        {user?.role === "teknisi" && (
+                            <Link
+                                to="/scan"
+                                className="inline-flex items-center px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] rounded-[6px] shadow-sm transition-colors"
                             >
-                                Tipe Lokasi
-                            </label>
-                            <select
-                                id="location"
-                                name="location"
-                                value={locationFilter}
-                                onChange={(e) =>
-                                    setLocationFilter(e.target.value)
-                                }
-                                className="block w-full px-3 py-2.5 border border-gray-300 rounded-[6px] focus:outline-none focus:ring-2 focus:ring-[#11468F] focus:border-[#11468F] transition-colors duration-200 text-sm"
-                            >
-                                <option value="all">Semua Lokasi</option>
-                                <option value="statis">Statis</option>
-                                <option value="mobile">Mobil</option>
-                            </select>
-                        </div>
+                                <QrCodeIcon className="h-4 w-4 mr-2" />
+                                Scan QR & Inspeksi
+                            </Link>
+                        )}
 
-                        {/* Clear Filters Button */}
-                        {(searchTerm ||
-                            statusFilter !== "all" ||
-                            locationFilter !== "all") && (
-                            <div className="w-full lg:w-auto">
-                                <button
-                                    onClick={() => {
-                                        setSearchTerm("");
-                                        setStatusFilter("all");
-                                        setLocationFilter("all");
-                                    }}
-                                    className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 border border-slate-300 rounded-[6px] hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-colors duration-200"
-                                >
-                                    Bersihkan Filter
-                                </button>
-                            </div>
+                        {/* Add New APAR Button */}
+                        {(user?.role === "admin" || user?.role === "supervisor") && (
+                            <Link
+                                to="/apar/create"
+                                data-testid="add-apar-btn"
+                                className="inline-flex items-center px-5 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] rounded-[6px] shadow-sm transition-colors"
+                            >
+                                <PlusIcon className="h-4 w-4 mr-1.5" />
+                                Tambah APAR
+                            </Link>
                         )}
                     </div>
                 </div>
 
-                {/* APAR List */}
-                <div className="bg-white shadow-sm border border-slate-200 rounded-[6px] overflow-hidden">
-                    {/* List Header */}
-                    <div className="px-6 py-4 border-b border-gray-200 bg-slate-50">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                    <FireIcon className="h-5 w-5 text-[#041562]" />
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        Daftar APAR ({filteredApars.length})
-                                    </h3>
-                                </div>
-                                {bulkDeleteMode && (
-                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                                        Mode Hapus Massal
-                                    </span>
+                {/* Bulk Delete Active Bar */}
+                {bulkDeleteMode && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-[8px] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+                        <div className="text-xs font-bold text-rose-800">
+                            Mode Hapus Massal Aktif: {selectedApars.length} tabung dipilih dari {filteredApars.length} total.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={handleBulkDelete}
+                                disabled={selectedApars.length === 0 || deleting}
+                                className="inline-flex items-center px-4 py-2 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-[6px] transition-colors shadow-xs"
+                            >
+                                {deleting ? (
+                                    <>
+                                        <svg
+                                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            />
+                                        </svg>
+                                        Menghapus...
+                                    </>
+                                ) : (
+                                    `Hapus (${selectedApars.length}) APAR`
                                 )}
-                            </div>
-
-                            {bulkDeleteMode && (
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm text-gray-600">
-                                        {selectedApars.length} dari{" "}
-                                        {filteredApars.length} dipilih
-                                    </span>
-                                    <button
-                                        onClick={handleBulkDelete}
-                                        disabled={
-                                            selectedApars.length === 0 ||
-                                            deleting
-                                        }
-                                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                                    >
-                                        {deleting
-                                            ? "Menghapus..."
-                                            : `Hapus ${selectedApars.length} APAR`}
-                                    </button>
-                                </div>
-                            )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setBulkDeleteMode(false);
+                                    setSelectedApars([]);
+                                }}
+                                disabled={deleting}
+                                className="px-3 py-2 min-h-[44px] text-xs font-semibold text-rose-700 hover:bg-rose-100 rounded-[6px] transition-colors disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
                         </div>
                     </div>
+                )}
 
-                    {/* Bulk Delete Header */}
-                    {bulkDeleteMode && (
-                        <div className="px-6 py-3 border-b border-gray-200 bg-red-50">
-                            <div className="flex items-center justify-between">
-                                <label className="flex items-center gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={
-                                            selectedApars.length ===
-                                                filteredApars.length &&
-                                            filteredApars.length > 0
-                                        }
-                                        onChange={handleSelectAll}
-                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                    />
-                                    <span className="text-sm font-medium text-gray-900">
-                                        Pilih Semua ({filteredApars.length})
-                                    </span>
-                                </label>
-                                <button
-                                    onClick={() => setBulkDeleteMode(false)}
-                                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                                >
-                                    Keluar dari Mode Hapus Massal
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                {/* Filter Section */}
+                <AparFilterBar
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    statusFilter={statusFilter}
+                    setStatusFilter={setStatusFilter}
+                    locationFilter={locationFilter}
+                    setLocationFilter={setLocationFilter}
+                    onResetFilters={handleResetFilters}
+                    hasActiveFilters={hasActiveFilters}
+                    totalResults={filteredApars.length}
+                />
 
-                    {/* APAR Table */}
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    {bulkDeleteMode && (
-                                        <th
-                                            scope="col"
-                                            className="px-6 py-3 text-left"
-                                        >
-                                            <span className="sr-only">
-                                                Pilih
-                                            </span>
-                                        </th>
-                                    )}
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        APAR
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Lokasi
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Kapasitas
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Kadaluarsa
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Status
-                                    </th>
-                                    <th
-                                        scope="col"
-                                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                                    >
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {filteredApars.map((apar) => {
-                                    const LocationIcon = getLocationTypeIcon(
-                                        apar.location_type
-                                    );
-                                    const isExpired =
-                                        apar.expired_at &&
-                                        new Date(apar.expired_at) < new Date();
-
-                                    return (
-                                        <tr
-                                            key={apar.id}
-                                            className="hover:bg-gray-50 transition-colors duration-150"
-                                        >
-                                            {bulkDeleteMode && (
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedApars.includes(
-                                                            apar.id
-                                                        )}
-                                                        onChange={() =>
-                                                            handleSelectApar(
-                                                                apar.id
-                                                            )
-                                                        }
-                                                        className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                                                    />
-                                                </td>
-                                            )}
-
-                                            {/* APAR Info */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="flex-shrink-0 h-10 w-10">
-                                                        <div className="h-10 w-10 rounded-lg bg-red-100 flex items-center justify-center">
-                                                            <FireIcon className="h-5 w-5 text-red-600" />
-                                                        </div>
-                                                    </div>
-                                                    <div className="ml-4">
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {apar.serial_number}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <LocationIcon
-                                                                className={`h-4 w-4 ${getLocationTypeColor(
-                                                                    apar.location_type
-                                                                )}`}
-                                                            />
-                                                            <span
-                                                                className={`text-xs font-medium ${getLocationTypeColor(
-                                                                    apar.location_type
-                                                                )}`}
-                                                            >
-                                                                {getLocationTypeText(
-                                                                    apar.location_type
-                                                                )}
-                                                            </span>
-                                                            {apar.apar_type
-                                                                ?.name && (
-                                                                <>
-                                                                    <span className="mx-1 text-slate-300">
-                                                                        |
-                                                                    </span>
-                                                                    <span className="text-xs font-semibold text-slate-700 tracking-wide">
-                                                                        {apar.apar_type.name.toUpperCase()}
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Location */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900">
-                                                    {apar.location_name}
-                                                </div>
-                                                {apar.tank_truck && (
-                                                    <div className="mt-1">
-                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                                            {
-                                                                apar.tank_truck
-                                                                    .plate_number
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </td>
-
-                                            {/* Capacity */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-gray-900 font-medium">
-                                                    {apar.capacity} kg
-                                                </div>
-                                            </td>
-
-                                            {/* Expiry Date */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div
-                                                    className={`text-sm font-medium ${
-                                                        isExpired
-                                                            ? "text-red-600"
-                                                            : "text-gray-900"
-                                                    }`}
-                                                >
-                                                    {apar.expired_at
-                                                        ? new Date(
-                                                              apar.expired_at
-                                                          ).toLocaleDateString(
-                                                              "id-ID"
-                                                          )
-                                                        : "Tidak ada"}
-                                                </div>
-                                                {isExpired && (
-                                                    <div className="text-xs text-red-500 mt-1">
-                                                        Sudah kadaluarsa
-                                                    </div>
-                                                )}
-                                            </td>
-
-                                            {/* Status */}
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                                                        apar.status
-                                                    )}`}
-                                                >
-                                                    {getStatusText(apar.status)}
-                                                </span>
-                                            </td>
-
-                                            {/* Actions */}
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                {!bulkDeleteMode && (
-                                                    <div className="flex items-center gap-2">
-                                                        {/* Inspection Button - Teknisi only */}
-                                                        {user?.role ===
-                                                            "teknisi" && (
-                                                            <Link
-                                                                to={`/inspection/${
-                                                                    apar.qr_code ||
-                                                                    apar.id
-                                                                }`}
-                                                                className="inline-flex items-center p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
-                                                                title="Mulai Inspeksi"
-                                                            >
-                                                                <ClipboardDocumentCheckIcon className="h-4 w-4" />
-                                                            </Link>
-                                                        )}
-
-                                                        {/* View Button */}
-                                                        <Link
-                                                            to={`/apar/$id`}
-                                                            params={{
-                                                                id: apar.id,
-                                                            }}
-                                                            className="inline-flex items-center p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                                                            title="Lihat Detail"
-                                                        >
-                                                            <EyeIcon className="h-4 w-4" />
-                                                        </Link>
-
-                                                        {/* Edit Button - Admin & Supervisor only */}
-                                                        {(user?.role ===
-                                                            "admin" ||
-                                                            user?.role ===
-                                                                "supervisor") && (
-                                                            <Link
-                                                                to={`/apar/${apar.id}/edit`}
-                                                                className="inline-flex items-center p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200"
-                                                                title="Edit APAR"
-                                                            >
-                                                                <PencilIcon className="h-4 w-4" />
-                                                            </Link>
-                                                        )}
-
-                                                        {/* Delete Button - Admin only */}
-                                                        {user?.role ===
-                                                            "admin" && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    handleDelete(
-                                                                        apar.id,
-                                                                        apar.serial_number
-                                                                    )
-                                                                }
-                                                                className="inline-flex items-center p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                                                title="Hapus APAR"
-                                                            >
-                                                                <TrashIcon className="h-4 w-4" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                {/* Table Section */}
+                {isLoading ? (
+                    <div className="bg-white border border-slate-200 rounded-[8px] p-12 text-center shadow-sm">
+                        <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-[#11468F] mx-auto mb-3" />
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Memuat data APAR FT Maos...
+                        </p>
                     </div>
-
-                    {/* Empty State */}
-                    {filteredApars.length === 0 && !isLoading && (
-                        <div className="text-center py-16 px-6">
-                            <div className="mx-auto h-16 w-16 text-gray-300 mb-4">
-                                <FireIcon className="h-16 w-16" />
-                            </div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                Tidak ada APAR ditemukan
-                            </h3>
-                            <p className="text-sm text-gray-500 max-w-sm mx-auto">
-                                {searchTerm ||
-                                statusFilter !== "all" ||
-                                locationFilter !== "all"
-                                    ? "Coba ubah filter pencarian Anda atau hapus filter yang ada."
-                                    : "Mulai dengan menambahkan APAR pertama ke dalam sistem."}
-                            </p>
-                            {!searchTerm &&
-                                statusFilter === "all" &&
-                                locationFilter === "all" && (
-                                    <div className="mt-6">
-                                        <Link
-                                            to="/apar/create"
-                                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#11468F] transition-colors duration-200 shadow-sm"
-                                        >
-                                            <PlusIcon className="h-4 w-4 mr-2" />
-                                            Tambah APAR Pertama
-                                        </Link>
-                                    </div>
-                                )}
-                        </div>
-                    )}
-                </div>
+                ) : (
+                    <AparTable
+                        apars={filteredApars}
+                        bulkDeleteMode={bulkDeleteMode}
+                        selectedAparIds={selectedApars}
+                        onToggleSelectApar={handleToggleSelectApar}
+                        onToggleSelectAll={handleToggleSelectAll}
+                        onDelete={handleDelete}
+                        userRole={user?.role}
+                        hasActiveFilters={hasActiveFilters}
+                        onResetFilters={handleResetFilters}
+                        deletingId={deletingId}
+                        isBulkDeleting={deleting}
+                    />
+                )}
             </div>
 
             {/* QR Download Modal */}
-            {showQrDownloadModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-xs overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-                    <div className="relative mx-auto p-6 border border-slate-200 w-full max-w-lg shadow-xl rounded-[6px] bg-white">
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-gray-900">
-                                    Unduh QR Code APAR
+            <AparQrDownloadModal
+                isOpen={showQrDownloadModal}
+                onClose={() => setShowQrDownloadModal(false)}
+                filteredApars={filteredApars}
+                selectedApars={qrDownloadApars}
+                setSelectedApars={setQrDownloadApars}
+                onDownload={handleDownloadQrPdf}
+                downloading={downloadingQr}
+            />
+
+            {/* Bulk Deleting Modal Overlay */}
+            {deleting && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex min-h-screen items-center justify-center p-4 text-center">
+                        <div
+                            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+                            aria-hidden="true"
+                        />
+                        <div className="relative bg-white rounded-lg shadow-2xl max-w-sm w-full mx-auto p-6 border border-slate-200 text-center transform transition-all z-10 space-y-4">
+                            <div className="relative mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-rose-50 border border-rose-200">
+                                <svg
+                                    className="animate-spin h-8 w-8 text-[#DA1212]"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                    />
+                                    <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                    Menghapus Data APAR
                                 </h3>
-                                <button
-                                    onClick={() =>
-                                        setShowQrDownloadModal(false)
-                                    }
-                                    className="text-gray-400 hover:text-gray-600"
-                                >
-                                    <XMarkIcon className="h-6 w-6" />
-                                </button>
-                            </div>
-
-                            <div className="mb-4">
-                                <p className="text-sm text-gray-600 mb-3">
-                                    Pilih APAR yang QR Code-nya ingin diunduh:
+                                <p className="text-xs font-semibold text-rose-600 mt-1 uppercase tracking-wider font-mono">
+                                    {selectedApars.length} Tabung Diproses
                                 </p>
-
-                                {/* Select All */}
-                                <div className="mb-3">
-                                    <label className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={
-                                                qrDownloadApars.length ===
-                                                filteredApars.length
-                                            }
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setQrDownloadApars(
-                                                        filteredApars
-                                                    );
-                                                } else {
-                                                    setQrDownloadApars([]);
-                                                }
-                                            }}
-                                            className="rounded-[3px] border-gray-300 text-[#11468F] focus:ring-[#11468F]"
-                                        />
-                                        <span className="ml-2 text-sm font-medium text-gray-700">
-                                            Pilih Semua ({filteredApars.length}{" "}
-                                            APAR)
-                                        </span>
-                                    </label>
-                                </div>
-
-                                {/* APAR List */}
-                                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-[6px] p-3">
-                                    {filteredApars.map((apar) => (
-                                        <label
-                                            key={apar.id}
-                                            className="flex items-center py-2 hover:bg-gray-50"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={qrDownloadApars.some(
-                                                    (a) => a.id === apar.id
-                                                )}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        setQrDownloadApars(
-                                                            (prev) => [
-                                                                ...prev,
-                                                                apar,
-                                                            ]
-                                                        );
-                                                    } else {
-                                                        setQrDownloadApars(
-                                                            (prev) =>
-                                                                prev.filter(
-                                                                    (a) =>
-                                                                        a.id !==
-                                                                        apar.id
-                                                                )
-                                                        );
-                                                    }
-                                                }}
-                                                className="rounded-[3px] border-gray-300 text-[#11468F] focus:ring-[#11468F]"
-                                            />
-                                            <span className="ml-2 text-sm text-gray-700">
-                                                {apar.serial_number} -{" "}
-                                                {apar.location_name}
-                                            </span>
-                                        </label>
-                                    ))}
-                                </div>
+                                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                                    Sistem sedang memproses penghapusan data secara aman dalam transaksi database. Mohon jangan menutup halaman ini...
+                                </p>
                             </div>
-
-                            <div className="flex justify-end space-x-3">
-                                <button
-                                    onClick={() =>
-                                        setShowQrDownloadModal(false)
-                                    }
-                                    className="px-4 py-2 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        downloadQrPdf(qrDownloadApars)
-                                    }
-                                    disabled={
-                                        qrDownloadApars.length === 0 ||
-                                        downloadingQr
-                                    }
-                                    className="px-4 py-2 border border-transparent rounded-[6px] text-sm font-semibold text-white bg-[#041562] hover:bg-[#11468F] disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
-                                >
-                                    {downloadingQr ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                                            Mengunduh...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <DocumentArrowDownIcon className="h-4 w-4 mr-2 inline-block" />
-                                            Unduh PDF ({qrDownloadApars.length}{" "}
-                                            APAR)
-                                        </>
-                                    )}
-                                </button>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div className="bg-rose-600 h-1.5 rounded-full animate-pulse w-full"></div>
                             </div>
                         </div>
                     </div>

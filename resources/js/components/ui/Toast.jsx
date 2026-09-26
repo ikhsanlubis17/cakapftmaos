@@ -104,6 +104,9 @@ const Toast = ({
     return (
         <div className={`fixed z-50 ${positionClasses[position]} pointer-events-none`}>
             <div 
+                role="alert"
+                data-testid="toast-notification"
+                data-toast-type={type}
                 className={`
                     ${config.bgColor} ${config.textColor}
                     border ${config.borderColor}

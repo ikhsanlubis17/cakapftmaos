@@ -10,6 +10,7 @@ import {
     LockOpenIcon,
     PaperAirplaneIcon
 } from '@heroicons/react/24/outline';
+import { getRoleDisplayName } from '@/utils/roleUtils';
 
 const UsersTable = ({ users, onEdit, onDelete, onUnblock, onResendActivation }) => {
     const getRoleIcon = (role) => {
@@ -25,18 +26,6 @@ const UsersTable = ({ users, onEdit, onDelete, onUnblock, onResendActivation }) 
         }
     };
 
-    const getRoleDisplayName = (role) => {
-        switch (role) {
-            case 'admin':
-                return 'Administrator';
-            case 'supervisor':
-                return 'Supervisor';
-            case 'teknisi':
-                return 'Teknisi';
-            default:
-                return role;
-        }
-    };
 
     const getRoleBadgeClasses = (role) => {
         switch (role) {

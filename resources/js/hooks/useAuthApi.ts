@@ -33,15 +33,26 @@ export const useAuthApi = (apiClient: ReturnType<typeof createApiClient>, { upda
     });
 
     const { mutateAsync: logout, isPending: isLoggingOut } = useMutation({
-        mutationFn: () => apiClient.post('/api/logout'),
+        mutationFn: async () => {
+            updateToken(null);
+            queryClient.setQueryData(userQueryKey, null);
+            queryClient.clear();
+            try {
+                return await apiClient.post('/api/logout');
+            } catch (err) {
+                return null;
+            }
+        },
         onSuccess: () => {
             updateToken(null);
             queryClient.setQueryData(userQueryKey, null);
+            queryClient.clear();
         },
         onError: () => {
             // Still log out on the client even if the server call fails
             updateToken(null);
             queryClient.setQueryData(userQueryKey, null);
+            queryClient.clear();
         }
     });
 

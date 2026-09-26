@@ -20,15 +20,20 @@ describe('Supervisor Access Control', function () {
     
     describe('APAR Routes', function () {
         
-        it('prevents supervisor from accessing GET /api/apar', function () {
+        it('allows supervisor to access GET /api/apar for inspection and monitoring', function () {
             $response = $this->withHeader('Authorization', 'Bearer ' . $this->supervisorToken)
                 ->getJson('/api/apar');
             
-            $response->assertStatus(403)
-                ->assertJson([
-                    'success' => false,
-                    'message' => 'Forbidden. You do not have permission to perform this action.',
-                ]);
+            $response->assertStatus(200);
+            expect($response->json())->toBeArray();
+        });
+
+        it('allows supervisor to access GET /api/apar/{apar}', function () {
+            $apar = \App\Models\Apar::factory()->create();
+            $response = $this->withHeader('Authorization', 'Bearer ' . $this->supervisorToken)
+                ->getJson("/api/apar/{$apar->id}");
+            
+            $response->assertStatus(200);
         });
         
         it('prevents supervisor from accessing POST /api/apar', function () {
@@ -128,6 +133,24 @@ describe('Supervisor Access Control', function () {
             expect($this->admin->role)->toBe('admin');
             expect($this->admin->isAdmin())->toBeTrue();
             expect($this->admin->isSupervisor())->toBeFalse();
+        });
+    });
+
+    describe('Inspections Listing Route', function () {
+        it('allows supervisor to get inspections list with relationships', function () {
+            $response = $this->withHeader('Authorization', 'Bearer ' . $this->supervisorToken)
+                ->getJson('/api/inspections');
+
+            $response->assertStatus(200);
+            expect($response->json())->toBeArray();
+        });
+
+        it('allows admin to get inspections list with relationships', function () {
+            $response = $this->withHeader('Authorization', 'Bearer ' . $this->adminToken)
+                ->getJson('/api/inspections');
+
+            $response->assertStatus(200);
+            expect($response->json())->toBeArray();
         });
     });
 });

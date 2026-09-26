@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Inspection extends Model
@@ -22,8 +23,15 @@ class Inspection extends Model
         'user_id',
         'photo_url',
         'selfie_url',
+        'mobile_verification_photo_url',
+        'mobile_flag_status',
+        'mobile_flag_reason',
+        'gps_accuracy_meters',
+        'photo_captured_at',
+        'is_mock_location_detected',
         'condition',
         'notes',
+        'identification_method',
         'inspection_lat',
         'inspection_lng',
         'location_valid',
@@ -52,16 +60,19 @@ class Inspection extends Model
     protected function casts(): array
     {
         return [
-            'inspection_lat' => 'decimal:8',
-            'inspection_lng' => 'decimal:8',
-            'location_valid' => 'boolean',
-            'is_valid' => 'boolean',
-            'requires_repair' => 'boolean',
-            'photo_required' => 'boolean',
-            'selfie_required' => 'boolean',
-            'reviewed_at' => 'datetime',
-            'condition' => \App\Enums\InspectionCondition::class,
-            'inspection_status' => \App\Enums\InspectionStatus::class,
+            'inspection_lat'          => 'decimal:8',
+            'inspection_lng'          => 'decimal:8',
+            'gps_accuracy_meters'     => 'decimal:2',
+            'location_valid'          => 'boolean',
+            'is_valid'                => 'boolean',
+            'requires_repair'         => 'boolean',
+            'photo_required'          => 'boolean',
+            'selfie_required'         => 'boolean',
+            'is_mock_location_detected' => 'boolean',
+            'reviewed_at'             => 'datetime',
+            'photo_captured_at'       => 'datetime',
+            'condition'               => \App\Enums\InspectionCondition::class,
+            'inspection_status'       => \App\Enums\InspectionStatus::class,
         ];
     }
 
@@ -309,5 +320,39 @@ class Inspection extends Model
         }
         
         return 'Inspeksi Ulang ke-' . $this->reinspection_count;
+    }
+
+    /**
+     * Normalize storage URL to relative path.
+     */
+    protected function photoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    protected function selfieUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    protected function mobileVerificationPhotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    private function normalizeStorageUrl(?string $url): ?string
+    {
+        if (!$url) return null;
+        if (str_contains($url, '/storage/')) {
+            $pos = strpos($url, '/storage/');
+            return substr($url, $pos);
+        }
+        return $url;
     }
 }

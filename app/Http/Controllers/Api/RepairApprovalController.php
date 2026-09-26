@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\RepairApproval;
-use App\Models\Inspection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -16,7 +15,14 @@ class RepairApprovalController extends Controller
      */
     public function index(Request $request)
     {
-        $query = RepairApproval::with(['inspection.apar.aparType', 'inspection.user', 'inspection.inspectionDamages.damageCategory', 'approver']);
+        $query = RepairApproval::with([
+            'inspection.apar.aparType', 
+            'inspection.user', 
+            'inspection.inspectionDamages.damageCategory', 
+            'approver', 
+            'assignedTeknisi',
+            'repairReport'
+        ]);
 
         // Filter by status
         if ($request->has('status')) {
@@ -27,6 +33,22 @@ class RepairApprovalController extends Controller
         if ($request->has('apar_id')) {
             $query->whereHas('inspection', function ($q) use ($request) {
                 $q->where('apar_id', $request->apar_id);
+            });
+        }
+
+        // Filter by assigned user
+        if ($request->has('assigned_user_id')) {
+            $query->where('assigned_user_id', $request->assigned_user_id);
+        }
+
+        // Filter for current technician (either assigned or original inspector)
+        if ($request->boolean('assigned_to_me') && Auth::guard('api')->check()) {
+            $currentUserId = Auth::guard('api')->id();
+            $query->where(function ($q) use ($currentUserId) {
+                $q->where('assigned_user_id', $currentUserId)
+                  ->orWhereHas('inspection', function ($sub) use ($currentUserId) {
+                      $sub->where('user_id', $currentUserId);
+                  });
             });
         }
 
@@ -43,7 +65,13 @@ class RepairApprovalController extends Controller
      */
     public function pending()
     {
-        $approvals = RepairApproval::with(['inspection.apar.aparType', 'inspection.user'])
+        $approvals = RepairApproval::with([
+            'inspection.apar.aparType', 
+            'inspection.user',
+            'inspection.inspectionDamages.damageCategory',
+            'approver',
+            'assignedTeknisi'
+        ])
             ->where('status', 'pending')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -64,6 +92,7 @@ class RepairApprovalController extends Controller
             'inspection.user',
             'inspection.inspectionDamages.damageCategory',
             'approver',
+            'assignedTeknisi',
             'repairReport'
         ]);
 
@@ -74,7 +103,7 @@ class RepairApprovalController extends Controller
     }
 
     /**
-     * Approve a repair request.
+     * Approve a repair request (Supervisor/Admin assigns technician and schedule).
      */
     public function approve(Request $request, RepairApproval $repairApproval)
     {
@@ -87,10 +116,28 @@ class RepairApprovalController extends Controller
 
         $validator = Validator::make($request->all(), [
             'supervisor_notes' => 'required|string|min:10',
+            'assigned_teknisi_id' => 'required|exists:users,id',
+            'schedule_date' => 'required|date|after_or_equal:today',
+            'schedule_time' => 'required|date_format:H:i',
         ], [
             'supervisor_notes.required' => 'Catatan supervisor wajib diisi',
-            'supervisor_notes.min' => 'Catatan supervisor minimal 10 karakter. Jelaskan alasan persetujuan atau instruksi perbaikan.',
+            'supervisor_notes.min' => 'Catatan supervisor minimal 10 karakter. Jelaskan instruksi kerja perbaikan.',
+            'assigned_teknisi_id.required' => 'Teknisi yang ditugaskan wajib dipilih',
+            'assigned_teknisi_id.exists' => 'Teknisi yang dipilih tidak valid',
+            'schedule_date.required' => 'Tanggal jadwal perbaikan wajib diisi',
+            'schedule_date.after_or_equal' => 'Tanggal perbaikan tidak boleh di masa lalu',
+            'schedule_time.required' => 'Waktu jadwal perbaikan wajib diisi',
+            'schedule_time.date_format' => 'Format waktu perbaikan harus HH:MM (contoh: 09:00)',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            if ($request->assigned_teknisi_id) {
+                $assignedUser = \App\Models\User::find($request->assigned_teknisi_id);
+                if (!$assignedUser || !$assignedUser->isTeknisi()) {
+                    $validator->errors()->add('assigned_teknisi_id', 'User yang ditugaskan harus memiliki peran teknisi.');
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json([
@@ -100,8 +147,28 @@ class RepairApprovalController extends Controller
             ], 422);
         }
 
+        // Check for schedule conflicts
+        $scheduleService = app(\App\Services\ScheduleService::class);
+        $conflictCheck = $scheduleService->checkScheduleConflict(
+            $request->assigned_teknisi_id,
+            $request->schedule_date,
+            $request->schedule_time
+        );
+
+        if ($conflictCheck['has_conflict']) {
+            return response()->json([
+                'success' => false,
+                'message' => $conflictCheck['message'] . '. Jadwal yang bentrok: ' . 
+                    collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
+                        return "APAR {$c['apar']} pada {$c['start_at']}";
+                    })->implode(', '),
+                'error' => 'schedule_conflict',
+                'conflicting_schedules' => $conflictCheck['conflicting_schedules'],
+            ], 422);
+        }
+
         $admin = Auth::guard('api')->user();
-        $repairApproval->approve($admin->id, $request->supervisor_notes);
+        $repairApproval->approve($admin->id, $request->supervisor_notes, $request->assigned_teknisi_id);
 
         // Update inspection status
         $repairApproval->inspection->update([
@@ -112,12 +179,37 @@ class RepairApprovalController extends Controller
         // Update APAR status to under_repair when repair is approved
         // This indicates that technician can now start the repair work
         $apar = $repairApproval->inspection->apar;
-        if ($apar->status === 'needs_repair') {
+        if ($apar) {
             $apar->update(['status' => 'under_repair']);
             \Log::info('APAR status updated to under_repair after repair approval', [
                 'apar_id' => $apar->id,
                 'repair_approval_id' => $repairApproval->id,
             ]);
+
+            // Create repair schedule for assigned technician
+            try {
+                $appTimezone = config('app.timezone', 'UTC');
+                $startAtLocal = \Carbon\Carbon::parse($request->schedule_date . ' ' . $request->schedule_time, $appTimezone);
+                $endAtLocal = $startAtLocal->copy()->addHour();
+
+                $repairSchedule = \App\Models\InspectionSchedule::create([
+                    'apar_id' => $apar->id,
+                    'assigned_user_id' => $request->assigned_teknisi_id,
+                    'start_at' => $startAtLocal,
+                    'end_at' => $endAtLocal,
+                    'frequency' => 'once',
+                    'is_active' => true,
+                    'notes' => 'Jadwal perbaikan dari tiket persetujuan #' . $repairApproval->id . ': ' . $request->supervisor_notes,
+                ]);
+
+                \Log::info('Repair schedule created upon supervisor approval', [
+                    'schedule_id' => $repairSchedule->id,
+                    'repair_approval_id' => $repairApproval->id,
+                    'assigned_user_id' => $request->assigned_teknisi_id,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Failed to create repair schedule upon approval: ' . $e->getMessage());
+            }
         }
 
         // Send notification to technician
@@ -131,10 +223,17 @@ class RepairApprovalController extends Controller
             \Log::error('Failed to send approval notification: ' . $e->getMessage());
         }
 
+        // Send email assignment notification to technician
+        try {
+            app(\App\Services\NotificationService::class)->notifyRepairAssignment($repairApproval);
+        } catch (\Exception $e) {
+            \Log::error('Failed to send repair assignment email: ' . $e->getMessage());
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Permintaan perbaikan berhasil disetujui',
-            'data' => $repairApproval->fresh(['inspection.apar.aparType', 'inspection.user', 'approver'])
+            'message' => 'Permintaan perbaikan berhasil disetujui dan teknisi telah ditugaskan',
+            'data' => $repairApproval->fresh(['inspection.apar.aparType', 'inspection.user', 'approver', 'assignedTeknisi'])
         ]);
     }
 

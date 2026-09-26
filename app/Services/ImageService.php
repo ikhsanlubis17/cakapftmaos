@@ -22,6 +22,27 @@ class ImageService
      */
     public function compressImage(UploadedFile $file, string $path, int $quality = 80, int $maxWidth = 1920, int $maxHeight = 1080): string
     {
+        // 1. Resolve safe file extension (prevent empty extension on Blobs)
+        $rawExt = $file->getClientOriginalExtension();
+        if (empty($rawExt) || strtolower($rawExt) === 'blob') {
+            $rawExt = $file->guessExtension() ?: 'jpg';
+        }
+        $extension = ltrim($rawExt, '.');
+        if (empty($extension)) {
+            $extension = 'jpg';
+        }
+
+        // 2. Ensure target storage directory exists
+        $disk = Storage::disk('public');
+        $directoryPath = $disk->path($path);
+        if (!is_dir($directoryPath)) {
+            mkdir($directoryPath, 0755, true);
+        }
+
+        $filename = uniqid() . '_' . time() . '.' . $extension;
+        $fullPath = $path . '/' . $filename;
+        $fullDiskPath = $disk->path($fullPath);
+
         try {
             // Create image instance
             $image = $this->manager->read($file->getPathname());
@@ -34,23 +55,16 @@ class ImageService
                 });
             }
             
-            // Generate unique filename
-            $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $fullPath = $path . '/' . $filename;
-            
             // Save compressed image
-            $image->save(Storage::disk('public')->path($fullPath), $quality);
+            $image->save($fullDiskPath, $quality);
             
             return $fullPath;
             
         } catch (\Exception $e) {
             Log::error('Image compression failed: ' . $e->getMessage());
             
-            // Fallback to original file
-            $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $fullPath = $path . '/' . $filename;
-            
-            Storage::disk('public')->putFileAs($path, $file, $filename);
+            // Fallback to direct file storage
+            $disk->putFileAs($path, $file, $filename);
             
             return $fullPath;
         }

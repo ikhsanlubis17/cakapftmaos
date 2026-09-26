@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import {
     ClipboardDocumentListIcon,
-    CheckCircleIcon,
     XCircleIcon,
     ClockIcon,
     MapPinIcon,
@@ -17,6 +16,7 @@ import {
     XMarkIcon,
     EyeIcon,
 } from '@heroicons/react/24/outline';
+import { formatDate as formatUtilDate, formatTime as formatUtilTime } from '@/utils/dateUtils';
 
 const MyInspections = () => {
     const { apiClient } = useAuth();
@@ -68,7 +68,7 @@ const MyInspections = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString('id-ID', {
+        return formatUtilDate(dateString, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -78,10 +78,7 @@ const MyInspections = () => {
 
     const formatTime = (dateString) => {
         if (!dateString) return '';
-        return new Date(dateString).toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return formatUtilTime(dateString);
     };
 
     const handlePhotoClick = (url) => {

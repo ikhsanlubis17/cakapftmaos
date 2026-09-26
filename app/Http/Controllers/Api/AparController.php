@@ -4,17 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\Apar;
-use App\Models\TankTruck;
 use App\Models\InspectionLog;
 use App\Http\Requests\Apar\StoreAparRequest;
 use App\Http\Requests\Apar\UpdateAparRequest;
 use App\Services\DeviceDetectorService;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\QrCodeService;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AparController extends Controller
@@ -148,19 +146,47 @@ class AparController extends Controller
     }
 
     /**
-     * Generate QR code for APAR
+     * Remove multiple APARs in bulk
+     *
+     * Menghapus banyak APAR sekaligus dalam satu transaksi database atomic
+     * untuk mencegah race condition, partial deletion, dan overhead ratusan request HTTP.
      */
-    public function qrCode(Apar $apar)
+    public function bulkDestroy(Request $request): \Illuminate\Http\JsonResponse
     {
-        // Match PDF generation parameters to ensure consistency
-        // PDF uses size(200) and margin(5)
-        $qrCode = QrCode::format('png')
-            ->size(200)
-            ->margin(5)
-            ->generate($apar->qr_code);
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:apars,id'],
+        ]);
+
+        $ids = $validated['ids'];
+        $count = count($ids);
+
+        // Eksekusi penghapusan massal dalam database transaction
+        // untuk menjamin seluruh data terhapus secara utuh (atomic)
+        DB::transaction(function () use ($ids) {
+            Apar::whereIn('id', $ids)->delete();
+        });
 
         return response()->json([
-            'qr_code' => base64_encode($qrCode)
+            'message' => "{$count} APAR berhasil dihapus",
+            'deleted_count' => $count,
+        ]);
+    }
+
+    /**
+     * Generate QR code for APAR
+     */
+    public function qrCode(Apar $apar, QrCodeService $qrCodeService)
+    {
+        $svg = $qrCodeService->generateQrCode($apar->qr_code, [
+            'size' => 200,
+            'margin' => 1
+        ]);
+
+        return response()->json([
+            'qr_code' => base64_encode($svg),
+            'mime_type' => 'image/svg+xml',
+            'svg' => $svg
         ]);
     }
 
@@ -180,38 +206,50 @@ class AparController extends Controller
     /**
      * Download QR Code PDF for multiple APARs
      */
-    public function downloadQrPdf(Request $request)
+    public function downloadQrPdf(Request $request, QrCodeService $qrCodeService)
     {
         $request->validate([
             'apars' => 'required|array',
-            'apars.*.id' => 'required|exists:apars,id'
+            'apars.*.id' => 'required|exists:apars,id',
+            'print_format' => 'nullable|string|in:both,qr_only,serial_only',
         ]);
 
+        $printFormat = $request->input('print_format', 'both');
         $aparIds = collect($request->apars)->pluck('id');
         $apars = Apar::whereIn('id', $aparIds)
             ->with(['aparType', 'tankTruck'])
             ->get();
 
-        // Generate QR codes for each APAR
-        $aparsWithQr = $apars->map(function ($apar) {
-            $qrCode = QrCode::format('png')
-                ->size(200)
-                ->margin(5)
-                ->generate($apar->qr_code);
-            
-            $apar->qr_code_image = base64_encode($qrCode);
+        // Generate QR codes for each APAR using vector SVG for crisp rendering in PDF (hanya jika butuh QR)
+        $aparsWithQr = $apars->map(function ($apar) use ($qrCodeService, $printFormat) {
+            if ($printFormat !== 'serial_only') {
+                $svg = $qrCodeService->generateQrCode($apar->qr_code, [
+                    'size' => 200,
+                    'margin' => 1
+                ]);
+                $apar->qr_code_image = base64_encode($svg);
+            } else {
+                $apar->qr_code_image = null;
+            }
             return $apar;
         });
 
         // Generate PDF
-        $pdf = PDF::loadView('pdf.apar-qr-codes', [
+        $pdf = Pdf::loadView('pdf.apar-qr-codes', [
             'apars' => $aparsWithQr,
+            'printFormat' => $printFormat,
             'generatedAt' => now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
             'totalApars' => $apars->count()
         ]);
 
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('qr-code-apar-' . now()->format('Y-m-d') . '.pdf');
+        $filenamePrefix = match ($printFormat) {
+            'qr_only' => 'qr-code-apar-',
+            'serial_only' => 'nomor-seri-apar-',
+            default => 'label-apar-',
+        };
+
+        return $pdf->download($filenamePrefix . now()->format('Y-m-d') . '.pdf');
     }
 }

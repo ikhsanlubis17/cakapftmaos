@@ -36,20 +36,25 @@ class SendInspectionReminders extends Command
 
         $notificationService = new NotificationService();
         
-        // Send reminders for H-7, H-3, and H-1
+        // 1. Send daily shift morning digest (schedules for today at 07:00 WIB)
+        $dailyCount = $notificationService->sendDailyShiftReminders();
+        $this->info("- Daily Shift (Today): {$dailyCount} technicians queued");
+
+        // 2. Send reminders for H-7, H-3, and H-1
         $h7Count = $this->sendRemindersForDays($notificationService, 7);
         $h3Count = $this->sendRemindersForDays($notificationService, 3);
         $h1Count = $this->sendRemindersForDays($notificationService, 1);
         
-        $totalCount = $h7Count + $h3Count + $h1Count;
+        $totalCount = $dailyCount + $h7Count + $h3Count + $h1Count;
 
         if ($totalCount > 0) {
-            $this->info("Successfully sent {$totalCount} reminders:");
+            $this->info("Successfully processed {$totalCount} reminders:");
+            $this->info("- Today: {$dailyCount}");
             $this->info("- H-7: {$h7Count}");
             $this->info("- H-3: {$h3Count}");
             $this->info("- H-1: {$h1Count}");
         } else {
-            $this->info('No reminders sent. No inspections scheduled for H-7, H-3, or H-1.');
+            $this->info('No reminders sent. No inspections scheduled for today, H-7, H-3, or H-1.');
         }
     }
 

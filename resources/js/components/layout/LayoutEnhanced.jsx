@@ -5,6 +5,8 @@ import { useToast } from "../../contexts/ToastContext"
 import { useSiteSettings } from "../../contexts/SiteSettingsContext"
 import { useConfirmDialog } from "../../hooks/useConfirmDialog"
 import ConfirmDialog from "../common/ConfirmDialog"
+import { tokenStorage } from "../../services/tokenStorage"
+import { getRoleDisplayName } from "../../utils/roleUtils"
 import {
   HomeIcon,
   FireIcon,
@@ -31,12 +33,19 @@ const LayoutEnhanced = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [navigationError, setNavigationError] = useState(null)
-  const { user, logout } = useAuth()
+  const { user, token, logout } = useAuth()
   const { settings } = useSiteSettings()
   const { showSuccess, showError } = useToast()
   const { isOpen, config, confirm, close } = useConfirmDialog()
   const location = useLocation()
   const navigate = useNavigate()
+
+  // Evict unauthenticated sessions from layout
+  useEffect(() => {
+    if (!token && !user) {
+      navigate({ to: "/welcome", replace: true })
+    }
+  }, [token, user, navigate])
 
   // Handle navigation errors
   useEffect(() => {
@@ -101,18 +110,6 @@ const LayoutEnhanced = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [userMenuOpen])
 
-  const getRoleDisplayName = (role) => {
-    switch (role) {
-      case "admin":
-        return "Administrator"
-      case "teknisi":
-        return "Teknisi"
-      case "supervisor":
-        return "Supervisor"
-      default:
-        return role
-    }
-  }
 
   // Role-based navigation configuration
   const getNavigationByRole = (role) => {
@@ -157,6 +154,12 @@ const LayoutEnhanced = () => {
             description: "Tinjau permintaan perbaikan",
           },
           {
+            name: "Review Laporan Perbaikan",
+            href: "/repair-reports/review",
+            icon: WrenchScrewdriverIcon,
+            description: "Verifikasi hasil perbaikan teknisi",
+          },
+          {
             name: "Laporan & Audit",
             href: "/reports",
             icon: ChartBarIcon,
@@ -181,15 +184,8 @@ const LayoutEnhanced = () => {
             icon: TruckIcon,
             description: "Manajemen mobil tangki",
           },
-          // {
-          //   name: "Inspeksi",
-          //   href: "/inspections",
-          //   icon: ClipboardDocumentListIcon,
-          //   description: "Riwayat inspeksi",
-          // },
           { name: "Pengguna", href: "/users", icon: UserGroupIcon, description: "Kelola pengguna" },
           { name: "Jadwal", href: "/schedules", icon: BellIcon, description: "Jadwal inspeksi" },
-          { name: "Scan QR & Inspeksi", href: "/scan", icon: QrCodeIcon, description: "Mulai inspeksi APAR" },
           {
             name: "Persetujuan Perbaikan",
             href: "/repair-approvals",
@@ -234,14 +230,14 @@ const LayoutEnhanced = () => {
       // Close user menu first
       setUserMenuOpen(false)
 
-      // Call logout function from auth context
-      logout()
+      // Await logout to ensure server session is terminated and token is cleared
+      await logout()
 
       // Show success message
       showSuccess("Berhasil logout dari sistem")
 
       // Navigate to login page
-      navigate({ to: "/login" })
+      await navigate({ to: "/login", replace: true })
     } catch (error) {
       console.error("Logout error:", error)
       showError("Gagal logout dari sistem. Silakan coba lagi.")
@@ -301,7 +297,7 @@ const LayoutEnhanced = () => {
 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto px-3 py-4">
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
@@ -312,23 +308,22 @@ const LayoutEnhanced = () => {
                       handleNavigation(item.href, item.name)
                       setSidebarOpen(false)
                     }}
-                    className={`group w-full flex items-center px-3.5 py-2.5 text-sm font-medium rounded-[6px] transition-colors duration-150 ${
+                    title={item.description}
+                    className={`group w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
                       active
-                        ? "bg-[#11468F] text-white shadow-sm font-semibold"
-                        : "text-slate-200 hover:bg-[#11468F]/30 hover:text-white"
+                        ? "bg-[#11468F] text-white shadow-xs"
+                        : "text-slate-200 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        active ? "text-white" : "text-slate-300 group-hover:text-white"
-                      }`}
-                    />
-                    <div className="text-left flex-1">
-                      <div className="font-semibold text-xs tracking-wide">{item.name}</div>
-                      <div className={`text-[11px] mt-0.5 ${active ? "text-white/80" : "text-slate-300/80"}`}>
-                        {item.description}
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={`h-5 w-5 flex-shrink-0 transition-colors ${
+                          active ? "text-white" : "text-slate-300 group-hover:text-white"
+                        }`}
+                      />
+                      <span className="tracking-wide">{item.name}</span>
                     </div>
+                    {active && <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />}
                   </button>
                 )
               })}
@@ -355,7 +350,7 @@ const LayoutEnhanced = () => {
 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto px-3.5 py-4">
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               {navigation.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
@@ -363,23 +358,22 @@ const LayoutEnhanced = () => {
                   <button
                     key={item.name}
                     onClick={() => handleNavigation(item.href, item.name)}
-                    className={`group w-full flex items-center px-3.5 py-2.5 text-sm font-medium rounded-[6px] transition-colors duration-150 ${
+                    title={item.description}
+                    className={`group w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer ${
                       active
-                        ? "bg-[#11468F] text-white shadow-sm font-semibold"
-                        : "text-slate-200 hover:bg-[#11468F]/30 hover:text-white"
+                        ? "bg-[#11468F] text-white shadow-xs"
+                        : "text-slate-200 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        active ? "text-white" : "text-slate-300 group-hover:text-white"
-                      }`}
-                    />
-                    <div className="text-left flex-1">
-                      <div className="font-semibold text-xs tracking-wide">{item.name}</div>
-                      <div className={`text-[11px] mt-0.5 ${active ? "text-white/80" : "text-slate-300/80"}`}>
-                        {item.description}
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={`h-5 w-5 flex-shrink-0 transition-colors ${
+                          active ? "text-white" : "text-slate-300 group-hover:text-white"
+                        }`}
+                      />
+                      <span className="tracking-wide">{item.name}</span>
                     </div>
+                    {active && <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />}
                   </button>
                 )
               })}
@@ -391,35 +385,61 @@ const LayoutEnhanced = () => {
       {/* Main content */}
       <div className="lg:pl-72">
         {/* Top bar */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-[#EEEEEE] bg-white px-4 sm:gap-x-6 sm:px-6 lg:px-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-          <button
-            type="button"
-            className="-m-2.5 p-2.5 text-slate-700 lg:hidden rounded-[6px] hover:bg-[#EEEEEE] transition-colors"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Bars3Icon className="h-6 w-6" />
-          </button>
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6 lg:px-8 shadow-xs">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              className="h-11 w-11 flex items-center justify-center text-slate-700 lg:hidden rounded-lg hover:bg-slate-100 active:bg-slate-200 transition-colors"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <span className="sr-only">Open sidebar</span>
+              <Bars3Icon className="h-6 w-6" />
+            </button>
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex flex-1 items-center">
-              <span className="hidden md:inline-flex items-center px-3 py-1 rounded-[4px] text-xs font-semibold bg-[#EEEEEE] text-slate-700 border border-slate-200">
+            {/* Mobile Brand Identity */}
+            <div className="flex items-center gap-2 lg:hidden">
+              <img src={settings.site_logo} alt="Logo" className="h-7 w-7 rounded bg-white p-0.5 object-contain" />
+              <span className="font-bold text-xs tracking-wider text-slate-900 font-mono">CAKAP FT MAOS</span>
+            </div>
+
+            {/* Desktop Breadcrumbs */}
+            <div className="hidden lg:flex items-center gap-2 text-xs font-medium text-slate-500">
+              <span className="hover:text-slate-800 transition-colors">CAKAP</span>
+              <span className="text-slate-300">/</span>
+              <span className="font-bold text-slate-800">
+                {location.pathname.startsWith('/inspections/new')
+                  ? 'Pilih APAR untuk Inspeksi'
+                  : location.pathname.startsWith('/inspections')
+                  ? 'Data Inspeksi'
+                  : location.pathname.startsWith('/scan')
+                  ? 'Pemindai QR Code'
+                  : location.pathname.startsWith('/apar')
+                  ? 'Manajemen APAR'
+                  : 'Dashboard'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-x-3 lg:gap-x-5">
+            <div className="hidden md:flex items-center">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 Operasional Siaga &bull; {settings.organization_name}
               </span>
             </div>
-            <div className="flex items-center gap-x-3 lg:gap-x-5">
-              {/* User menu */}
-              <div className="relative user-menu">
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-x-3 text-sm font-medium text-slate-900 hover:text-slate-700 p-1.5 rounded-[6px] hover:bg-[#EEEEEE] transition-colors"
-                >
-                  <div className="h-8 w-8 rounded-full bg-[#041562] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : <UserCircleIcon className="h-5 w-5" />}
-                  </div>
-                  <span className="hidden lg:block text-xs font-semibold text-slate-800">{user?.name}</span>
-                  <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />
-                </button>
+
+            {/* User menu */}
+            <div className="relative user-menu">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="h-11 flex items-center gap-x-2 text-sm font-medium text-slate-900 hover:text-slate-700 px-2 rounded-lg hover:bg-slate-100 transition-colors active:scale-[0.98]"
+              >
+                <div className="h-8 w-8 rounded-full bg-[#041562] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : <UserCircleIcon className="h-5 w-5" />}
+                </div>
+                <span className="hidden lg:block text-xs font-semibold text-slate-800">{user?.name}</span>
+                <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />
+              </button>
 
                 {userMenuOpen && (
                   <div className="absolute right-0 z-10 mt-2 w-60 origin-top-right rounded-[6px] bg-white py-2 shadow-lg border border-[#EEEEEE]">
@@ -452,7 +472,6 @@ const LayoutEnhanced = () => {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Page content */}
         <main className="py-6">

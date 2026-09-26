@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\AparType;
 use App\Http\Requests\AparType\StoreAparTypeRequest;
 use App\Http\Requests\AparType\UpdateAparTypeRequest;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class AparTypeController extends Controller
@@ -17,7 +16,7 @@ class AparTypeController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $aparTypes = AparType::orderBy('name')->get();
+            $aparTypes = AparType::withCount('apars')->orderBy('name')->get();
             
             return response()->json([
                 'success' => true,
@@ -39,6 +38,7 @@ class AparTypeController extends Controller
     {
         try {
             $aparType = AparType::create($request->validated());
+            $aparType->loadCount('apars');
 
             return response()->json([
                 'success' => true,
@@ -58,6 +58,8 @@ class AparTypeController extends Controller
      */
     public function show(AparType $aparType): JsonResponse
     {
+        $aparType->loadCount('apars');
+
         return response()->json([
             'success' => true,
             'data' => $aparType,
@@ -72,6 +74,7 @@ class AparTypeController extends Controller
     {
         try {
             $aparType->update($request->validated());
+            $aparType->loadCount('apars');
 
             return response()->json([
                 'success' => true,

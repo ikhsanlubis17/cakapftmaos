@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import { useAuth } from '../../../contexts/AuthContext';
 import { useSiteSettings } from '../../../contexts/SiteSettingsContext';
 import WelcomeNav from '../components/welcome/WelcomeNav';
 import WelcomeHero from '../components/welcome/WelcomeHero';
@@ -13,6 +15,15 @@ const Welcome = () => {
     const [activeSection, setActiveSection] = useState('');
     const [scrollY, setScrollY] = useState(0);
     const { settings } = useSiteSettings();
+    const { isAuthenticated, user } = useAuth();
+    const navigate = useNavigate();
+
+    // If already authenticated, redirect to dashboard
+    useEffect(() => {
+        if (isAuthenticated || user) {
+            navigate({ to: '/', replace: true });
+        }
+    }, [isAuthenticated, user, navigate]);
 
     useEffect(() => {
         const handleScroll = () => {

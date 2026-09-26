@@ -47,7 +47,7 @@ Sistem memiliki 3 role pengguna dengan hak akses terisolasi:
 ### 2. Monitoring & Inspeksi Lapangan
 - **Deteksi Jenis Lokasi Otomatis**: Menyesuaikan form inspeksi apakah tabung berada di gedung (lokasi statis dengan validasi GPS) atau di Mobil Tangki (menampilkan detail plat nomor kendaraan).
 - **Validasi Waktu & Radius**: Menolak submit inspeksi jika teknisi berada di luar jadwal aktif atau di luar radius koordinat geografis yang diizinkan (kecuali override role oleh Admin/Supervisor).
-- **Pemberitahuan Otomatis & Reminder**: Pengingat jadwal inspeksi dan notifikasi overdue otomatis via WebSocket dan cron scheduler harian.
+- **Pemberitahuan Otomatis & Reminder**: Pengingat jadwal inspeksi dan notifikasi overdue otomatis via TanStack Query polling teroptimasi, email alert berbasis Queue, dan cron scheduler harian.
 
 ### 3. Pelaporan & Rekapitulasi Data
 - Export rekapitulasi data ke format **Excel (.xlsx)** dan cetak dokumen resmi **PDF** untuk:
@@ -75,7 +75,7 @@ Sistem memiliki 3 role pengguna dengan hak akses terisolasi:
 | **QR Scanner** | `@yudiel/react-qr-scanner` | In-browser client camera scanner |
 | **PDF & Excel Engine** | `barryvdh/laravel-dompdf` & `maatwebsite/excel` | Dokumen PDF & spreadsheet export |
 | **Image Processing** | `intervention/image` v3 | Resizing, compressing & handling foto inspeksi |
-| **Real-time Push** | Pusher PHP Server / Ratchet WebSockets | Notifikasi langsung ke browser |
+| **Email & Notifikasi** | Laravel Queue & Mailable (SMTP) | Notifikasi kerusakan kritis, assignment & approval |
 | **Testing** | PHPUnit 11 & Pest 3 | Unit & Feature testing |
 
 ---

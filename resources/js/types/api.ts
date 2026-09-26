@@ -35,6 +35,3 @@ export interface ApiResponse<T = any> {
 }
 
 export interface AparTypeListResponse extends ApiResponse<AparType[]> {}
-
-// Specific response type for AparType index endpoint
-export type AparTypeIndexResponse = ApiResponse<AparType[]>;

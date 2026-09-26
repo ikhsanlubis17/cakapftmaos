@@ -5,13 +5,238 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Notification;
 use App\Models\RepairApproval;
+use App\Models\RepairReport;
+use App\Models\Inspection;
 use App\Models\InspectionSchedule;
+use App\Models\Apar;
+use App\Models\Setting;
+use App\Mail\CriticalDamageAlertMail;
+use App\Mail\RepairAssignmentMail;
+use App\Mail\RepairCompletedReviewMail;
+use App\Mail\DailyShiftReminderMail;
+use App\Mail\AparExpiryAlertMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class NotificationService
 {
+    /**
+     * Send critical damage alert email directly to all Supervisors.
+     * (As requested: kirimkan langsung ke email seluruh user ber-role supervisor saja)
+     */
+    public function notifyCriticalDamage(Inspection $inspection): int
+    {
+        if (!Setting::get('mail_notification_enabled', true) || !Setting::get('notify_on_damaged_apar', true)) {
+            Log::info('Critical damage notification skipped: disabled in settings');
+            return 0;
+        }
+
+        try {
+            $supervisors = User::where('role', 'supervisor')
+                ->whereNotNull('email')
+                ->get();
+
+            $sentCount = 0;
+            foreach ($supervisors as $supervisor) {
+                Mail::to($supervisor->email)->queue(new CriticalDamageAlertMail($inspection));
+
+                $this->createInAppNotification(
+                    $supervisor->id,
+                    'critical_damage_alert',
+                    "Peringatan HSSE: APAR {$inspection->apar?->serial_number} dilaporkan RUSAK di {$inspection->apar?->location_name}.",
+                    $inspection->id
+                );
+
+                $sentCount++;
+            }
+
+            Log::info("Critical damage alert queued to {$sentCount} supervisors for inspection #{$inspection->id}");
+            return $sentCount;
+        } catch (\Exception $e) {
+            Log::error('Failed to notify supervisors of critical damage', [
+                'inspection_id' => $inspection->id,
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * Send repair assignment email to assigned technician.
+     */
+    public function notifyRepairAssignment(RepairApproval $repairApproval): bool
+    {
+        if (!Setting::get('mail_notification_enabled', true) || !Setting::get('notify_on_repair_assignment', true)) {
+            Log::info('Repair assignment notification skipped: disabled in settings');
+            return false;
+        }
+
+        try {
+            $technician = $repairApproval->assignedUser;
+            if (!$technician || !$technician->email) {
+                Log::warning('Repair assignment notification skipped: no assigned technician or email', [
+                    'approval_id' => $repairApproval->id,
+                ]);
+                return false;
+            }
+
+            Mail::to($technician->email)->queue(new RepairAssignmentMail($repairApproval));
+
+            $serial = $repairApproval->inspection?->apar?->serial_number ?? 'APAR';
+            $this->createInAppNotification(
+                $technician->id,
+                'repair_assignment',
+                "Anda ditugaskan melakukan perbaikan APAR {$serial}. Silakan cek rincian instruksi.",
+                $repairApproval->id
+            );
+
+            Log::info("Repair assignment email queued to {$technician->email} for approval #{$repairApproval->id}");
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to notify technician of repair assignment', [
+                'approval_id' => $repairApproval->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Send repair completion notification for supervisor review.
+     */
+    public function notifyRepairCompleted(RepairReport $repairReport): int
+    {
+        if (!Setting::get('mail_notification_enabled', true)) {
+            return 0;
+        }
+
+        try {
+            $supervisors = User::where('role', 'supervisor')
+                ->whereNotNull('email')
+                ->get();
+
+            $sentCount = 0;
+            foreach ($supervisors as $supervisor) {
+                Mail::to($supervisor->email)->queue(new RepairCompletedReviewMail($repairReport));
+
+                $serial = $repairReport->repairApproval?->inspection?->apar?->serial_number ?? 'APAR';
+                $this->createInAppNotification(
+                    $supervisor->id,
+                    'repair_completed_review',
+                    "Laporan perbaikan APAR {$serial} telah diselesaikan oleh teknisi. Menunggu verifikasi Anda.",
+                    $repairReport->id
+                );
+
+                $sentCount++;
+            }
+
+            Log::info("Repair completed review email queued to {$sentCount} supervisors for report #{$repairReport->id}");
+            return $sentCount;
+        } catch (\Exception $e) {
+            Log::error('Failed to notify supervisors of repair completion', [
+                'report_id' => $repairReport->id,
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * Send daily shift inspection reminders at 07:00 WIB.
+     */
+    public function sendDailyShiftReminders(): int
+    {
+        if (!Setting::get('mail_notification_enabled', true) || !Setting::get('notify_daily_schedule', true)) {
+            Log::info('Daily shift reminder skipped: disabled in settings');
+            return 0;
+        }
+
+        try {
+            $appTimezone = config('app.timezone', 'Asia/Jakarta');
+            $today = Carbon::today($appTimezone);
+
+            $schedules = InspectionSchedule::with(['apar.aparType', 'assignedUser'])
+                ->where('is_active', true)
+                ->where('is_completed', false)
+                ->whereDate('start_at', $today)
+                ->whereNotNull('assigned_user_id')
+                ->get();
+
+            $grouped = $schedules->groupBy('assigned_user_id');
+            $sentCount = 0;
+
+            foreach ($grouped as $userId => $userSchedules) {
+                $technician = User::find($userId);
+                if ($technician && $technician->email) {
+                    Mail::to($technician->email)->queue(new DailyShiftReminderMail($technician, $userSchedules));
+
+                    $this->createInAppNotification(
+                        $technician->id,
+                        'daily_shift_reminder',
+                        "Pengingat Shift: Anda memiliki {$userSchedules->count()} jadwal inspeksi APAR hari ini.",
+                        $userSchedules->first()?->id
+                    );
+
+                    $sentCount++;
+                }
+            }
+
+            Log::info("Daily shift inspection reminders queued to {$sentCount} technicians for date {$today->toDateString()}");
+            return $sentCount;
+        } catch (\Exception $e) {
+            Log::error('Failed to send daily shift inspection reminders', [
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
+
+    /**
+     * Send APAR expiry early-warning digest.
+     */
+    public function sendAparExpiryAlerts(?int $thresholdDays = null): int
+    {
+        if (!Setting::get('mail_notification_enabled', true)) {
+            return 0;
+        }
+
+        $threshold = $thresholdDays ?? (int) Setting::get('notify_apar_expiry_days', 30);
+
+        try {
+            $targetDate = Carbon::now()->addDays($threshold);
+
+            $expiringApars = Apar::with(['aparType'])
+                ->whereNotNull('expired_at')
+                ->where('expired_at', '<=', $targetDate)
+                ->where('status', '!=', 'damaged')
+                ->orderBy('expired_at', 'asc')
+                ->get();
+
+            if ($expiringApars->isEmpty()) {
+                Log::info("No APARs expiring within {$threshold} days");
+                return 0;
+            }
+
+            $recipients = User::whereIn('role', ['supervisor', 'admin'])
+                ->whereNotNull('email')
+                ->get();
+
+            $sentCount = 0;
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient->email)->queue(new AparExpiryAlertMail($expiringApars, $threshold));
+                $sentCount++;
+            }
+
+            Log::info("APAR expiry digest queued to {$sentCount} recipients ({$expiringApars->count()} tabung)");
+            return $sentCount;
+        } catch (\Exception $e) {
+            Log::error('Failed to send APAR expiry digest', [
+                'error' => $e->getMessage(),
+            ]);
+            return 0;
+        }
+    }
     /**
      * Send bulk inspection reminders for today only
      */

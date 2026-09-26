@@ -7,8 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
-use App\Models\Apar;
-use App\Models\User;
 
 class NotificationController extends Controller
 {

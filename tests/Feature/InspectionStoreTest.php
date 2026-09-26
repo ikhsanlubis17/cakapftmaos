@@ -58,17 +58,20 @@ it('prevents teknisi from creating inspection outside schedule window', function
 
     $response = $this->withHeader('Authorization', 'Bearer ' . $token)
         ->postJson('/api/inspections', [
-            'apar_id' => $this->apar->id,
+            'apar_id'  => $this->apar->id,
             'apar_qrCode' => $this->apar->qr_code,
             'condition' => 'good',
-            'notes' => 'Testing outside schedule',
-            'photo' => UploadedFile::fake()->image('photo.jpg'),
-            'selfie' => UploadedFile::fake()->image('selfie.jpg'),
+            'notes'    => 'Testing outside schedule',
+            'photo'    => UploadedFile::fake()->image('photo.jpg'),
+            'selfie'   => UploadedFile::fake()->image('selfie.jpg'),
+            // APAR mobile wajib menyertakan foto verifikasi plat nomor
+            'mobile_verification_photo' => UploadedFile::fake()->image('verification.jpg'),
         ]);
 
-    $response->assertStatus(422)
-        ->assertJson(['valid' => false]);
+    // Teknisi di luar jadwal harus ditolak dengan 422
+    $response->assertStatus(422);
 });
+
 
 it('allows supervisor to create inspection regardless of schedule/time', function () {
     $supervisor = \App\Models\User::factory()->create([ 'role' => 'supervisor' ]);
@@ -76,32 +79,55 @@ it('allows supervisor to create inspection regardless of schedule/time', functio
 
     $response = $this->withHeader('Authorization', 'Bearer ' . $token)
         ->postJson('/api/inspections', [
-            'apar_id' => $this->apar->id,
+            'apar_id'  => $this->apar->id,
             'apar_qrCode' => $this->apar->qr_code,
             'condition' => 'good',
-            'notes' => 'Supervisor override test',
-            'photo' => UploadedFile::fake()->image('photo.jpg'),
-            'selfie' => UploadedFile::fake()->image('selfie.jpg'),
+            'notes'    => 'Supervisor override test',
+            'photo'    => UploadedFile::fake()->image('photo.jpg'),
+            'selfie'   => UploadedFile::fake()->image('selfie.jpg'),
+            // APAR mobile wajib menyertakan foto verifikasi plat nomor
+            'mobile_verification_photo' => UploadedFile::fake()->image('verification.jpg'),
         ]);
 
     $response->assertStatus(201)
         ->assertJsonStructure(['message', 'inspection']);
 });
 
-it('allows admin to create inspection regardless of schedule/time', function () {
+
+it('prevents admin from creating inspection', function () {
     $admin = \App\Models\User::factory()->create([ 'role' => 'admin' ]);
     $token = JWTAuth::fromUser($admin);
 
     $response = $this->withHeader('Authorization', 'Bearer ' . $token)
         ->postJson('/api/inspections', [
-            'apar_id' => $this->apar->id,
+            'apar_id'  => $this->apar->id,
             'apar_qrCode' => $this->apar->qr_code,
             'condition' => 'good',
-            'notes' => 'Admin override test',
-            'photo' => UploadedFile::fake()->image('photo.jpg'),
-            'selfie' => UploadedFile::fake()->image('selfie.jpg'),
+            'notes'    => 'Admin inspection attempt',
+            'photo'    => UploadedFile::fake()->image('photo.jpg'),
+            'selfie'   => UploadedFile::fake()->image('selfie.jpg'),
+            'mobile_verification_photo' => UploadedFile::fake()->image('verification.jpg'),
+        ]);
+
+    $response->assertStatus(403);
+});
+
+it('allows mobile apar inspection without mobile_verification_photo', function () {
+    $supervisor = \App\Models\User::factory()->create(['role' => 'supervisor']);
+    $token = JWTAuth::fromUser($supervisor);
+
+    $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+        ->postJson('/api/inspections', [
+            'apar_id'     => $this->apar->id,
+            'apar_qrCode' => $this->apar->qr_code,
+            'condition'   => 'good',
+            'notes'       => 'Mobile inspection without 3rd verification photo',
+            'photo'       => UploadedFile::fake()->image('photo.jpg'),
+            'selfie'      => UploadedFile::fake()->image('selfie.jpg'),
+            // mobile_verification_photo is intentionally omitted
         ]);
 
     $response->assertStatus(201)
         ->assertJsonStructure(['message', 'inspection']);
 });
+

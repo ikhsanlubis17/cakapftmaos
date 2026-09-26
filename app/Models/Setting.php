@@ -33,7 +33,8 @@ class Setting extends Model
         $setting = self::where('key', $key)->first();
         
         if (!$setting) {
-            return $default;
+            $metaDefault = \App\Services\SystemSettingsMeta::all()[$key]['default'] ?? null;
+            return $default ?? $metaDefault;
         }
 
         // Convert value based on type
@@ -43,6 +44,14 @@ class Setting extends Model
         Cache::put($cacheKey, $value, now()->addHour());
         
         return $value;
+    }
+
+    /**
+     * Alias for getValue
+     */
+    public static function get(string $key, $default = null)
+    {
+        return self::getValue($key, $default);
     }
 
     /**
@@ -166,14 +175,12 @@ class Setting extends Model
     public static function bulkUpdate(array $settings): bool
     {
         try {
+            $meta = \App\Services\SystemSettingsMeta::all();
             foreach ($settings as $key => $value) {
-                $setting = self::where('key', $key)->first();
-                if ($setting) {
-                    $setting->update([
-                        'value' => is_array($value) ? json_encode($value) : (string) $value
-                    ]);
-                    Cache::forget("setting.{$key}");
-                }
+                $type = $meta[$key]['type'] ?? 'string';
+                $group = $meta[$key]['group'] ?? 'general';
+                $desc = $meta[$key]['description'] ?? null;
+                self::setValue($key, $value, $type, $group, $desc);
             }
             return true;
         } catch (\Exception $e) {

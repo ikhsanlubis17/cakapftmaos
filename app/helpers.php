@@ -29,10 +29,16 @@ if (! function_exists('getAparStatusLabel')) {
     /**
      * Get human-readable APAR status label
      */
-    function getAparStatusLabel(string $status): string
+    function getAparStatusLabel(string|\App\Enums\AparStatus|null $status): string
     {
+        if ($status instanceof \App\Enums\AparStatus) {
+            return $status->label();
+        }
+        if ($status === null) {
+            return '-';
+        }
         $enum = \App\Enums\AparStatus::tryFrom($status);
-        return $enum ? $enum->label() : ucfirst(str_replace('_', ' ', $status));
+        return $enum ? $enum->label() : ucfirst(str_replace('_', ' ', (string) $status));
     }
 }
 
@@ -40,8 +46,14 @@ if (! function_exists('getAparStatusClass')) {
     /**
      * Get CSS class for APAR status badge
      */
-    function getAparStatusClass(string $status): string
+    function getAparStatusClass(string|\App\Enums\AparStatus|null $status): string
     {
+        if ($status instanceof \App\Enums\AparStatus) {
+            return $status->badgeClass();
+        }
+        if ($status === null) {
+            return 'status-inactive';
+        }
         $enum = \App\Enums\AparStatus::tryFrom($status);
         return $enum ? $enum->badgeClass() : 'status-inactive';
     }
@@ -69,23 +81,32 @@ if (! function_exists('getActionLabel')) {
             'start_inspection' => 'Mulai Inspeksi',
             'submit_inspection' => 'Submit Inspeksi',
             'validation_failed' => 'Validasi Gagal',
+            'update_inspection' => 'Update Inspeksi',
+            'delete_inspection' => 'Hapus Inspeksi',
+            'view_inspection' => 'Lihat Inspeksi',
             default => ucfirst(str_replace('_', ' ', $action)),
         };
     }
 }
 
-if (! function_exists('getActionClass')) {
+if (! function_exists('haversine_distance_meters')) {
     /**
-     * Get CSS class for action in audit logs
+     * Calculate distance between two coordinates in meters using Haversine formula.
+     * Shared across InspectionService, AuditLogService, and Apar model.
      */
-    function getActionClass(string $action): string
+    function haversine_distance_meters(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
-        return match ($action) {
-            'scan_qr' => 'scan',
-            'start_inspection' => 'inspection',
-            'submit_inspection' => 'inspection',
-            'validation_failed' => 'validation',
-            default => 'default',
-        };
+        $earthRadius = config('inspection.location.earth_radius_meters', 6371000);
+
+        $latDelta = deg2rad($lat2 - $lat1);
+        $lngDelta = deg2rad($lng2 - $lng1);
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lngDelta / 2) * sin($lngDelta / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return $earthRadius * $c;
     }
 }

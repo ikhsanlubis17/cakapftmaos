@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Apar extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -197,18 +197,7 @@ class Apar extends Model
             return 0;
         }
 
-        $earthRadius = 6371000; // Earth's radius in meters
-
-        $latDelta = deg2rad($lat - $this->latitude);
-        $lngDelta = deg2rad($lng - $this->longitude);
-
-        $a = sin($latDelta / 2) * sin($latDelta / 2) +
-             cos(deg2rad($this->latitude)) * cos(deg2rad($lat)) *
-             sin($lngDelta / 2) * sin($lngDelta / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
+        return haversine_distance_meters((float) $this->latitude, (float) $this->longitude, $lat, $lng);
     }
 
     /**

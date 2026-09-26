@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Carbon\Carbon;
 
 class RepairApproval extends Model
 {
@@ -15,6 +14,7 @@ class RepairApproval extends Model
     protected $fillable = [
         'inspection_id',
         'approved_by',
+        'assigned_user_id',
         'status',
         'admin_notes', // Deprecated - use supervisor_notes
         'supervisor_notes',
@@ -45,6 +45,22 @@ class RepairApproval extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the technician assigned to carry out the repair.
+     */
+    public function assignedTeknisi(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    /**
+     * Get the technician assigned to carry out the repair (alias).
+     */
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
     }
 
     /**
@@ -90,11 +106,12 @@ class RepairApproval extends Model
     /**
      * Approve the repair.
      */
-    public function approve(int $adminId, string $supervisorNotes): void
+    public function approve(int $adminId, string $supervisorNotes, ?int $assignedUserId = null): void
     {
         $this->update([
             'status' => 'approved',
             'approved_by' => $adminId,
+            'assigned_user_id' => $assignedUserId,
             'supervisor_notes' => $supervisorNotes,
             'admin_notes' => $supervisorNotes, // Keep for backward compatibility
             'approved_at' => now(),

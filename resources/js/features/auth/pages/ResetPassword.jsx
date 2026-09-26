@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearch } from '@tanstack/react-router';
+import { tokenStorage } from '@/services/tokenStorage';
 import { useToast } from '@/contexts/ToastContext';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import {
@@ -21,6 +22,11 @@ const ResetPassword = () => {
 
     const token = search?.token || '';
     const email = search?.email || '';
+
+    useEffect(() => {
+        // Purge any preexisting session to avoid accidental cross-account leakage
+        tokenStorage.remove();
+    }, []);
 
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -185,15 +191,20 @@ const ResetPassword = () => {
                                     Kata sandi Anda berhasil diubah. Silakan login menggunakan kata sandi baru.
                                 </p>
                             </div>
-                            <Link
-                                to="/login"
-                                className="w-full flex justify-center items-center gap-2 py-3 px-4 text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] transition-all duration-150"
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    tokenStorage.remove();
+                                    const emailParam = email ? `?email=${encodeURIComponent(email)}&reset=1` : '?reset=1';
+                                    window.location.href = `/login${emailParam}`;
+                                }}
+                                className="w-full flex justify-center items-center gap-2 py-3 px-4 text-sm font-semibold rounded-[6px] text-white bg-[#11468F] hover:bg-[#0d3873] transition-all duration-150 cursor-pointer shadow-sm"
                             >
                                 Masuk ke Sistem
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                 </svg>
-                            </Link>
+                            </button>
                         </div>
                     )}
 

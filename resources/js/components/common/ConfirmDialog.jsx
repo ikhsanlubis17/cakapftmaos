@@ -1,57 +1,83 @@
-import React from 'react';
+import React, { useEffect } from "react";
 import {
     ExclamationTriangleIcon,
     InformationCircleIcon,
     CheckCircleIcon,
     XCircleIcon,
     XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
+import Button from "@/components/ui/Button";
 
 const ConfirmDialog = ({
     isOpen,
     onClose,
     onConfirm,
-    title = 'Konfirmasi',
-    message = 'Apakah Anda yakin ingin melanjutkan?',
-    type = 'warning',
-    confirmText = 'Ya, Lanjutkan',
-    cancelText = 'Batal',
-    confirmButtonColor = 'red',
+    title = "Konfirmasi",
+    message = "Apakah Anda yakin ingin melanjutkan?",
+    type = "warning",
+    confirmText = "Ya, Lanjutkan",
+    cancelText = "Batal",
+    confirmButtonColor = "red",
     showCancel = true,
+    loading = false,
+    isLoading = false,
 }) => {
+    // Close on Escape key
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape" && isOpen) {
+                onClose();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const getIcon = () => {
-        const iconClasses = "h-12 w-12";
-        
+        const iconClasses = "h-8 w-8";
+
         switch (type) {
-            case 'success':
-                return <CheckCircleIcon className={`${iconClasses} text-green-600`} />;
-            case 'error':
-                return <XCircleIcon className={`${iconClasses} text-red-600`} />;
-            case 'info':
-                return <InformationCircleIcon className={`${iconClasses} text-blue-600`} />;
-            case 'warning':
+            case "success":
+                return (
+                    <div className="p-2.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        <CheckCircleIcon className={iconClasses} />
+                    </div>
+                );
+            case "error":
+                return (
+                    <div className="p-2.5 rounded-full bg-rose-50 text-[#DA1212] border border-rose-200">
+                        <XCircleIcon className={iconClasses} />
+                    </div>
+                );
+            case "info":
+                return (
+                    <div className="p-2.5 rounded-full bg-blue-50 text-[#11468F] border border-blue-200">
+                        <InformationCircleIcon className={iconClasses} />
+                    </div>
+                );
+            case "warning":
             default:
-                return <ExclamationTriangleIcon className={`${iconClasses} text-yellow-600`} />;
+                return (
+                    <div className="p-2.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                        <ExclamationTriangleIcon className={iconClasses} />
+                    </div>
+                );
         }
     };
 
-    const getConfirmButtonStyle = () => {
+    const getButtonVariant = () => {
         switch (confirmButtonColor) {
-            case 'red':
-                return 'bg-[#DA1212] hover:bg-[#b00f0f] text-white focus:ring-[#DA1212]';
-            case 'green':
-                return 'bg-emerald-600 hover:bg-emerald-700 text-white focus:ring-emerald-500';
-            case 'blue':
-            case 'yellow':
+            case "red":
+                return "destructive";
+            case "green":
+                return "primary";
+            case "blue":
+            case "yellow":
             default:
-                return 'bg-[#11468F] hover:bg-[#0d3873] text-white focus:ring-[#11468F]';
+                return "navy";
         }
-    };
-
-    const handleConfirm = () => {
-        onConfirm();
     };
 
     const handleBackdropClick = (e) => {
@@ -62,56 +88,69 @@ const ConfirmDialog = ({
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex min-h-screen items-center justify-center p-4 sm:p-6">
-                {/* Backdrop */}
-                <div 
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-150 ease-in-out"
+            <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 text-center">
+                {/* Backdrop with blur */}
+                <div
+                    className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200 ease-out"
                     onClick={handleBackdropClick}
+                    aria-hidden="true"
                 />
-                
-                {/* Dialog */}
-                <div className="relative bg-white rounded-[6px] shadow-xl max-w-md w-full mx-auto border border-[#EEEEEE] transform transition-all duration-150 ease-in-out scale-100 opacity-100 overflow-hidden">
+
+                {/* Dialog Container */}
+                <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full mx-auto border border-slate-200 text-left transform transition-all duration-200 ease-out overflow-hidden z-10">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-5 border-b border-[#EEEEEE]">
-                        <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0">
-                                {getIcon()}
+                    <div className="flex items-start justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+                        <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0">{getIcon()}</div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                    {title}
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Tindakan operasional sistem
+                                </p>
                             </div>
-                            <h3 className="text-base font-bold text-slate-900 leading-6 tracking-tight">
-                                {title}
-                            </h3>
                         </div>
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-slate-600 transition-colors duration-150 rounded-[4px] p-1.5 hover:bg-[#EEEEEE]"
+                            disabled={loading || isLoading}
+                            className="text-slate-400 hover:text-slate-600 transition-colors rounded-md p-1 hover:bg-slate-200/50 disabled:opacity-40 disabled:cursor-not-allowed"
+                            title="Tutup"
                         >
                             <XMarkIcon className="h-5 w-5" />
                         </button>
                     </div>
-                    
+
                     {/* Content */}
-                    <div className="px-6 py-4">
-                        <p className="text-slate-600 leading-relaxed text-sm font-medium">
+                    <div className="p-6">
+                        <p className="text-slate-700 leading-relaxed text-sm font-normal">
                             {message}
                         </p>
                     </div>
-                    
+
                     {/* Actions */}
-                    <div className="flex flex-col sm:flex-row gap-2.5 sm:justify-end p-4 bg-slate-50 border-t border-[#EEEEEE]">
+                    <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end p-4 bg-slate-50 border-t border-slate-100">
                         {showCancel && (
-                            <button
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={onClose}
-                                className="w-full sm:w-auto px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-[6px] hover:bg-[#EEEEEE] transition-colors duration-150"
+                                disabled={loading || isLoading}
+                                className="w-full sm:w-auto h-10 text-xs disabled:opacity-50"
                             >
                                 {cancelText}
-                            </button>
+                            </Button>
                         )}
-                        <button
-                            onClick={handleConfirm}
-                            className={`w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-[6px] shadow-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${getConfirmButtonStyle()}`}
+                        <Button
+                            variant={getButtonVariant()}
+                            size="sm"
+                            onClick={onConfirm}
+                            isLoading={loading || isLoading}
+                            disabled={loading || isLoading}
+                            className="w-full sm:w-auto h-10 text-xs"
                         >
                             {confirmText}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -119,4 +158,4 @@ const ConfirmDialog = ({
     );
 };
 
-export default ConfirmDialog; 
+export default ConfirmDialog;

@@ -9,8 +9,14 @@ export interface Apar {
     valid_radius?: number;
     qr_code: string;
     status: string;
+    capacity?: number;
+    expired_at?: string;
+    manufactured_date?: string;
+    notes?: string;
     aparType?: AparType;
+    apar_type?: AparType;
     tankTruck?: TankTruck;
+    tank_truck?: TankTruck;
 }
 
 export interface AparType {

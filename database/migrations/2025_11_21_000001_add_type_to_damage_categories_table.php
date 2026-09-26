@@ -17,7 +17,7 @@ return new class extends Migration
         });
 
         // Set default type to first active APAR type for existing records
-        $firstAparType = \App\Models\AparType::active()->first();
+        $firstAparType = \DB::table('apar_types')->where('is_active', true)->first();
         if ($firstAparType) {
             \DB::table('damage_categories')
                 ->whereNull('type')

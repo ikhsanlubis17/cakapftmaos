@@ -63,6 +63,11 @@ class QrCodeService
      */
     public function generateQrCodePng(string $data, array $options = []): string
     {
+        // If imagick is not available on system, fall back to SVG vector QR code
+        if (!extension_loaded('imagick')) {
+            return $this->generateQrCode($data, $options);
+        }
+
         // Suppress warnings during QR code generation
         $previousErrorReporting = error_reporting();
         error_reporting(E_ALL & ~E_WARNING & ~E_NOTICE);

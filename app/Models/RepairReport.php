@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RepairReport extends Model
@@ -44,6 +45,14 @@ class RepairReport extends Model
      * Get the user who reported the repair.
      */
     public function reporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    /**
+     * Get the user who reported the repair (alias).
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
@@ -133,5 +142,32 @@ class RepairReport extends Model
             'reviewed_by' => $reviewerId,
             'reviewed_at' => now(),
         ]);
+    }
+
+    /**
+     * Normalize storage URL to relative path.
+     */
+    protected function beforePhotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    protected function afterPhotoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->normalizeStorageUrl($value),
+        );
+    }
+
+    private function normalizeStorageUrl(?string $url): ?string
+    {
+        if (!$url) return null;
+        if (str_contains($url, '/storage/')) {
+            $pos = strpos($url, '/storage/');
+            return substr($url, $pos);
+        }
+        return $url;
     }
 }

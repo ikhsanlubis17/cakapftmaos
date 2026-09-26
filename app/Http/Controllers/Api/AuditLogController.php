@@ -23,8 +23,11 @@ class AuditLogController extends Controller
     {
         $filters = [
             'user_id' => $request->get('user_id'),
+            'user_name' => $request->get('user_name'),
             'apar_id' => $request->get('apar_id'),
+            'apar_serial' => $request->get('apar_serial'),
             'action' => $request->get('action'),
+            'ip_address' => $request->get('ip_address'),
             'is_successful' => $request->get('is_successful'),
             'start_date' => $request->get('start_date'),
             'end_date' => $request->get('end_date'),
@@ -32,7 +35,10 @@ class AuditLogController extends Controller
 
         $logs = $this->auditLogService->getAuditLogs($filters);
 
-        return response()->json($logs);
+        return response()->json([
+            'data' => $logs,
+            'total' => $logs->count(),
+        ]);
     }
 
     /**
@@ -76,8 +82,11 @@ class AuditLogController extends Controller
     {
         $filters = [
             'user_id' => $request->get('user_id'),
+            'user_name' => $request->get('user_name'),
             'apar_id' => $request->get('apar_id'),
+            'apar_serial' => $request->get('apar_serial'),
             'action' => $request->get('action'),
+            'ip_address' => $request->get('ip_address'),
             'is_successful' => $request->get('is_successful'),
             'start_date' => $request->get('start_date'),
             'end_date' => $request->get('end_date'),
@@ -92,35 +101,19 @@ class AuditLogController extends Controller
     }
 
     /**
-     * Get audit log anomalies
-     */
-    public function anomalies(Request $request)
-    {
-        $filters = [
-            'user_id' => $request->get('user_id'),
-            'apar_id' => $request->get('apar_id'),
-            'start_date' => $request->get('start_date'),
-            'end_date' => $request->get('end_date'),
-        ];
-
-        $anomalies = $this->auditLogService->detectAnomalies($filters);
-
-        return response()->json([
-            'anomalies' => $anomalies,
-            'total' => count($anomalies),
-        ]);
-    }
-
-    /**
      * Clean up old audit logs
      */
     public function cleanup(Request $request)
     {
+        // Support both 'days_to_keep' and 'days' parameter names
+        $days = $request->input('days_to_keep', $request->input('days'));
+        $request->merge(['days_to_keep' => $days]);
+
         $request->validate([
             'days_to_keep' => 'required|integer|min:30|max:365',
         ]);
 
-        $result = $this->auditLogService->cleanupOldLogs($request->input('days_to_keep'));
+        $result = $this->auditLogService->cleanupOldLogs((int) $request->input('days_to_keep'));
 
         return response()->json([
             'message' => "Successfully deleted {$result['deleted_count']} old audit logs",

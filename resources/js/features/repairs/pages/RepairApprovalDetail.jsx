@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,27 +16,24 @@ import {
     DocumentTextIcon,
     CameraIcon,
     WrenchScrewdriverIcon,
-    ChatBubbleLeftRightIcon,
     XMarkIcon,
     ArrowsPointingOutIcon,
     ShieldCheckIcon,
-    XCircleIcon as XCircleIconSolid,
-    CheckCircleIcon as CheckCircleIconSolid
+    ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { formatStorageUrl } from '@/utils/imageUrl';
+import RepairActionModal from '../components/RepairActionModal';
 
 const RepairApprovalDetail = () => {
     const { id } = useParams({ strict: false });
     const navigate = useNavigate();
     const { showSuccess, showError } = useToast();
-    const { apiClient } = useAuth();
+    const { apiClient, user } = useAuth();
     const queryClient = useQueryClient();
 
-    const [notes, setNotes] = useState('');
-    const [rejectionReason, setRejectionReason] = useState('');
-    const [submitting, setSubmitting] = useState(false);
     const [showActionModal, setShowActionModal] = useState(false);
-    const [actionType, setActionType] = useState(null);
-    const [validationErrors, setValidationErrors] = useState({});
+    const [actionType, setActionType] = useState('approve');
+    const [validationErrors, setValidationErrors] = useState(null);
     
     // Lightbox State
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -53,23 +50,43 @@ const RepairApprovalDetail = () => {
         throwOnError: false,
     });
 
+    // Fetch active technicians list for assignment (Supervisor/Admin only)
+    const { data: teknisiList = [] } = useQuery({
+        queryKey: ['users', 'teknisi', 'active'],
+        queryFn: async () => {
+            const res = await apiClient.get('/api/users?role=teknisi&is_active=true');
+            return res.data?.data || res.data || [];
+        },
+        enabled: !!id && (user?.role === 'admin' || user?.role === 'supervisor'),
+        staleTime: 1000 * 60 * 5,
+    });
+
     const approveMutation = useMutation({
-        mutationFn: ({ id, notes }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { supervisor_notes: notes }),
+        mutationFn: ({ id, notes, assignedTeknisiId, scheduleDate, scheduleTime }) => apiClient.post(`/api/repair-approvals/${id}/approve`, { 
+            supervisor_notes: notes,
+            assigned_teknisi_id: assignedTeknisiId,
+            schedule_date: scheduleDate,
+            schedule_time: scheduleTime,
+        }),
         onMutate: async ({ id, notes }) => {
             await queryClient.cancelQueries({ queryKey: ['repair-approval', id] });
             const previous = queryClient.getQueryData(['repair-approval', id]);
-            queryClient.setQueryData(['repair-approval', id], (old) => ({ ...(old || {}), status: 'approved', admin_notes: notes }));
+            queryClient.setQueryData(['repair-approval', id], (old) => ({ ...(old || {}), status: 'approved', admin_notes: notes, supervisor_notes: notes }));
             return { previous };
         },
         onError: (err, vars, context) => {
             if (context?.previous) queryClient.setQueryData(['repair-approval', id], context.previous);
             console.error('Error approving:', err);
+            if (err?.response?.status === 422 && err?.response?.data?.errors) {
+                setValidationErrors(err.response.data.errors);
+            }
             showError(err?.response?.data?.message || 'Gagal memproses tindakan');
         },
         onSuccess: () => {
-            showSuccess('Persetujuan berhasil disetujui');
+            showSuccess('Persetujuan berhasil disetujui dan teknisi telah ditugaskan');
             queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
             queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+            setShowActionModal(false);
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['repair-approval', id] })
     });
@@ -100,44 +117,26 @@ const RepairApprovalDetail = () => {
             showSuccess('Persetujuan berhasil ditolak');
             queryClient.invalidateQueries({ queryKey: ['repair-approvals'] });
             queryClient.invalidateQueries({ queryKey: ['repair-approvals-stats'] });
+            setShowActionModal(false);
         },
         onSettled: () => queryClient.invalidateQueries({ queryKey: ['repair-approval', id] })
     });
 
-    const handleAction = async () => {
-        // Clear previous validation errors
-        setValidationErrors({});
-
-        // Validate supervisor notes (required for both approve and reject)
-        if (!notes.trim() || notes.trim().length < 10) {
-            setValidationErrors({
-                supervisor_notes: ['Catatan supervisor wajib diisi minimal 10 karakter. Jelaskan alasan keputusan Anda.']
+    const handleActionConfirm = async (formData) => {
+        if (actionType === 'approve') {
+            await approveMutation.mutateAsync({ 
+                id, 
+                notes: formData.notes,
+                assignedTeknisiId: formData.assignedTeknisiId,
+                scheduleDate: formData.scheduleDate,
+                scheduleTime: formData.scheduleTime
             });
-            return;
-        }
-
-        // Validate rejection reason (required only for reject)
-        if (actionType === 'reject' && !rejectionReason.trim()) {
-            setValidationErrors({
-                rejection_reason: ['Alasan penolakan wajib dipilih']
+        } else {
+            await rejectMutation.mutateAsync({
+                id,
+                notes: formData.notes,
+                rejectionReason: formData.rejectionReason
             });
-            return;
-        }
-
-        setSubmitting(true);
-        try {
-            if (actionType === 'approve') {
-                approveMutation.mutate({ id, notes: notes.trim() });
-            } else if (actionType === 'reject') {
-                rejectMutation.mutate({ id, notes: notes.trim(), rejectionReason });
-            }
-
-            setShowActionModal(false);
-            setNotes('');
-            setRejectionReason('');
-            setActionType(null);
-        } finally {
-            setSubmitting(false);
         }
     };
 
@@ -208,8 +207,8 @@ const RepairApprovalDetail = () => {
                             Coba Lagi
                         </button>
                         <button
-                            onClick={() => navigate({ to: '/repair-approvals' })}
-                            className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-4 py-2.5 rounded-[6px] transition-colors text-sm"
+                            onClick={() => navigate({ to: user?.role === 'teknisi' ? '/my-repairs' : '/repair-approvals' })}
+                            className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold px-4 py-2.5 rounded-[6px] transition-colors text-sm cursor-pointer"
                         >
                             Kembali ke Daftar
                         </button>
@@ -224,7 +223,7 @@ const RepairApprovalDetail = () => {
 
     const openLightbox = (photoUrl, caption) => {
         if (!photoUrl) return;
-        setSelectedPhoto({ url: photoUrl, caption });
+        setSelectedPhoto({ url: formatStorageUrl(photoUrl), caption });
         setLightboxOpen(true);
     };
 
@@ -235,13 +234,21 @@ const RepairApprovalDetail = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button 
-                            onClick={() => window.history.back()}
-                            className="p-2 hover:bg-slate-100 rounded-[6px] transition-colors text-slate-600 hover:text-slate-900"
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    window.history.back();
+                                } else {
+                                    navigate({ to: user?.role === 'teknisi' ? '/my-repairs' : '/repair-approvals' });
+                                }
+                            }}
+                            className="p-2 hover:bg-slate-100 rounded-[6px] transition-colors text-slate-600 hover:text-slate-900 cursor-pointer"
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
                         </button>
                         <div>
-                            <h1 className="text-lg font-bold text-slate-900">Detail Persetujuan Perbaikan</h1>
+                            <h1 className="text-lg font-bold text-slate-900">
+                                {user?.role === 'teknisi' ? 'Detail Tugas Perbaikan' : 'Detail Persetujuan Perbaikan'}
+                            </h1>
                             <p className="text-xs text-slate-500">APAR {approval.inspection?.apar?.serial_number || '-'}</p>
                         </div>
                     </div>
@@ -352,7 +359,7 @@ const RepairApprovalDetail = () => {
                                                     className="relative aspect-square w-full rounded-[4px] overflow-hidden cursor-pointer group bg-slate-100 border border-slate-200"
                                                     onClick={() => openLightbox(damage.damage_photo_url, `Kerusakan: ${damage.damage_category?.name}`)}
                                                 >
-                                                    <img src={damage.damage_photo_url} alt="Rusak" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                                    <img src={formatStorageUrl(damage.damage_photo_url)} alt="Rusak" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                                         <ArrowsPointingOutIcon className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-all" />
                                                     </div>
@@ -371,7 +378,7 @@ const RepairApprovalDetail = () => {
                                                     className="relative aspect-square w-full rounded-[4px] overflow-hidden cursor-pointer group bg-slate-100 border border-emerald-200"
                                                     onClick={() => openLightbox(damage.repair_photo_url, `Perbaikan: ${damage.damage_category?.name}`)}
                                                 >
-                                                    <img src={damage.repair_photo_url} alt="Perbaikan" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                                    <img src={formatStorageUrl(damage.repair_photo_url)} alt="Perbaikan" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                                         <ArrowsPointingOutIcon className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-all" />
                                                     </div>
@@ -419,7 +426,7 @@ const RepairApprovalDetail = () => {
                                             className="relative aspect-square rounded-[4px] overflow-hidden cursor-pointer group border border-slate-200"
                                             onClick={() => openLightbox(approval.inspection.photo_url, 'Foto Kondisi APAR')}
                                         >
-                                            <img src={approval.inspection.photo_url} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                            <img src={formatStorageUrl(approval.inspection.photo_url)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                                 <ArrowsPointingOutIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-all" />
                                             </div>
@@ -435,7 +442,7 @@ const RepairApprovalDetail = () => {
                                             className="relative aspect-square rounded-[4px] overflow-hidden cursor-pointer group border border-slate-200"
                                             onClick={() => openLightbox(approval.inspection.selfie_url, 'Foto Selfie')}
                                         >
-                                            <img src={approval.inspection.selfie_url} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                            <img src={formatStorageUrl(approval.inspection.selfie_url)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                                 <ArrowsPointingOutIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-all" />
                                             </div>
@@ -453,7 +460,7 @@ const RepairApprovalDetail = () => {
                                                 className="relative aspect-square rounded-[4px] overflow-hidden cursor-pointer group border border-rose-200 w-full"
                                                 onClick={() => openLightbox(damage.damage_photo_url, `Kerusakan: ${damage.damage_category?.name}`)}
                                             >
-                                                <img src={damage.damage_photo_url} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                                <img src={formatStorageUrl(damage.damage_photo_url)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                                     <ArrowsPointingOutIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-all" />
                                                 </div>
@@ -468,6 +475,91 @@ const RepairApprovalDetail = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Laporan Hasil Perbaikan Teknisi (Jika sudah dilaporkan) */}
+                        {(approval.repair_report || approval.repairReport) && (() => {
+                            const report = approval.repair_report || approval.repairReport;
+                            return (
+                                <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 overflow-hidden">
+                                    <div className="px-5 py-3 border-b border-slate-200 bg-blue-50/60 flex items-center justify-between">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-[4px] bg-[#11468F] text-white flex items-center justify-center">
+                                                <WrenchScrewdriverIcon className="h-4 w-4" />
+                                            </div>
+                                            <h3 className="font-bold text-slate-900 text-sm tracking-wide uppercase">
+                                                Laporan Hasil Perbaikan Lapangan
+                                            </h3>
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider border ${
+                                            report.status === 'pending_review' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                            report.status === 'approved' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                                            report.status === 'needs_rework' ? 'bg-rose-100 text-rose-800 border-rose-200' :
+                                            'bg-slate-100 text-slate-700 border-slate-200'
+                                        }`}>
+                                            {report.status === 'pending_review' ? 'Menunggu Review SPV' :
+                                             report.status === 'approved' ? 'Telah Disetujui SPV' :
+                                             report.status === 'needs_rework' ? 'Perlu Perbaikan Ulang' : report.status}
+                                        </span>
+                                    </div>
+                                    <div className="p-5 space-y-4">
+                                        {/* Deskripsi Tindakan */}
+                                        <div className="bg-slate-50 p-3.5 rounded-[4px] border border-slate-200">
+                                            <span className="text-xs font-bold text-[#041562] block mb-1">Catatan Tindakan Teknisi:</span>
+                                            <p className="text-sm text-slate-800 leading-relaxed">{report.repair_description}</p>
+                                            <div className="mt-2.5 pt-2 border-t border-slate-200 text-xs text-slate-500 flex flex-wrap gap-4">
+                                                <span>Pelapor: <strong className="text-slate-700">{report.reporter?.name || 'Teknisi'}</strong></span>
+                                                <span>Selesai: <strong className="text-slate-700">{report.repair_completed_at ? new Date(report.repair_completed_at).toLocaleString('id-ID') : '-'}</strong></span>
+                                                {report.repair_lat && (
+                                                    <span>GPS: <strong className="font-mono text-slate-700">{report.repair_lat}, {report.repair_lng}</strong></span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Perbandingan Foto Sebelum vs Sesudah */}
+                                        <div>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Dokumentasi Foto Fisik</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {report.before_photo_url && (
+                                                    <div
+                                                        className="relative aspect-video rounded-[4px] overflow-hidden cursor-pointer group border border-slate-200 bg-black"
+                                                        onClick={() => openLightbox(report.before_photo_url, 'Foto Sebelum Perbaikan')}
+                                                    >
+                                                        <img src={formatStorageUrl(report.before_photo_url)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        <div className="absolute top-2 left-2 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                                                            SEBELUM PERBAIKAN
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {report.after_photo_url && (
+                                                    <div
+                                                        className="relative aspect-video rounded-[4px] overflow-hidden cursor-pointer group border border-slate-200 bg-black"
+                                                        onClick={() => openLightbox(report.after_photo_url, 'Foto Setelah Perbaikan')}
+                                                    >
+                                                        <img src={formatStorageUrl(report.after_photo_url)} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        <div className="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                                                            SELESAI PERBAIKAN
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Tautan Review jika masih pending (Khusus Supervisor / Admin) */}
+                                        {report.status === 'pending_review' && (user?.role === 'supervisor' || user?.role === 'admin') && (
+                                            <div className="pt-2 flex justify-end">
+                                                <button
+                                                    onClick={() => navigate({ to: '/repair-reports/review' })}
+                                                    className="px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white text-xs font-bold uppercase tracking-wider rounded-[4px] shadow-sm flex items-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
+                                                >
+                                                    <CheckCircleIcon className="h-4 w-4" />
+                                                    Buka Halaman Review Laporan
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                     </div>
 
@@ -536,11 +628,41 @@ const RepairApprovalDetail = () => {
                             </div>
                         )}
 
-                        {/* Action Card (Only if Pending) */}
-                        {approval.status === 'pending' && (
+                        {/* Assigned Technician Card (if approved & assigned) */}
+                        {approval.assigned_teknisi && (
+                            <div className="bg-white rounded-[6px] shadow-sm border border-blue-200 p-5 bg-blue-50/20">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="font-bold text-slate-900 text-sm tracking-wide uppercase flex items-center gap-2">
+                                        <WrenchScrewdriverIcon className="h-4 w-4 text-[#11468F]" />
+                                        Teknisi Ditugaskan
+                                    </h3>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-blue-100 text-[#11468F] border border-blue-200">
+                                        Penugasan SPV
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-[4px] bg-[#11468F] text-white flex items-center justify-center font-bold text-sm">
+                                        {approval.assigned_teknisi.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900">{approval.assigned_teknisi.name}</p>
+                                        <p className="text-xs text-slate-500">{approval.assigned_teknisi.email || 'Teknisi Lapangan'}</p>
+                                    </div>
+                                </div>
+                                {approval.supervisor_notes && (
+                                    <div className="mt-3.5 p-3 bg-white rounded-[4px] text-xs text-slate-700 border border-slate-200 shadow-2xs">
+                                        <span className="font-bold text-[#041562] block mb-1">Instruksi Kerja Supervisor:</span>
+                                        <p className="leading-relaxed text-slate-600">{approval.supervisor_notes}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Action Card: Supervisor/Admin Decision (Pending Status) */}
+                        {approval.status === 'pending' && (user?.role === 'supervisor' || user?.role === 'admin') && (
                              <div className="bg-white rounded-[6px] shadow-sm border border-slate-200 p-5 sticky top-24">
                                 <h3 className="font-bold text-slate-900 text-sm tracking-wide uppercase mb-2">Tindakan Diperlukan</h3>
-                                <p className="text-xs text-slate-500 mb-5 leading-relaxed">Sebagai Supervisor, tinjau hasil inspeksi ini dan berikan keputusan.</p>
+                                <p className="text-xs text-slate-500 mb-5 leading-relaxed">Sebagai Supervisor, tinjau hasil inspeksi ini, tentukan penugasan teknisi dan jadwal perbaikan.</p>
                                 
                                 <div className="space-y-3">
                                     <button
@@ -548,120 +670,111 @@ const RepairApprovalDetail = () => {
                                             setActionType('approve');
                                             setShowActionModal(true);
                                         }}
-                                        className="w-full py-2.5 px-4 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent rounded-[6px] font-bold shadow-sm transition-all flex items-center justify-center gap-2 text-sm"
+                                        className="w-full py-2.5 px-4 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent rounded-[6px] font-bold shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
                                     >
-                                        <CheckCircleIconSolid className="h-4 w-4" />
-                                        Setujui Perbaikan
+                                        <CheckCircleIcon className="h-4 w-4" />
+                                        Setujui & Tugaskan Teknisi
                                     </button>
                                     <button
                                         onClick={() => {
                                             setActionType('reject');
                                             setShowActionModal(true);
                                         }}
-                                        className="w-full py-2.5 px-4 bg-[#DA1212] hover:bg-red-700 text-white rounded-[6px] font-bold transition-all flex items-center justify-center gap-2 text-sm"
+                                        className="w-full py-2.5 px-4 bg-[#DA1212] hover:bg-red-700 text-white rounded-[6px] font-bold transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
                                     >
-                                        <XCircleIconSolid className="h-4 w-4" />
-                                        Tolak
+                                        <XCircleIcon className="h-4 w-4" />
+                                        Tolak Permintaan
                                     </button>
                                 </div>
                             </div>
+                        )}
+
+                        {/* Action Card: Status Info for Teknisi when Pending */}
+                        {approval.status === 'pending' && user?.role === 'teknisi' && (
+                            <div className="bg-white rounded-[6px] shadow-sm border border-amber-200 p-5 bg-amber-50/20">
+                                <h3 className="font-bold text-slate-900 text-sm tracking-wide uppercase mb-2 flex items-center gap-2">
+                                    <ClockIcon className="h-4 w-4 text-amber-600" />
+                                    Menunggu Evaluasi Supervisor
+                                </h3>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    Permohonan perbaikan tabung APAR ini sedang dalam antrean evaluasi dan disposisi teknisi oleh Supervisor operasional.
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Action Card: Teknisi Next Steps when Approved */}
+                        {approval.status === 'approved' && user?.role === 'teknisi' && (
+                            <>
+                                {!approval.repair_report ? (
+                                    <div className="bg-white rounded-[6px] shadow-sm border border-blue-200 p-5 bg-blue-50/20 sticky top-24">
+                                        <h3 className="font-bold text-slate-900 text-sm tracking-wide uppercase mb-2 flex items-center gap-2">
+                                            <WrenchScrewdriverIcon className="h-4 w-4 text-[#11468F]" />
+                                            Tindakan Teknisi
+                                        </h3>
+                                        <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+                                            Perbaikan telah disetujui. Lakukan perbaikan fisik di lokasi APAR sesuai instruksi Supervisor dan unggah bukti foto perbaikan.
+                                        </p>
+                                        <button
+                                            onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
+                                            className="w-full py-2.5 px-4 bg-[#11468F] hover:bg-[#0d3873] text-white rounded-[6px] font-bold shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+                                        >
+                                            <WrenchScrewdriverIcon className="h-4 w-4" />
+                                            Lakukan Perbaikan Sekarang
+                                        </button>
+                                    </div>
+                                ) : approval.repair_report.status === 'rework_needed' ? (
+                                    <div className="bg-white rounded-[6px] shadow-sm border border-rose-200 p-5 bg-rose-50/20 sticky top-24">
+                                        <h3 className="font-bold text-rose-900 text-sm tracking-wide uppercase mb-2 flex items-center gap-2">
+                                            <ExclamationTriangleIcon className="h-4 w-4 text-rose-600" />
+                                            Perlu Perbaikan Ulang
+                                        </h3>
+                                        <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+                                            Supervisor meminta perbaikan ulang terhadap hasil perbaikan sebelumnya. Silakan periksa catatan dan unggah laporan perbaikan ulang.
+                                        </p>
+                                        <button
+                                            onClick={() => navigate({ to: `/repair-report/${approval.id}` })}
+                                            className="w-full py-2.5 px-4 bg-rose-700 hover:bg-rose-800 text-white rounded-[6px] font-bold shadow-sm transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+                                        >
+                                            <ArrowPathIcon className="h-4 w-4" />
+                                            Perbaiki Ulang Sekarang
+                                        </button>
+                                    </div>
+                                ) : approval.repair_report.status === 'pending_review' ? (
+                                    <div className="bg-white rounded-[6px] shadow-sm border border-blue-200 p-5 bg-blue-50/20">
+                                        <h3 className="font-bold text-[#11468F] text-sm tracking-wide uppercase mb-2 flex items-center gap-2">
+                                            <ClockIcon className="h-4 w-4 text-[#11468F]" />
+                                            Laporan Menunggu Verifikasi
+                                        </h3>
+                                        <p className="text-xs text-slate-600 leading-relaxed">
+                                            Laporan perbaikan fisik telah berhasil Anda kirimkan dan saat ini sedang menunggu review dan persetujuan penutupan tiket dari Supervisor.
+                                        </p>
+                                    </div>
+                                ) : approval.repair_report.status === 'approved' ? (
+                                    <div className="bg-white rounded-[6px] shadow-sm border border-emerald-200 p-5 bg-emerald-50/20">
+                                        <h3 className="font-bold text-emerald-800 text-sm tracking-wide uppercase mb-2 flex items-center gap-2">
+                                            <CheckCircleIcon className="h-4 w-4 text-emerald-600" />
+                                            Perbaikan Selesai & Terverifikasi
+                                        </h3>
+                                        <p className="text-xs text-slate-600 leading-relaxed">
+                                            Perbaikan fisik tabung APAR ini telah diverifikasi dan disetujui oleh Supervisor. Status APAR telah kembali aktif siap operasi.
+                                        </p>
+                                    </div>
+                                ) : null}
+                            </>
                         )}
                     </div>
                 </div>
             </div>
 
             {/* Action Modal */}
-            {showActionModal && (
-                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true" onClick={() => setShowActionModal(false)}></div>
-                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div className="relative inline-block align-bottom bg-white rounded-[6px] text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-slate-200">
-                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                                <div className="sm:flex sm:items-start">
-                                    <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-[6px] sm:mx-0 sm:h-10 sm:w-10 ${
-                                        actionType === 'approve' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                                    }`}>
-                                        {actionType === 'approve' ? (
-                                            <CheckCircleIcon className="h-6 w-6" aria-hidden="true" />
-                                        ) : (
-                                            <ExclamationTriangleIcon className="h-6 w-6" aria-hidden="true" />
-                                        )}
-                                    </div>
-                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                                        <h3 className="text-base font-bold text-slate-900" id="modal-title">
-                                            {actionType === 'approve' ? 'Konfirmasi Persetujuan' : 'Tolak Permintaan'}
-                                        </h3>
-                                        <div className="mt-2">
-                                             <p className="text-xs text-slate-500 mb-4">
-                                                {actionType === 'approve' 
-                                                    ? 'Anda yakin ingin menyetujui permintaan perbaikan ini?' 
-                                                    : 'Mohon berikan alasan penolakan untuk permintaan ini.'}
-                                            </p>
-                                            
-                                            {actionType === 'reject' && (
-                                                <div className="mb-4">
-                                                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Alasan Penolakan</label>
-                                                    <select
-                                                        value={rejectionReason}
-                                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                                        className="w-full border border-slate-300 rounded-[6px] p-2.5 text-sm focus:ring-1 focus:ring-[#11468F] focus:border-[#11468F] outline-none"
-                                                    >
-                                                        <option value="">Pilih alasan...</option>
-                                                        <option value="Data tidak lengkap">Data tidak lengkap</option>
-                                                        <option value="Foto buram">Foto buram</option>
-                                                        <option value="Lainnya">Lainnya</option>
-                                                    </select>
-                                                </div>
-                                            )}
-
-                                            <textarea
-                                                rows={4}
-                                                className={`block w-full focus:ring-1 focus:ring-[#11468F] focus:border-[#11468F] text-sm border ${
-                                                    validationErrors.supervisor_notes ? 'border-rose-300' : 'border-slate-300'
-                                                } rounded-[6px] p-3 outline-none`}
-                                                placeholder={actionType === 'approve' ? "Catatan tambahan (opsional)..." : "Wajib isi alasan penolakan..."}
-                                                value={notes}
-                                                onChange={(e) => setNotes(e.target.value)}
-                                            />
-                                            {validationErrors.supervisor_notes && (
-                                                <p className="text-xs text-rose-600 mt-1.5 flex items-center space-x-1 font-medium">
-                                                    <XCircleIcon className="h-4 w-4 flex-shrink-0" />
-                                                    <span>{validationErrors.supervisor_notes[0]}</span>
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2 border-t border-slate-200">
-                                <button
-                                    type="button"
-                                    onClick={handleAction}
-                                    disabled={submitting}
-                                    className={`w-full inline-flex justify-center rounded-[6px] px-4 py-2 text-sm font-bold shadow-sm sm:w-auto transition-colors ${
-                                        actionType === 'approve' 
-                                            ? 'bg-[#11468F] hover:bg-[#0d3873] text-white' 
-                                            : 'bg-[#DA1212] hover:bg-red-700 text-white'
-                                    } ${submitting ? 'opacity-75 cursor-not-allowed' : ''}`}
-                                >
-                                    {submitting ? 'Memproses...' : (actionType === 'approve' ? 'Ya, Setujui' : 'Tolak')}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="mt-2 sm:mt-0 w-full inline-flex justify-center rounded-[6px] border border-slate-300 px-4 py-2 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto transition-colors"
-                                    onClick={() => {
-                                        setShowActionModal(false);
-                                        setValidationErrors({});
-                                    }}
-                                >
-                                    Batal
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <RepairActionModal
+                isOpen={showActionModal}
+                onClose={() => setShowActionModal(false)}
+                actionType={actionType}
+                approval={approval}
+                onConfirm={handleActionConfirm}
+                isSubmitting={approveMutation.isPending || rejectMutation.isPending}
+            />
 
             {/* Lightbox Modal */}
             {lightboxOpen && selectedPhoto && (
@@ -675,7 +788,7 @@ const RepairApprovalDetail = () => {
                         </button>
                         
                         <img
-                            src={selectedPhoto.url}
+                            src={formatStorageUrl(selectedPhoto.url)}
                             alt={selectedPhoto.caption || 'Full size'}
                             className="max-w-full max-h-[85vh] object-contain rounded-[6px] shadow-2xl border border-slate-700"
                             onClick={(e) => e.stopPropagation()} 

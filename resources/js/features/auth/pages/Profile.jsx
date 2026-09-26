@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import {
@@ -371,9 +371,9 @@ const Profile = () => {
                         <button
                             type="submit"
                             disabled={saving}
-                            className={`inline-flex items-center px-6 py-2.5 rounded-[6px] shadow-sm text-sm font-semibold transition-colors ${
+                            className={`inline-flex items-center px-6 py-2.5 min-h-[44px] rounded-[6px] shadow-sm text-sm font-semibold transition-colors ${
                                 saving
-                                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                    ? 'bg-[#11468F] opacity-70 text-white cursor-not-allowed'
                                     : 'bg-[#11468F] hover:bg-[#0d3873] text-white'
                             }`}
                         >

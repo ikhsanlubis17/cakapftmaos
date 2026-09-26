@@ -85,7 +85,7 @@ class DashboardController extends Controller
                     'date' => $dateStr,
                     'day' => $currentDate->format('l'),
                     'good' => $dayData->where('condition', 'good')->first()->total ?? 0,
-                    'needs_repair' => $dayData->where('condition', 'needs_repair')->first()->total ?? 0,
+                    'needs_repair' => $dayData->whereIn('condition', ['damaged', 'needs_refill', 'expired'])->sum('total'),
                     'total' => $dayData->sum('total'),
                 ];
                 
@@ -134,6 +134,61 @@ class DashboardController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching dashboard data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Statistik akurasi pelaporan per teknisi (Sprint 3A - Temuan #11).
+     *
+     * Mengukur "false alarm rate" setiap teknisi dengan menghitung berapa banyak inspeksi
+     * mereka yang di-reject oleh supervisor (menandakan laporan yang tidak akurat atau sengaja
+     * dimanipulasi). Berguna untuk identifikasi teknisi yang perlu coaching atau investigasi.
+     *
+     * Diproteksi: hanya Admin dan Supervisor yang dapat mengakses data ini.
+     */
+    public function technicianAccuracy(Request $request)
+    {
+        try {
+            $periodDays = (int) $request->get('days', 30);
+            $startDate  = Carbon::now()->subDays($periodDays);
+
+            // Ambil semua teknisi yang memiliki inspeksi dalam periode
+            $stats = DB::table('inspections')
+                ->join('users', 'inspections.user_id', '=', 'users.id')
+                ->select([
+                    'users.id as user_id',
+                    'users.name as technician_name',
+                    'users.employee_id',
+                    DB::raw('COUNT(*) as total_inspections'),
+                    DB::raw("SUM(CASE WHEN inspections.inspection_status = 'rejected' THEN 1 ELSE 0 END) as rejected_count"),
+                    DB::raw("SUM(CASE WHEN inspections.inspection_status = 'approved' THEN 1 ELSE 0 END) as approved_count"),
+                    DB::raw("SUM(CASE WHEN inspections.mobile_flag_status = 'flagged' THEN 1 ELSE 0 END) as mobile_flagged_count"),
+                    DB::raw("SUM(CASE WHEN inspections.is_mock_location_detected = 1 THEN 1 ELSE 0 END) as mock_location_count"),
+                    // False alarm rate: persen inspeksi yang di-reject dari total
+                    DB::raw('ROUND(100.0 * SUM(CASE WHEN inspections.inspection_status = \'rejected\' THEN 1 ELSE 0 END) / COUNT(*), 1) as false_alarm_rate_pct'),
+                ])
+                ->where('inspections.created_at', '>=', $startDate)
+                ->whereNull('users.deleted_at')
+                ->groupBy('users.id', 'users.name', 'users.employee_id')
+                ->orderByDesc('false_alarm_rate_pct')
+                ->get();
+
+            return response()->json([
+                'success'    => true,
+                'period_days'=> $periodDays,
+                'since'      => $startDate->toDateString(),
+                'data'       => $stats,
+                'summary' => [
+                    'total_technicians'   => $stats->count(),
+                    'high_risk_count'     => $stats->where('false_alarm_rate_pct', '>=', 30)->count(), // >30% rejection rate
+                    'total_mock_location_incidents' => $stats->sum('mock_location_count'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching technician accuracy: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -47,19 +47,37 @@ const NotificationModal = ({ isOpen, onClose, onSelectType, sending }) => {
                         <button
                             onClick={() => onSelectType("today")}
                             disabled={sending}
-                            className="w-full p-3.5 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50"
+                            className="w-full p-3.5 bg-[#11468F] hover:bg-[#0d3873] text-white border border-transparent rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            <CalendarIcon className="w-5 h-5" />
-                            <span>Jadwal Sedang Berlangsung</span>
+                            {sending ? (
+                                <>
+                                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                    <span>Mengirim Notifikasi...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <CalendarIcon className="w-5 h-5" />
+                                    <span>Jadwal Sedang Berlangsung</span>
+                                </>
+                            )}
                         </button>
 
                         <button
                             onClick={() => onSelectType("all")}
                             disabled={sending}
-                            className="w-full p-3.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-50"
+                            className="w-full p-3.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-[6px] text-sm font-semibold focus:ring-2 focus:ring-[#11468F] shadow-sm transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                            <BellIcon className="w-5 h-5 text-[#11468F]" />
-                            <span>Semua Jadwal Aktif</span>
+                            {sending ? (
+                                <>
+                                    <span className="animate-spin rounded-full h-4 w-4 border-2 border-[#11468F] border-t-transparent" />
+                                    <span>Mengirim Notifikasi...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <BellIcon className="w-5 h-5 text-[#11468F]" />
+                                    <span>Semua Jadwal Aktif</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>

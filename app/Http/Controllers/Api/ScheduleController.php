@@ -132,4 +132,32 @@ class ScheduleController extends Controller
             'data' => $result['data'] ?? null,
         ], $result['status_code']);
     }
+
+    /**
+     * Get available technicians with schedule conflict checks.
+     */
+    public function availableTechnicians(Request $request)
+    {
+        $request->validate([
+            'schedule_date' => 'nullable|date',
+            'schedule_time' => 'nullable|date_format:H:i',
+            'only_available' => 'nullable',
+            'available_only' => 'nullable',
+        ]);
+
+        $data = $this->scheduleService->getAvailableTechnicians(
+            $request->get('schedule_date'),
+            $request->get('schedule_time')
+        );
+
+        if ($request->boolean('only_available') || $request->boolean('available_only')) {
+            $data = array_values(array_filter($data, fn ($tech) => ($tech['is_available'] ?? true) !== false));
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
 }
+

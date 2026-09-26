@@ -9,32 +9,43 @@ use App\Models\InspectionSchedule;
 use App\Models\InspectionDamage;
 use App\Models\RepairApproval;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class InspectionService
 {
     protected ImageService $imageService;
     protected ScheduleService $scheduleService;
+    protected MobileFraudDetectionService $mobileFraudService;
+    protected NotificationService $notificationService;
 
-    public function __construct(ImageService $imageService, ScheduleService $scheduleService)
-    {
-        $this->imageService = $imageService;
-        $this->scheduleService = $scheduleService;
+    public function __construct(
+        ImageService $imageService,
+        ScheduleService $scheduleService,
+        MobileFraudDetectionService $mobileFraudService,
+        NotificationService $notificationService
+    ) {
+        $this->imageService         = $imageService;
+        $this->scheduleService      = $scheduleService;
+        $this->mobileFraudService   = $mobileFraudService;
+        $this->notificationService  = $notificationService;
     }
 
     /**
-     * Validate inspection time to prevent manipulation
+     * Validate inspection time to prevent manipulation (supports QR Code or Serial Number)
      */
-    public function validateInspectionTime(string $aparQrCode, int $userId): array
+    public function validateInspectionTime(string $identifier, int $userId): array
     {
-        $apar = Apar::where('qr_code', $aparQrCode)->first();
+        $apar = Apar::where('qr_code', $identifier)
+            ->orWhere('serial_number', $identifier)
+            ->first();
+
         if (!$apar) {
             return [
                 'valid' => false,
-                'message' => 'QR tidak valid.',
+                'message' => 'APAR dengan kode QR atau nomor seri tersebut tidak ditemukan.',
                 'status_code' => 200, // Return 200 to avoid console errors
             ];
         }
@@ -63,6 +74,13 @@ class InspectionService
                 return [
                     'valid' => true,
                     'message' => 'Inspeksi darurat (tanpa jadwal) diizinkan untuk Admin/Supervisor',
+                    'apar' => [
+                        'id' => $apar->id,
+                        'serial_number' => $apar->serial_number,
+                        'qr_code' => $apar->qr_code,
+                        'location_name' => $apar->location_name,
+                        'location_type' => $apar->location_type,
+                    ],
                     'schedule' => null,
                     'status_code' => 200,
                 ];
@@ -91,12 +109,17 @@ class InspectionService
             ];
         }
 
-        // Return schedule info
-        // Note: startAtUtc/endAtUtc methods in model might need check if they double-convert, 
-        // but for now we focus on the query finding the schedule.
+        // Return schedule and apar info
         return [
             'valid' => true,
-            'message' => 'QR Code valid dan jadwal sesuai',
+            'message' => 'Identifikasi APAR valid dan jadwal sesuai',
+            'apar' => [
+                'id' => $apar->id,
+                'serial_number' => $apar->serial_number,
+                'qr_code' => $apar->qr_code,
+                'location_name' => $apar->location_name,
+                'location_type' => $apar->location_type,
+            ],
             'schedule' => [
                 'id' => $schedule->id,
                 'scheduled_date' => $schedule->scheduled_date,
@@ -109,98 +132,200 @@ class InspectionService
     }
 
     /**
-     * Validate location for static APARs
+     * Validate location for static APARs and run fraud analysis for mobile APARs.
+     *
+     * @param  Apar         $apar
+     * @param  float|null   $lat
+     * @param  float|null   $lng
+     * @param  array        $data  Full request data (needed for mobile fraud analysis)
+     * @param  int          $userId
+     * @return array
      */
-    public function validateLocation(Apar $apar, ?float $lat, ?float $lng): array
+    public function validateLocation(Apar $apar, ?float $lat, ?float $lng, array $data = [], int $userId = 0): array
     {
-        // Mobile APARs don't require location validation
+        // ── APAR MOBILE — Lapisan validasi berbasis metadata & foto ────────────
+        // Radius GPS statis tidak relevan, gunakan fraud detection service
         if ($apar->location_type !== 'statis') {
+            $fraudResult = $this->mobileFraudService->analyze($data, $userId);
+
+            // Hard-block: mock location atau foto verifikasi tidak ada
+            if (!$fraudResult['is_valid']) {
+                return [
+                    'valid'        => false,
+                    'is_mobile'    => true,
+                    'hard_blocked' => true,
+                    'flag_reasons' => $fraudResult['flag_reasons'],
+                    'message'      => $fraudResult['message'],
+                ];
+            }
+
+            // Soft-flag: submit diizinkan tapi ditandai untuk review supervisor
             return [
-                'valid' => true,
-                'message' => 'APAR mobile tidak memerlukan validasi lokasi',
+                'valid'        => true,
+                'is_mobile'    => true,
+                'is_flagged'   => $fraudResult['is_flagged'],
+                'flag_reasons' => $fraudResult['flag_reasons'],
+                'message'      => $fraudResult['message'],
             ];
         }
 
-        // Allow null coordinates (user skipped location)
-        // This is acceptable for development/testing or when GPS is unavailable
+        // ── APAR STATIS — Validasi radius Haversine + cek GPS spoofing ─────────
+        // Cek mock location flag dari frontend (untuk APAR statis pun tetap di-block)
+        if (!empty($data['is_mock_location'])) {
+            Log::warning('Static APAR inspection BLOCKED: mock location detected', [
+                'apar_id' => $apar->id,
+                'user_id' => $userId,
+            ]);
+            return [
+                'valid'        => false,
+                'message'      => 'Fake GPS / Mock Location terdeteksi. Nonaktifkan aplikasi lokasi palsu.',
+                'flag_reasons' => ['mock_location_detected'],
+                'event_type'   => 'blocked',
+            ];
+        }
+
+        // Cek GPS accuracy rendah — soft flag (bukan hard block untuk APAR statis)
+        $gpsAccuracy = $data['gps_accuracy'] ?? null;
+        if ($gpsAccuracy) {
+            $accuracyThreshold = (float) Setting::getValue('gps_accuracy_warning_threshold', 100);
+            if ($gpsAccuracy > $accuracyThreshold) {
+                Log::info('GPS accuracy warning for static APAR inspection', [
+                    'apar_id'          => $apar->id,
+                    'gps_accuracy'     => $gpsAccuracy,
+                    'threshold'        => $accuracyThreshold,
+                ]);
+                // Tidak memblokir — dicatat saja di log via createInspection
+            }
+        }
+
+        // Allow null coordinates — GPS unavailable / dilewati user
         if (!$lat || !$lng) {
             Log::warning('Inspection submitted without location data', [
-                'apar_id' => $apar->id,
-                'apar_serial' => $apar->serial_number,
+                'apar_id'       => $apar->id,
+                'apar_serial'   => $apar->serial_number,
                 'location_type' => $apar->location_type,
-                'reason' => 'User skipped location or GPS unavailable'
+                'reason'        => 'User skipped location or GPS unavailable',
             ]);
 
             return [
-                'valid' => true, // Changed from false to true
+                'valid'   => true,
                 'message' => 'Lokasi dilewati - inspeksi dilanjutkan tanpa validasi lokasi',
                 'skipped' => true,
             ];
         }
 
-        // Validate location if coordinates are provided
+        // Validasi Haversine radius
         $isValid = $apar->isWithinValidRadius($lat, $lng);
 
         if (!$isValid) {
             $distance = $apar->distanceFrom($lat, $lng);
             return [
-                'valid' => false,
-                'message' => "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.",
-                'distance' => $distance,
+                'valid'        => false,
+                'message'      => "Anda berada {$distance} meter dari APAR. Maksimal {$apar->valid_radius} meter.",
+                'distance'     => $distance,
                 'valid_radius' => $apar->valid_radius,
-                'apar_location' => [
-                    'lat' => $apar->latitude,
-                    'lng' => $apar->longitude,
-                ],
-                'user_location' => [
-                    'lat' => $lat,
-                    'lng' => $lng,
-                ],
+                'apar_location' => ['lat' => $apar->latitude, 'lng' => $apar->longitude],
+                'user_location' => ['lat' => $lat, 'lng' => $lng],
             ];
         }
 
         return [
-            'valid' => true,
+            'valid'   => true,
             'message' => 'Lokasi valid',
         ];
     }
 
     /**
-     * Process inspection submission
+     * Process inspection submission with idempotency check, mobile fraud analysis,
+     * GPS spoofing detection, and expired-date cross-validation.
      */
     public function createInspection(array $data, int $userId): array
     {
         $apar = Apar::findOrFail($data['apar_id']);
 
-        // Log inspection start
-        $this->logInspectionAction($apar->id, $userId, 'start_inspection', $data['lat'] ?? null, $data['lng'] ?? null, true, 'Inspection started');
+        // ── Idempotency Check ─────────────────────────────────────────────────
+        // Cegah duplikasi inspeksi pada jadwal + APAR + user yang sama
+        if (!empty($data['schedule_id'])) {
+            $existingInspection = Inspection::where('schedule_id', $data['schedule_id'])
+                ->where('apar_id', $apar->id)
+                ->where('user_id', $userId)
+                ->where('status', 'completed')
+                ->first();
 
-        // Validate location
-        $locationValidation = $this->validateLocation($apar, $data['lat'] ?? null, $data['lng'] ?? null);
+            if ($existingInspection) {
+                Log::info('Idempotency: inspeksi duplikat terdeteksi, mengembalikan record existing', [
+                    'inspection_id' => $existingInspection->id,
+                    'schedule_id'   => $data['schedule_id'],
+                    'apar_id'       => $apar->id,
+                    'user_id'       => $userId,
+                ]);
+                return [
+                    'success'    => true,
+                    'message'    => 'Inspeksi untuk jadwal ini sudah ada.',
+                    'inspection' => $existingInspection->load(['apar.aparType', 'user']),
+                    'location_valid'      => true,
+                    'inspection_status'   => $existingInspection->inspection_status,
+                    'status_code'         => 200,
+                ];
+            }
+        }
+
+        // Log inspection start
+        $this->logInspectionAction(
+            $apar->id, $userId, 'start_inspection',
+            $data['lat'] ?? null, $data['lng'] ?? null,
+            true, 'Inspection started'
+        );
+
+        // ── Validasi Lokasi + Fraud Detection ─────────────────────────────────
+        $locationValidation = $this->validateLocation(
+            $apar,
+            $data['lat'] ?? null,
+            $data['lng'] ?? null,
+            $data,
+            $userId
+        );
 
         if (!$locationValidation['valid']) {
-            // Log validation failure
+            $eventType  = $locationValidation['event_type'] ?? 'blocked';
+            $flagReason = implode(',', $locationValidation['flag_reasons'] ?? []);
+
+            // Semua jalur blocked/error masuk audit trail
             $this->logInspectionAction(
-                $apar->id,
-                $userId,
-                'validation_failed',
-                $data['lat'] ?? null,
-                $data['lng'] ?? null,
+                $apar->id, $userId, 'validation_failed',
+                $data['lat'] ?? null, $data['lng'] ?? null,
                 false,
-                'Location validation failed: ' . $locationValidation['message']
+                'Location/fraud validation failed: ' . $locationValidation['message'],
+                null, $eventType, $flagReason ?: null,
+                $data['gps_accuracy'] ?? null,
+                $data['photo_captured_at'] ?? null
             );
 
             return [
-                'success' => false,
-                'message' => 'Lokasi tidak valid',
-                'error' => $locationValidation['message'],
+                'success'        => false,
+                'message'        => $locationValidation['hard_blocked'] ?? false ? $locationValidation['message'] : 'Lokasi tidak valid',
+                'error'          => $locationValidation['message'],
                 'location_valid' => false,
-                'data' => $locationValidation,
-                'status_code' => 422,
+                'data'           => $locationValidation,
+                'status_code'    => 422,
             ];
         }
 
-        // Store photos with compression
+        // ── Simpan foto verifikasi mobile jika ada ────────────────────────────
+        $mobileVerificationPhotoUrl = null;
+        if (!empty($data['mobile_verification_photo'])) {
+            $photoConfig = config('inspection.photo');
+            $mvpPath = $this->imageService->compressImage(
+                $data['mobile_verification_photo'],
+                'inspections/mobile_verifications',
+                $photoConfig['compression_quality'],
+                $photoConfig['max_width'],
+                $photoConfig['max_height']
+            );
+            $mobileVerificationPhotoUrl = '/storage/' . $mvpPath;
+        }
+
+        // ── Store main photos with compression ───────────────────────────────
         $photoConfig = config('inspection.photo');
         $selfieConfig = config('inspection.selfie');
 
@@ -231,157 +356,190 @@ class InspectionService
         $user = User::find($userId);
         $isAdminOrSupervisor = $user && ($user->isAdmin() || $user->isSupervisor());
 
-        // Teknisi inspections need supervisor review
-        // Admin/supervisor inspections are auto-approved
-        $inspectionStatus = $isAdminOrSupervisor ? 'approved' : 'pending_review';
+        // Tentukan inspection_status awal
+        // Inspeksi mobile yang di-flag SELALU pending_review meski oleh Admin/Supervisor
+        // agar ada verifikasi manual untuk melindungi integritas data
+        $isMobileFlagged = ($locationValidation['is_flagged'] ?? false) && ($locationValidation['is_mobile'] ?? false);
+        $inspectionStatus = ($isAdminOrSupervisor && !$isMobileFlagged) ? 'approved' : 'pending_review';
 
-        // For teknisi, repair_status stays 'none' until supervisor reviews and approves the inspection
-        // For admin/supervisor with damage, they directly assign repair (no RepairApproval needed)
         $repairStatus = 'none';
         if ($requiresRepair) {
-            if ($isAdminOrSupervisor) {
-                // Admin/supervisor directly approves and assigns repair
-                $repairStatus = 'approved';
-            } else {
-                // Teknisi inspection needs review first, so repair_status is pending_approval
-                $repairStatus = 'pending_approval';
+            $repairStatus = $isAdminOrSupervisor ? 'approved' : 'pending_approval';
+        }
+
+        // ── Validasi silang kondisi expired vs data sistem ────────────────────
+        // Jika teknisi melaporkan 'expired' tapi sistem mencatat APAR belum expired
+        $expiredDateDiscrepancy = false;
+        if ($data['condition'] === 'expired' && $apar->expired_at) {
+            try {
+                $aparExpiredAt = Carbon::parse($apar->expired_at);
+                if ($aparExpiredAt->isFuture()) {
+                    // Sistem bilang belum expired, tapi teknisi melaporkan expired — flag untuk review
+                    $expiredDateDiscrepancy = true;
+                    Log::warning('Expired date discrepancy detected', [
+                        'apar_id'          => $apar->id,
+                        'apar_expired_at'  => $apar->expired_at,
+                        'inspection_by'    => $userId,
+                        'reported_at'      => now()->toIso8601String(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::debug('Could not parse apar expired_at', ['error' => $e->getMessage()]);
             }
         }
 
-        // Create inspection
-        $inspection = Inspection::create([
-            'apar_id' => $apar->id,
-            'user_id' => $userId,
-            'photo_url' => Storage::url($photoPath),
-            'selfie_url' => Storage::url($selfiePath),
-            'condition' => $data['condition'],
-            'notes' => $data['notes'] ?? null,
-            'inspection_lat' => $data['lat'] ?? null,
-            'inspection_lng' => $data['lng'] ?? null,
-            'location_valid' => true,
-            'is_valid' => true,
-            'status' => 'completed',
-            'inspection_status' => $inspectionStatus,
-            'schedule_id' => $schedule?->id,
-            'repair_status' => $repairStatus,
-            'requires_repair' => $requiresRepair,
-            'photo_required' => true,
-            'selfie_required' => true,
-        ]);
+        // ── Mobile flag data ──────────────────────────────────────────────────
+        $mobileFlagStatus = 'none';
+        $mobileFlagReason = null;
+        if ($isMobileFlagged) {
+            $mobileFlagStatus = 'flagged';
+            $mobileFlagReason = implode(',', $locationValidation['flag_reasons'] ?? []);
+        }
 
-        // Log inspection submission
-        $this->logInspectionAction(
-            $apar->id,
+        // Create inspection and related records within a database transaction
+        $inspection = DB::transaction(function () use (
+            $apar,
             $userId,
-            'submit_inspection',
-            $data['lat'] ?? null,
-            $data['lng'] ?? null,
-            true,
-            'Inspection submitted successfully',
-            $inspection->id
-        );
+            $user,
+            $photoPath,
+            $selfiePath,
+            $mobileVerificationPhotoUrl,
+            $data,
+            $inspectionStatus,
+            $schedule,
+            $repairStatus,
+            $requiresRepair,
+            $mobileFlagStatus,
+            $mobileFlagReason,
+            $isMobileFlagged,
+            $expiredDateDiscrepancy
+        ) {
+            $isSupervisorDirectRepair = $user && $user->isSupervisor() && $requiresRepair && !empty($data['assigned_teknisi_id']);
 
-        // Handle damage categories
-        if (isset($data['damage_categories']) && count($data['damage_categories']) > 0) {
-            $this->handleDamageCategories($inspection->id, $data['damage_categories']);
-        }
+            $inspection = Inspection::create([
+                'apar_id'                        => $apar->id,
+                'user_id'                        => $userId,
+                'photo_url'                      => '/storage/' . $photoPath,
+                'selfie_url'                     => '/storage/' . $selfiePath,
+                'mobile_verification_photo_url'  => $mobileVerificationPhotoUrl,
+                'mobile_flag_status'             => $mobileFlagStatus,
+                'mobile_flag_reason'             => $mobileFlagReason,
+                'gps_accuracy_meters'            => $data['gps_accuracy'] ?? null,
+                'photo_captured_at'              => $data['photo_captured_at'] ?? null,
+                'is_mock_location_detected'      => !empty($data['is_mock_location']),
+                'condition'                      => $data['condition'],
+                'notes'                          => $data['notes'] ?? null,
+                'identification_method'          => $data['identification_method'] ?? 'qr_scan',
+                'inspection_lat'                 => $data['lat'] ?? null,
+                'inspection_lng'                 => $data['lng'] ?? null,
+                'location_valid'                 => true,
+                'is_valid'                       => true,
+                'status'                         => 'completed',
+                'inspection_status'              => $inspectionStatus,
+                'schedule_id'                    => $schedule?->id,
+                'repair_status'                  => $repairStatus,
+                'requires_repair'                => $requiresRepair,
+                'repair_notes'                   => $isSupervisorDirectRepair ? ($data['supervisor_notes'] ?? null) : null,
+                'photo_required'                 => true,
+                'selfie_required'                => true,
+            ]);
 
-        // Create repair approval only for teknisi inspections that need supervisor review
-        // Admin/supervisor inspections skip RepairApproval and directly assign repair
-        if ($requiresRepair && !$isAdminOrSupervisor) {
-            $this->createRepairApproval($inspection->id);
-        }
+            // Tentukan event_type dan flag_reason untuk log
+            $eventType   = $isMobileFlagged ? 'flagged' : 'success';
+            $flagReason  = $mobileFlagReason;
+            if ($expiredDateDiscrepancy) {
+                $eventType  = 'flagged';
+                $flagReason = trim(($flagReason ? $flagReason . ',' : '') . 'expired_date_discrepancy', ',');
+            }
 
-        // Create repair schedule if admin/supervisor assigned teknisi (direct assignment, no RepairApproval)
-        $repairSchedule = null;
-        if ($requiresRepair && $isAdminOrSupervisor) {
-            if (isset($data['assigned_teknisi_id']) && isset($data['schedule_date']) && isset($data['schedule_time'])) {
-                // Check for schedule conflicts
-                $conflictCheck = $this->scheduleService->checkScheduleConflict(
-                    $data['assigned_teknisi_id'],
-                    $data['schedule_date'],
-                    $data['schedule_time']
-                );
+            // Log inspection submission — termasuk semua field fraud detection
+            $this->logInspectionAction(
+                $apar->id, $userId, 'submit_inspection',
+                $data['lat'] ?? null, $data['lng'] ?? null,
+                true, 'Inspection submitted successfully',
+                $inspection->id,
+                $eventType, $flagReason,
+                $data['gps_accuracy'] ?? null,
+                $data['photo_captured_at'] ?? null,
+                $data['emergency_reason'] ?? null
+            );
 
-                if ($conflictCheck['has_conflict']) {
-                    return [
-                        'success' => false,
-                        'message' => $conflictCheck['message'] . '. Jadwal yang bentrok: ' . 
-                            collect($conflictCheck['conflicting_schedules'])->map(function ($c) {
-                                return "APAR {$c['apar']} pada {$c['start_at']}";
-                            })->implode(', '),
-                        'error' => 'schedule_conflict',
-                        'conflicting_schedules' => $conflictCheck['conflicting_schedules'],
-                        'status_code' => 422,
-                    ];
+            // Handle damage categories
+            if (isset($data['damage_categories']) && count($data['damage_categories']) > 0) {
+                $this->handleDamageCategories($inspection->id, $data['damage_categories']);
+            }
+
+            // Create repair approval if required
+            if ($requiresRepair) {
+                if ($isSupervisorDirectRepair) {
+                    $this->createSupervisorDirectRepairAssignment($inspection, $apar, $userId, $data);
+                    // Langsung update APAR ke under_repair karena perbaikan sudah dijadwalkan ke teknisi
+                    $apar->update(['status' => 'under_repair']);
+                } else {
+                    $this->createRepairApproval($inspection->id);
+                    $this->updateAparStatus($apar, $data['condition']);
                 }
+            } else {
+                // Update APAR status jika tidak ada perbaikan
+                $this->updateAparStatus($apar, $data['condition']);
+            }
 
-                // Create repair schedule
+            // Mark schedule as completed
+            if ($schedule) {
+                $schedule->update(['is_completed' => true]);
+            }
+
+            return $inspection;
+        });
+
+        // Send notifications
+        if ($requiresRepair) {
+            if ($user && $user->isSupervisor() && !empty($data['assigned_teknisi_id'])) {
+                // Notifikasi teknisi yang langsung ditugaskan perbaikan oleh supervisor
                 try {
-                    $appTimezone = config('app.timezone', 'UTC');
-                    $startAtLocal = Carbon::parse($data['schedule_date'] . ' ' . $data['schedule_time'], $appTimezone);
-                    $endAtLocal = $startAtLocal->copy()->addHour(); // Default 1 hour for repair
-
-                    $repairSchedule = InspectionSchedule::create([
-                        'apar_id' => $apar->id,
-                        'assigned_user_id' => $data['assigned_teknisi_id'],
-                        'start_at' => $startAtLocal,
-                        'end_at' => $endAtLocal,
-                        'frequency' => 'once', // One-time repair schedule
-                        'is_active' => true,
-                        'notes' => 'Jadwal perbaikan dari inspeksi #' . $inspection->id,
-                    ]);
-
-                    Log::info('Repair schedule created from inspection', [
-                        'inspection_id' => $inspection->id,
-                        'schedule_id' => $repairSchedule->id,
-                        'teknisi_id' => $data['assigned_teknisi_id'],
-                        'schedule_date' => $data['schedule_date'],
-                        'schedule_time' => $data['schedule_time'],
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to create repair schedule', [
-                        'inspection_id' => $inspection->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                    // Don't fail the inspection if schedule creation fails
+                    $repairApproval = RepairApproval::where('inspection_id', $inspection->id)->first();
+                    if ($repairApproval) {
+                        $reinspectionService = new \App\Services\ReinspectionService();
+                        $reinspectionService->notifyTechnicianOfApproval($inspection, $repairApproval);
+                        $this->notificationService->notifyRepairAssignment($repairApproval);
+                    }
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify assigned technician: ' . $e->getMessage());
+                }
+            } else {
+                // Notifikasi reguler kerusakan ke supervisor (jika teknisi yang inspeksi)
+                try {
+                    $this->notificationService->notifyCriticalDamage($inspection);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify supervisors of critical damage: ' . $e->getMessage());
                 }
             }
         }
 
-        // Update APAR status based on condition and user role
-        if ($requiresRepair && $isAdminOrSupervisor && $repairSchedule) {
-            // Admin/supervisor directly assigned repair, set APAR to under_repair
-            $apar->update(['status' => 'under_repair']);
-            Log::info('APAR status set to under_repair by admin/supervisor', [
-                'apar_id' => $apar->id,
-                'inspection_id' => $inspection->id,
-            ]);
-        } else {
-            // Standard flow: update based on condition
-            $this->updateAparStatus($apar, $data['condition']);
-        }
-
-        // Mark schedule as completed
-        if ($schedule) {
-            $schedule->update(['is_completed' => true]);
-        }
-
-        // Build success message based on user role and inspection status
+        // Build success message
         $message = 'Inspeksi berhasil disimpan';
-        if (!$isAdminOrSupervisor) {
+        if ($user && $user->isSupervisor() && $requiresRepair && !empty($data['assigned_teknisi_id'])) {
+            $assignedTech = User::find($data['assigned_teknisi_id']);
+            $techName = $assignedTech ? $assignedTech->name : 'Teknisi';
+            $message .= ". Perbaikan berhasil ditugaskan kepada {$techName} pada {$data['schedule_date']} {$data['schedule_time']}.";
+        } elseif (!$isAdminOrSupervisor || $isMobileFlagged) {
             $message .= '. Menunggu review dari supervisor.';
-        } elseif ($requiresRepair && $repairSchedule) {
-            $message .= '. Jadwal perbaikan telah dibuat untuk teknisi.';
+        }
+        if ($isMobileFlagged) {
+            $message .= ' (Inspeksi mobile ditandai untuk verifikasi tambahan)';
+        }
+        if ($expiredDateDiscrepancy) {
+            $message .= ' (Perhatian: tanggal expired berbeda dengan data sistem)';
         }
 
         return [
-            'success' => true,
-            'message' => $message,
-            'inspection' => $inspection->load(['apar.aparType', 'user']),
-            'location_valid' => true,
-            'inspection_status' => $inspectionStatus,
-            'status_code' => 201,
+            'success'            => true,
+            'message'            => $message,
+            'inspection'         => $inspection->load(['apar.aparType', 'user']),
+            'location_valid'     => true,
+            'inspection_status'  => $inspectionStatus,
+            'is_flagged'         => $isMobileFlagged || $expiredDateDiscrepancy,
+            'status_code'        => 201,
         ];
     }
 
@@ -410,14 +568,14 @@ class InspectionService
                     $damagePhotoConfig['max_width'],
                     $damagePhotoConfig['max_height']
                 );
-                $repairPhotoUrl = Storage::url($repairPhotoPath);
+                $repairPhotoUrl = '/storage/' . $repairPhotoPath;
             }
 
             InspectionDamage::create([
                 'inspection_id' => $inspectionId,
                 'damage_category_id' => $damageData['category_id'],
                 'notes' => $damageData['notes'] ?? null,
-                'damage_photo_url' => Storage::url($damagePhotoPath),
+                'damage_photo_url' => '/storage/' . $damagePhotoPath,
                 'repair_photo_url' => $repairPhotoUrl,
                 'severity' => $damageData['severity'],
             ]);
@@ -433,6 +591,52 @@ class InspectionService
             'inspection_id' => $inspectionId,
             'status' => 'pending',
         ]);
+    }
+
+    /**
+     * Create direct approved repair approval and schedule when inspection is submitted by a supervisor.
+     */
+    protected function createSupervisorDirectRepairAssignment(Inspection $inspection, Apar $apar, int $supervisorId, array $data): RepairApproval
+    {
+        $supervisorNotes = $data['supervisor_notes'] ?? 'Ditugaskan langsung oleh Supervisor saat inspeksi.';
+
+        $repairApproval = RepairApproval::create([
+            'inspection_id'    => $inspection->id,
+            'status'           => 'approved',
+            'approved_by'      => $supervisorId,
+            'assigned_user_id' => $data['assigned_teknisi_id'],
+            'supervisor_notes' => $supervisorNotes,
+            'admin_notes'      => $supervisorNotes,
+            'approved_at'      => now(),
+            'decision_made_at' => now(),
+        ]);
+
+        try {
+            $appTimezone = config('app.timezone', 'UTC');
+            $startAtLocal = Carbon::parse($data['schedule_date'] . ' ' . $data['schedule_time'], $appTimezone);
+            $endAtLocal = $startAtLocal->copy()->addHour();
+
+            $repairSchedule = InspectionSchedule::create([
+                'apar_id'          => $apar->id,
+                'assigned_user_id' => $data['assigned_teknisi_id'],
+                'start_at'         => $startAtLocal,
+                'end_at'           => $endAtLocal,
+                'frequency'        => 'once',
+                'is_active'        => true,
+                'notes'            => 'Jadwal perbaikan dari inspeksi supervisor #' . $inspection->id . ': ' . $supervisorNotes,
+            ]);
+
+            Log::info('Repair schedule created directly upon supervisor inspection', [
+                'schedule_id'      => $repairSchedule->id,
+                'inspection_id'    => $inspection->id,
+                'repair_approval'  => $repairApproval->id,
+                'assigned_teknisi' => $data['assigned_teknisi_id'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Failed to create repair schedule upon supervisor inspection: ' . $e->getMessage());
+        }
+
+        return $repairApproval;
     }
 
     /**
@@ -477,7 +681,21 @@ class InspectionService
     }
 
     /**
-     * Log inspection action
+     * Log inspection action ke audit trail dengan kategorisasi event.
+     *
+     * @param  int          $aparId
+     * @param  int          $userId
+     * @param  string       $action         Nama aksi (scan_qr, submit_inspection, validation_failed, dll.)
+     * @param  float|null   $lat
+     * @param  float|null   $lng
+     * @param  bool         $isSuccessful
+     * @param  string       $details        Deskripsi bebas tentang kejadian
+     * @param  int|null     $inspectionId
+     * @param  string       $eventType      Kategori: success, blocked, flagged, error
+     * @param  string|null  $flagReason     Alasan flag (comma-separated jika multiple)
+     * @param  float|null   $gpsAccuracy    Presisi GPS dalam meter
+     * @param  string|null  $photoCapturedAt Timestamp klaim foto dari frontend
+     * @param  string|null  $emergencyReason Alasan bypass jadwal (untuk Admin/Supervisor)
      */
     protected function logInspectionAction(
         int $aparId,
@@ -487,20 +705,30 @@ class InspectionService
         ?float $lng,
         bool $isSuccessful,
         string $details,
-        ?int $inspectionId = null
+        ?int $inspectionId = null,
+        string $eventType = 'success',
+        ?string $flagReason = null,
+        ?float $gpsAccuracy = null,
+        ?string $photoCapturedAt = null,
+        ?string $emergencyReason = null
     ): void {
         InspectionLog::create([
-            'apar_id' => $aparId,
-            'user_id' => $userId,
-            'inspection_id' => $inspectionId,
-            'action' => $action,
-            'lat' => $lat,
-            'lng' => $lng,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'device_info' => DeviceDetectorService::getDeviceInfo(),
-            'is_successful' => $isSuccessful,
-            'details' => $details,
+            'apar_id'            => $aparId,
+            'user_id'            => $userId,
+            'inspection_id'      => $inspectionId,
+            'action'             => $action,
+            'lat'                => $lat,
+            'lng'                => $lng,
+            'ip_address'         => request()->ip(),
+            'user_agent'         => request()->userAgent(),
+            'device_info'        => DeviceDetectorService::getDeviceInfo(),
+            'is_successful'      => $isSuccessful,
+            'details'            => $details,
+            'event_type'         => $eventType,
+            'flag_reason'        => $flagReason,
+            'gps_accuracy_meters'=> $gpsAccuracy,
+            'photo_captured_at'  => $photoCapturedAt,
+            'emergency_reason'   => $emergencyReason,
         ]);
     }
 
@@ -517,17 +745,6 @@ class InspectionService
      */
     public function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
-        $earthRadius = config('inspection.location.earth_radius_meters');
-
-        $latDelta = deg2rad($lat2 - $lat1);
-        $lngDelta = deg2rad($lng2 - $lng1);
-
-        $a = sin($latDelta / 2) * sin($latDelta / 2) +
-            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-            sin($lngDelta / 2) * sin($lngDelta / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
+        return haversine_distance_meters($lat1, $lng1, $lat2, $lng2);
     }
 }

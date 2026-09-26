@@ -7,8 +7,6 @@ use App\Models\DamageCategory;
 use App\Http\Requests\DamageCategory\StoreDamageCategoryRequest;
 use App\Http\Requests\DamageCategory\UpdateDamageCategoryRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class DamageCategoryController extends Controller
 {

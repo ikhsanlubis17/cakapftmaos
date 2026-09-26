@@ -20,7 +20,7 @@
     </script>
 
     @viteReactRefresh
-    @vite(['resources/css/app.css', 'resources/css/vendor-fixes.css', 'resources/css/exception-fixes.css', 'resources/js/app.tsx'])
+    @vite(['resources/css/app.css', 'resources/js/app.tsx'])
 
     <style>
         body {
@@ -63,18 +63,5 @@
 </head>
 <body class="bg-[#f8fafc] text-slate-900 antialiased selection:bg-[#11468F] selection:text-white">
     <div id="app"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof axios !== 'undefined') {
-                window.axios = axios;
-                window.axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                window.axios.defaults.headers.common['Accept'] = 'application/json';
-            }
-        });
-    </script>
 </body>
 </html>

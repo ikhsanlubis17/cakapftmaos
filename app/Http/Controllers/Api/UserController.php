@@ -19,11 +19,22 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'email_verified_at', 'blocked_until', 'created_at')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = User::select('id', 'name', 'email', 'phone', 'role', 'is_active', 'email_verified_at', 'blocked_until', 'created_at');
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->has('is_active')) {
+            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($isActive !== null) {
+                $query->where('is_active', $isActive);
+            }
+        }
+
+        $users = $query->orderBy('name', 'asc')->get();
 
         return response()->json($users);
     }

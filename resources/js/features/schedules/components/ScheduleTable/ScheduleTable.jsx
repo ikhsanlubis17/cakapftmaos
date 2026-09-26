@@ -120,7 +120,7 @@ const ScheduleTable = ({
                     .filter((schedule) => schedule && schedule.id)
                     .map((schedule) => {
                         const StatusIcon =
-                            statusIcons[getStatusIcon(schedule)] ||
+                            getStatusIcon(schedule, icons) ||
                             CalendarIcon;
                         return (
                             <div

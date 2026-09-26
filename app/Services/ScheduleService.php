@@ -154,6 +154,45 @@ class ScheduleService
     }
 
     /**
+     * Get all active technicians with their conflict status for a specific date and time.
+     */
+    public function getAvailableTechnicians(?string $scheduleDate = null, ?string $scheduleTime = null): array
+    {
+        $technicians = User::where('role', 'teknisi')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'phone', 'role']);
+
+        if (!$scheduleDate || !$scheduleTime) {
+            return $technicians->map(function ($tech) {
+                return [
+                    'id' => $tech->id,
+                    'name' => $tech->name,
+                    'email' => $tech->email,
+                    'phone' => $tech->phone,
+                    'is_available' => true,
+                    'conflict' => null,
+                ];
+            })->values()->toArray();
+        }
+
+        return $technicians->map(function ($tech) use ($scheduleDate, $scheduleTime) {
+            $conflictCheck = $this->checkScheduleConflict($tech->id, $scheduleDate, $scheduleTime);
+            return [
+                'id' => $tech->id,
+                'name' => $tech->name,
+                'email' => $tech->email,
+                'phone' => $tech->phone,
+                'is_available' => !$conflictCheck['has_conflict'],
+                'conflict' => $conflictCheck['has_conflict'] ? [
+                    'message' => $conflictCheck['message'],
+                    'conflicting_schedules' => $conflictCheck['conflicting_schedules'],
+                ] : null,
+            ];
+        })->values()->toArray();
+    }
+
+    /**
      * Create a new schedule
      */
     public function createSchedule(array $data): InspectionSchedule

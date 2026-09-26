@@ -6,8 +6,10 @@ use App\Models\RepairReport;
 use App\Models\RepairApproval;
 use App\Models\InspectionSchedule;
 use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class RepairReportService
@@ -26,11 +28,11 @@ class RepairReportService
         $inspection = $repairApproval->inspection;
         $inspection->load('inspectionDamages');
 
-        // 1. Process specific damage repair photos if provided
+        // 1. Process specific damage repair photos if provided (compress outside transaction)
+        $damagePhotoPaths = [];
         if (!empty($files['damage_photos'])) {
             foreach ($files['damage_photos'] as $damageId => $photo) {
-                $damage = $inspection->inspectionDamages->find($damageId);
-                if ($damage && $photo) {
+                if ($photo) {
                     $path = $this->imageService->compressImage(
                         $photo,
                         'inspections/repairs',
@@ -38,14 +40,12 @@ class RepairReportService
                         1920,
                         1080
                     );
-                    $damage->update([
-                        'repair_photo_url' => Storage::url($path),
-                    ]);
+                    $damagePhotoPaths[$damageId] = '/storage/' . $path;
                 }
             }
         }
 
-        // 2. Compress & store general before/after photos
+        // 2. Compress & store general before/after photos (compress outside transaction)
         $beforePhotoPath = $this->imageService->compressImage(
             $files['before_photo'],
             'repairs/before',
@@ -61,31 +61,51 @@ class RepairReportService
             1080
         );
 
-        // 3. Create repair report
-        $repairReport = RepairReport::create([
-            'repair_approval_id' => $repairApproval->id,
-            'reported_by' => $userId,
-            'repair_description' => $data['repair_description'],
-            'before_photo_url' => Storage::url($beforePhotoPath),
-            'after_photo_url' => Storage::url($afterPhotoPath),
-            'repair_lat' => $data['repair_lat'] ?? null,
-            'repair_lng' => $data['repair_lng'] ?? null,
-            'repair_completed_at' => $data['repair_completed_at'],
-            'status' => 'pending_review',
-        ]);
+        // 3. Database operations wrapped in transaction to guarantee consistency
+        $repairReport = DB::transaction(function () use (
+            $repairApproval,
+            $inspection,
+            $userId,
+            $data,
+            $damagePhotoPaths,
+            $beforePhotoPath,
+            $afterPhotoPath
+        ) {
+            foreach ($damagePhotoPaths as $damageId => $photoUrl) {
+                $damage = $inspection->inspectionDamages->find($damageId);
+                if ($damage) {
+                    $damage->update([
+                        'repair_photo_url' => $photoUrl,
+                    ]);
+                }
+            }
 
-        // 4. Update inspection
-        $inspection->update([
-            'repair_notes' => $data['repair_description'],
-        ]);
+            $repairReport = RepairReport::create([
+                'repair_approval_id' => $repairApproval->id,
+                'reported_by' => $userId,
+                'repair_description' => $data['repair_description'],
+                'before_photo_url' => '/storage/' . $beforePhotoPath,
+                'after_photo_url' => '/storage/' . $afterPhotoPath,
+                'repair_lat' => $data['repair_lat'] ?? null,
+                'repair_lng' => $data['repair_lng'] ?? null,
+                'repair_completed_at' => $data['repair_completed_at'],
+                'status' => 'pending_review',
+            ]);
 
-        if (!empty($data['needs_reinspection'])) {
-            $this->reinspectionService->handlePostRepairReinspection(
-                $inspection,
-                $repairApproval,
-                $data['repair_description']
-            );
-        }
+            $inspection->update([
+                'repair_notes' => $data['repair_description'],
+            ]);
+
+            if (!empty($data['needs_reinspection'])) {
+                $this->reinspectionService->handlePostRepairReinspection(
+                    $inspection,
+                    $repairApproval,
+                    $data['repair_description']
+                );
+            }
+
+            return $repairReport;
+        });
 
         Log::info('Repair report submitted for review', [
             'repair_report_id' => $repairReport->id,
@@ -93,6 +113,13 @@ class RepairReportService
             'apar_id' => $inspection->apar_id,
             'teknisi_id' => $userId,
         ]);
+
+        // Notify supervisors for completed repair review
+        try {
+            app(NotificationService::class)->notifyRepairCompleted($repairReport);
+        } catch (\Exception $e) {
+            Log::error('Failed to notify supervisors of repair completion: ' . $e->getMessage());
+        }
 
         return $repairReport;
     }
@@ -122,7 +149,7 @@ class RepairReportService
                 1920,
                 1080
             );
-            $updateData['before_photo_url'] = Storage::url($beforePhotoPath);
+            $updateData['before_photo_url'] = '/storage/' . $beforePhotoPath;
         }
 
         if (!empty($files['after_photo'])) {
@@ -138,7 +165,7 @@ class RepairReportService
                 1920,
                 1080
             );
-            $updateData['after_photo_url'] = Storage::url($afterPhotoPath);
+            $updateData['after_photo_url'] = '/storage/' . $afterPhotoPath;
         }
 
         $repairReport->update($updateData);
@@ -169,21 +196,23 @@ class RepairReportService
      */
     public function approve(RepairReport $repairReport, int $reviewerId, ?string $notes = null): RepairReport
     {
-        $repairReport->approve($reviewerId, $notes);
+        DB::transaction(function () use ($repairReport, $reviewerId, $notes) {
+            $repairReport->approve($reviewerId, $notes);
 
-        $repairApproval = $repairReport->repairApproval;
-        $repairApproval->markCompleted($notes);
+            $repairApproval = $repairReport->repairApproval;
+            $repairApproval->markCompleted($notes);
 
-        $repairApproval->inspection->update([
-            'repair_status' => 'completed',
-        ]);
+            $repairApproval->inspection->update([
+                'repair_status' => 'completed',
+            ]);
 
-        $apar = $repairApproval->inspection->apar;
-        $apar->update(['status' => 'active']);
+            $apar = $repairApproval->inspection->apar;
+            $apar->update(['status' => 'active']);
+        });
 
         Log::info('Repair report approved, APAR set to active', [
             'repair_report_id' => $repairReport->id,
-            'apar_id' => $apar->id,
+            'apar_id' => $repairReport->repairApproval->inspection->apar_id,
             'supervisor_id' => $reviewerId,
         ]);
 
@@ -195,29 +224,33 @@ class RepairReportService
      */
     public function requestRework(RepairReport $repairReport, int $reviewerId, string $notes, string $scheduleDate, string $scheduleTime): array
     {
-        $repairReport->markNeedsRework($reviewerId, $notes);
+        $appTimezone = config('app.timezone', 'UTC');
+        $startAtLocal = Carbon::parse($scheduleDate . ' ' . $scheduleTime, $appTimezone);
+        $endAtLocal = $startAtLocal->copy()->addHour();
 
         $repairApproval = $repairReport->repairApproval;
         $inspection = $repairApproval->inspection;
         $teknisiId = $repairReport->reported_by;
 
-        $appTimezone = config('app.timezone', 'UTC');
-        $startAtLocal = Carbon::parse($scheduleDate . ' ' . $scheduleTime, $appTimezone);
-        $endAtLocal = $startAtLocal->copy()->addHour();
+        $schedule = DB::transaction(function () use ($repairReport, $reviewerId, $notes, $repairApproval, $inspection, $teknisiId, $startAtLocal, $endAtLocal) {
+            $repairReport->markNeedsRework($reviewerId, $notes);
 
-        $schedule = InspectionSchedule::create([
-            'apar_id' => $inspection->apar_id,
-            'assigned_user_id' => $teknisiId,
-            'start_at' => $startAtLocal,
-            'end_at' => $endAtLocal,
-            'frequency' => 'once',
-            'is_active' => true,
-            'notes' => "Perbaikan ulang dari laporan #" . $repairReport->id . "\n\nCatatan Supervisor: " . $notes,
-        ]);
+            $schedule = InspectionSchedule::create([
+                'apar_id' => $inspection->apar_id,
+                'assigned_user_id' => $teknisiId,
+                'start_at' => $startAtLocal,
+                'end_at' => $endAtLocal,
+                'frequency' => 'once',
+                'is_active' => true,
+                'notes' => "Perbaikan ulang dari laporan #" . $repairReport->id . "\n\nCatatan Supervisor: " . $notes,
+            ]);
 
-        $repairApproval->update([
-            'status' => 'approved',
-        ]);
+            $repairApproval->update([
+                'status' => 'approved',
+            ]);
+
+            return $schedule;
+        });
 
         try {
             Notification::create([
@@ -255,27 +288,29 @@ class RepairReportService
      */
     public function reject(RepairReport $repairReport, int $reviewerId, string $notes): RepairReport
     {
-        $repairReport->reject($reviewerId, $notes);
+        DB::transaction(function () use ($repairReport, $reviewerId, $notes) {
+            $repairReport->reject($reviewerId, $notes);
 
-        $repairApproval = $repairReport->repairApproval;
-        $inspection = $repairApproval->inspection;
-        $apar = $inspection->apar;
+            $repairApproval = $repairReport->repairApproval;
+            $inspection = $repairApproval->inspection;
+            $apar = $inspection->apar;
 
-        $repairApproval->update([
-            'status' => 'rejected',
-            'rejection_reason' => 'APAR tidak dapat diperbaiki (not fixable)',
-        ]);
+            $repairApproval->update([
+                'status' => 'rejected',
+                'rejection_reason' => 'APAR tidak dapat diperbaiki (not fixable)',
+            ]);
 
-        $inspection->update([
-            'repair_status' => 'rejected',
-            'repair_notes' => $notes,
-        ]);
+            $inspection->update([
+                'repair_status' => 'rejected',
+                'repair_notes' => $notes,
+            ]);
 
-        $apar->update(['status' => 'not_fixable']);
+            $apar->update(['status' => 'not_fixable']);
+        });
 
         Log::info('Repair report rejected, APAR marked as not fixable', [
             'repair_report_id' => $repairReport->id,
-            'apar_id' => $apar->id,
+            'apar_id' => $repairReport->repairApproval->inspection->apar_id,
             'supervisor_id' => $reviewerId,
         ]);
 

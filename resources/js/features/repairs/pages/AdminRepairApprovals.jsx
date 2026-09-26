@@ -14,6 +14,8 @@ import {
 import ApprovalStats from '../components/ApprovalStats';
 import ApprovalDetailModal from '../components/ApprovalDetailModal';
 import ApprovalStatusBadge from '../components/ApprovalStatusBadge';
+import { formatStorageUrl } from '@/utils/imageUrl';
+import { formatDateTime as formatDate } from '@/utils/dateUtils';
 
 const AdminRepairApprovals = () => {
     const { apiClient } = useAuth();
@@ -159,18 +161,6 @@ const AdminRepairApprovals = () => {
     const handlePhotoClick = (url) => {
         setSelectedPhoto(url);
         setShowPhotoModal(true);
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
     };
 
     if (loading) {
@@ -378,7 +368,7 @@ const AdminRepairApprovals = () => {
                                                     {approval.inspection?.photo_url && (
                                                         <img
                                                             className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform"
-                                                            src={approval.inspection.photo_url}
+                                                            src={formatStorageUrl(approval.inspection.photo_url)}
                                                             alt="APAR"
                                                             onClick={() => handlePhotoClick(approval.inspection.photo_url)}
                                                             title="Foto APAR"
@@ -387,7 +377,7 @@ const AdminRepairApprovals = () => {
                                                     {approval.inspection?.selfie_url && (
                                                         <img
                                                             className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform"
-                                                            src={approval.inspection.selfie_url}
+                                                            src={formatStorageUrl(approval.inspection.selfie_url)}
                                                             alt="Selfie"
                                                             onClick={() => handlePhotoClick(approval.inspection.selfie_url)}
                                                             title="Foto Selfie"
@@ -398,7 +388,7 @@ const AdminRepairApprovals = () => {
                                                             <img
                                                                 key={idx}
                                                                 className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover cursor-pointer hover:scale-110 transition-transform border-2 border-rose-500"
-                                                                src={damage.damage_photo_url}
+                                                                src={formatStorageUrl(damage.damage_photo_url)}
                                                                 alt="Kerusakan"
                                                                 onClick={() => handlePhotoClick(damage.damage_photo_url)}
                                                                 title={`Kerusakan: ${damage.damage_category?.name || 'Unknown'}`}
@@ -461,7 +451,7 @@ const AdminRepairApprovals = () => {
                         </div>
                         <div className="p-4 sm:p-6 flex justify-center items-center bg-slate-950 flex-1 overflow-auto">
                             <img
-                                src={selectedPhoto}
+                                src={formatStorageUrl(selectedPhoto)}
                                 alt="Foto inspeksi full"
                                 className="max-w-full max-h-full object-contain rounded-[6px]"
                             />

@@ -47,18 +47,27 @@ Route::middleware('auth:api')->group(function () {
     // Dashboard statistics
     Route::get('/stats', [DashboardController::class, 'getStats']);
 
+    // Statistik akurasi pelaporan teknisi (false alarm rate) — khusus Admin & Supervisor
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/dashboard/technician-accuracy', [DashboardController::class, 'technicianAccuracy']);
+    });
+
     // APAR routes (Accessible to all authenticated users for scanning)
     Route::get('/apar/qr/{qrCode}', [AparController::class, 'showByQr']);
 
-    // APAR routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
+    // APAR read routes (Admin & Supervisor)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/apar', [AparController::class, 'index']);
         Route::get('/apar/{apar}', [AparController::class, 'show']);
         Route::get('/apar/{apar}/inspections', [AparController::class, 'inspections']);
-        Route::get('/apar/{apar}/qr-code', [AparController::class, 'qrCode']);
+    });
+
+    // APAR write / management routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
         Route::post('/apar', [AparController::class, 'store']);
         Route::put('/apar/{apar}', [AparController::class, 'update']);
         Route::delete('/apar/{apar}', [AparController::class, 'destroy']);
+        Route::post('/apar/bulk-delete', [AparController::class, 'bulkDestroy']);
         Route::post('/apar/download-qr-pdf', [AparController::class, 'downloadQrPdf']);
     });
 
@@ -91,8 +100,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/inspections', [InspectionController::class, 'index']);
     Route::get('/inspections/my-inspections', [InspectionController::class, 'myInspections']);
     Route::get('/inspections/{inspection}', [InspectionController::class, 'show']);
-    Route::post('/inspections', [InspectionController::class, 'store']);
-    Route::post('/inspections/validate', [InspectionController::class, 'validateInspectionTime']);
+    
+    // Inspeksi hanya boleh dilakukan oleh peran teknisi dan supervisor (Admin dilarang)
+    Route::middleware(['role:supervisor,teknisi'])->group(function () {
+        Route::post('/inspections', [InspectionController::class, 'store']);
+        Route::post('/inspections/validate', [InspectionController::class, 'validateInspectionTime']);
+    });
+
     Route::put('/inspections/{inspection}', [InspectionController::class, 'update']);
     Route::delete('/inspections/{inspection}', [InspectionController::class, 'destroy']);
 
@@ -133,10 +147,14 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/repair-reports/{repairReport}/reject', [RepairReportController::class, 'reject']);
     });
 
-    // User management routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
+    // User read routes (Admin & Supervisor for technician assignment and operational review)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/users', [UserController::class, 'index']);
         Route::get('/users/{user}', [UserController::class, 'show']);
+    });
+
+    // User mutation routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
         Route::post('/users', [UserController::class, 'store']);
         Route::put('/users/{user}', [UserController::class, 'update']);
         Route::delete('/users/{user}', [UserController::class, 'destroy']);
@@ -162,6 +180,7 @@ Route::middleware('auth:api')->group(function () {
 
     // Schedule routes - Admin & Supervisor read
     Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/schedules/available-technicians', [ScheduleController::class, 'availableTechnicians']);
         Route::get('/schedules', [ScheduleController::class, 'index']);
         Route::get('/schedules/{schedule}', [ScheduleController::class, 'show']);
     });
@@ -187,6 +206,7 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/settings', [SettingController::class, 'index']);
         Route::put('/settings', [SettingController::class, 'update']);
+        Route::post('/settings/test-email', [SettingController::class, 'testEmail']);
     });
 
     // Report routes
@@ -196,13 +216,16 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/reports/overdue', [ReportController::class, 'overdue']);
     Route::get('/reports/export/{type}', [ReportController::class, 'export']);
 
-    // Audit Log routes (Admin only)
-    Route::middleware(['role:admin'])->group(function () {
+    // Audit Log routes (Admin & Supervisor read-only)
+    Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index']);
         Route::get('/audit-logs/stats', [AuditLogController::class, 'stats']);
-        Route::get('/audit-logs/anomalies', [AuditLogController::class, 'anomalies']);
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+    });
+
+    // Audit Log cleanup routes (Admin only)
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/audit-logs/cleanup-stats', [AuditLogController::class, 'cleanupStats']);
         Route::post('/audit-logs/cleanup', [AuditLogController::class, 'cleanup']);
-        Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
     });
 });

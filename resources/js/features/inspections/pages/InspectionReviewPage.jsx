@@ -16,6 +16,8 @@ import {
     PhotoIcon,
     CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
+import { formatStorageUrl } from "@/utils/imageUrl";
+import { formatDateTime as formatDate } from "@/utils/dateUtils";
 
 const InspectionReviewPage = () => {
     const navigate = useNavigate();
@@ -124,17 +126,6 @@ const InspectionReviewPage = () => {
         );
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        return new Date(dateString).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
     return (
         <div className="min-h-screen bg-slate-50 p-4 sm:p-6">
             <div className="max-w-7xl mx-auto">
@@ -175,7 +166,7 @@ const InspectionReviewPage = () => {
                         <p className="mt-4 text-slate-600 font-medium">Memuat data...</p>
                     </div>
                 ) : inspections.length === 0 ? (
-                    <div className="bg-white rounded-[6px] border border-slate-200 p-12 text-center shadow-sm">
+                    <div data-testid="empty-state" className="bg-white rounded-[6px] border border-slate-200 p-12 text-center shadow-sm">
                         <CheckCircleIcon className="h-16 w-16 text-emerald-500 mx-auto mb-4" />
                         <h3 className="text-lg font-bold text-slate-900">Semua Sudah Direview</h3>
                         <p className="text-slate-500 mt-2">Tidak ada inspeksi yang menunggu review</p>
@@ -194,7 +185,7 @@ const InspectionReviewPage = () => {
                                             {/* Photo thumbnail */}
                                             {inspection.photo_url ? (
                                                 <img
-                                                    src={inspection.photo_url}
+                                                    src={formatStorageUrl(inspection.photo_url)}
                                                     alt="APAR"
                                                     className="w-20 h-20 object-cover rounded-[6px] border border-slate-200 shadow-sm"
                                                 />
@@ -256,6 +247,7 @@ const InspectionReviewPage = () => {
                                             Detail
                                         </button>
                                         <button
+                                            data-testid="approve-inspection-btn"
                                             onClick={() => handleApprove(inspection)}
                                             className="inline-flex items-center justify-center px-4 py-2 bg-[#11468F] hover:bg-[#0d3873] text-white font-semibold rounded-[6px] transition shadow-sm"
                                         >
@@ -263,6 +255,7 @@ const InspectionReviewPage = () => {
                                             Setujui
                                         </button>
                                         <button
+                                            data-testid="reject-inspection-btn"
                                             onClick={() => handleReject(inspection)}
                                             className="inline-flex items-center justify-center px-4 py-2 bg-white border border-rose-200 text-[#DA1212] hover:bg-rose-50 rounded-[6px] transition font-bold shadow-sm"
                                         >

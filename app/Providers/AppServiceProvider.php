@@ -34,6 +34,14 @@ class AppServiceProvider extends ServiceProvider
         // Set error reporting level from configuration
         $errorReporting = Config::get('app.error_reporting', E_ALL & ~E_WARNING & ~E_NOTICE);
         error_reporting($errorReporting);
+
+        // Fix Windows socket bind issue on 'php artisan serve' by ensuring SystemRoot is passed
+        if (class_exists(\Illuminate\Foundation\Console\ServeCommand::class)) {
+            \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables = array_unique(array_merge(
+                \Illuminate\Foundation\Console\ServeCommand::$passthroughVariables,
+                ['SystemRoot', 'SystemDrive', 'windir', 'TEMP', 'TMP']
+            ));
+        }
     }
 
     /**

@@ -235,12 +235,27 @@ class InspectionController extends Controller
     public function validateInspectionTime(Request $request)
     {
         $validated = $request->validate([
-            'apar_qrCode' => 'required|string',
+            'identifier' => 'nullable|string',
+            'apar_qrCode' => 'nullable|string',
+            'serial_number' => 'nullable|string',
+            'method' => 'nullable|string|in:qr_scan,manual_serial',
         ]);
+
+        $identifier = $validated['identifier'] 
+            ?? $validated['apar_qrCode'] 
+            ?? $validated['serial_number'] 
+            ?? null;
+
+        if (!$identifier) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Kode QR atau Nomor Seri APAR wajib disertakan.',
+            ], 422);
+        }
 
         try {
             $result = $this->inspectionService->validateInspectionTime(
-                $validated['apar_qrCode'],
+                $identifier,
                 Auth::id()
             );
 
@@ -315,6 +330,7 @@ class InspectionController extends Controller
                 'inspection_id' => $inspection->id,
                 'status' => 'approved', // Pre-approved by supervisor
                 'approved_by' => $user->id,
+                'assigned_user_id' => $request->assigned_teknisi_id,
                 'supervisor_notes' => $request->notes ?? 'Disetujui oleh supervisor',
                 'approved_at' => now(),
                 'decision_made_at' => now(),

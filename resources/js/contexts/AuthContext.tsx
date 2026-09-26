@@ -1,22 +1,18 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { UseMutateAsyncFunction, useQuery } from '@tanstack/react-query';
-import { AxiosError, AxiosResponse } from 'axios';
+import React, { createContext, useContext, useEffect, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { createApiClient, setupInterceptors } from '../services/api';
 import { useAuthState } from '../hooks/useAuthState';
-import { useAuthApi, userQueryKey, User, LoginResponse } from '../hooks/useAuthApi';
+import { useAuthApi, userQueryKey, User } from '../hooks/useAuthApi';
 
 export interface AuthContextType {
     user: User | undefined;
+    token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     isInitialLoading: boolean;
-    login: UseMutateAsyncFunction<{
-        data: LoginResponse;
-    }, Error, {
-        email: string;
-        password: string;
-    }, unknown>
-    logout: UseMutateAsyncFunction<AxiosResponse<any, any, {}>, Error, void, unknown>;
+    login: ReturnType<typeof useAuthApi>['login'];
+    logout: ReturnType<typeof useAuthApi>['logout'];
     apiClient: ReturnType<typeof createApiClient>;
 }
 
@@ -46,6 +42,7 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
                 updateToken(newToken);
             },
             onAuthError: () => {
+                updateToken(null);
                 logout();
             },
         });
@@ -64,6 +61,8 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
         queryFn: fetchUser,
         // Only run this query if a token exists!
         enabled: !!token,
+        staleTime: 1000 * 60 * 5, // 5 minutes data freshness for user profile
+        refetchOnWindowFocus: false, // Prevent re-fetching user profile on window/tab focus
         // We don't want to retry on 401/403, as that means the token is bad.
         retry: (failureCount, error) => {
             const axiosError = error as AxiosError;
@@ -79,19 +78,24 @@ export const AuthProvider = ({ children, apiClient: externalApiClient }: { child
     // If the query errors (e.g., with a 401), it means the token is invalid. Log out.
     useEffect(() => {
         if (isError) {
+            updateToken(null);
             logout();
         }
-    }, [isError, logout]);
+    }, [isError, updateToken, logout]);
 
-    const value: AuthContextType = {
-        user,
-        isAuthenticated: !!user && !isUserLoading,
-        isLoading: isUserLoading || isUserFetching || isLoggingIn || isLoggingOut,
-        isInitialLoading: isUserLoading,
-        login,
-        logout,
-        apiClient
-    };
+    const value: AuthContextType = useMemo(
+        () => ({
+            user,
+            token,
+            isAuthenticated: !!token && !!user && !isUserLoading,
+            isLoading: isUserLoading || isLoggingIn || isLoggingOut,
+            isInitialLoading: isUserLoading,
+            login,
+            logout,
+            apiClient,
+        }),
+        [user, token, isUserLoading, isLoggingIn, isLoggingOut, login, logout, apiClient]
+    );
 
     return (
         <AuthContext.Provider value={value}>

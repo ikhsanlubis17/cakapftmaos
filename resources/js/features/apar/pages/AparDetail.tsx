@@ -2,340 +2,434 @@ import React, { useState, useEffect } from "react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
-import { useQuery } from '@tanstack/react-query';
-import { Apar } from '@/types/api';
+import { useQuery } from "@tanstack/react-query";
+import { Apar } from "@/types/api";
 import {
     FireIcon,
+    ArrowLeftIcon,
+    PencilIcon,
+    MapPinIcon,
+    TruckIcon,
+    ScaleIcon,
+    QrCodeIcon,
+    ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
+import { getAparStatusConfig, getLocationTypeConfig } from "@/utils/statusUtils";
 
 const AparDetail: React.FC = () => {
-    const route = getRouteApi('/authenticated/apar/$id');
+    const route = getRouteApi("/authenticated/apar/$id");
     const { id } = route.useParams() as { id?: string };
 
     const { user, apiClient } = useAuth();
-    const { showError } = useToast();
+    const { showError, showSuccess } = useToast();
 
-    const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+    const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
     const [qrCodeError, setQrCodeError] = useState<boolean>(false);
 
-    // Check if id parameter is available
     if (!id) {
         return (
-            <div className="text-center py-12">
-                <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <div className="text-center py-12 bg-white border border-slate-200 rounded-[8px] p-8">
+                <FireIcon className="mx-auto h-12 w-12 text-slate-400 mb-2" />
+                <h3 className="text-base font-bold text-slate-800">
                     Parameter ID tidak ditemukan
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                    ID APAR tidak tersedia dalam URL. Router context mungkin belum terinisialisasi.
+                <p className="text-xs text-slate-500 mt-1 mb-4">
+                    ID APAR tidak tersedia dalam URL.
                 </p>
+                <Link
+                    to="/apar"
+                    className="inline-flex items-center px-4 py-2 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#11468F] rounded-[6px]"
+                >
+                    Kembali ke Daftar APAR
+                </Link>
             </div>
         );
     }
 
-    // Use react-query to fetch APAR detail and inspections
-    const { data: apar, isLoading: aparLoading, isError: aparError } = useQuery<Apar, Error>({
-        queryKey: ['apar', id],
+    // Use react-query to fetch APAR detail
+    const {
+        data: apar,
+        isLoading: aparLoading,
+        isError: aparError,
+    } = useQuery<Apar, Error>({
+        queryKey: ["apar", id],
         queryFn: async () => {
             const response = await apiClient.get(`/api/apar/${id}`);
             return response.data.data ?? response.data;
         },
-        staleTime: 1 * 60 * 1000,
-        enabled: !!id,
+        staleTime: 60 * 1000,
+        enabled: Boolean(id),
     });
-
-
 
     // Use react-query to fetch the QR code base64 string
     const qrQuery = useQuery({
-        queryKey: ['apar', id, 'qr-code'],
+        queryKey: ["apar", id, "qr-code"],
         queryFn: async () => {
-            // Add version to bust browser cache since we updated generation params
             const response = await apiClient.get(`/api/apar/${id}/qr-code?v=3`);
             return response.data;
         },
-        enabled: !!id,
-        // Keep data fresh for 24 hours
+        enabled: Boolean(id),
         staleTime: 24 * 60 * 60 * 1000,
     });
 
-    // Set QR code URL when data is available
     useEffect(() => {
         setQrCodeError(false);
-        setQrCodeUrl('');
+        setQrCodeUrl("");
 
         if (qrQuery.data?.qr_code) {
-            setQrCodeUrl(`data:image/png;base64,${qrQuery.data.qr_code}`);
+            const mimeType = qrQuery.data.mime_type || "image/svg+xml";
+            setQrCodeUrl(`data:${mimeType};base64,${qrQuery.data.qr_code}`);
         } else if (qrQuery.isError) {
             setQrCodeError(true);
         }
     }, [qrQuery.data, qrQuery.isError]);
 
-    const getStatusColor = (status?: string): string => {
-        switch (status) {
-            case "active":
-                return "bg-green-100 text-green-800";
-            case "needs_repair":
-                return "bg-yellow-100 text-yellow-800";
-            case "inactive":
-                return "bg-red-100 text-red-800";
-            case "under_repair":
-                return "bg-blue-100 text-blue-800";
-            default:
-                return "bg-gray-100 text-gray-800";
-        }
+    const handleDownloadPng = () => {
+        if (!qrCodeUrl || !apar) return;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const size = 600;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(0, 0, size, size);
+                ctx.drawImage(img, 0, 0, size, size);
+                const pngUrl = canvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.href = pngUrl;
+                link.download = `QR_${apar.serial_number}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showSuccess("QR Code berhasil diunduh sebagai PNG.");
+            }
+        };
+        img.onerror = () => {
+            showError("Gagal mengonversi QR Code ke format PNG.");
+        };
+        img.src = qrCodeUrl;
     };
 
-    const getStatusText = (status?: string): string => {
-        switch (status) {
-            case "active":
-                return "Aktif";
-            case "needs_repair":
-                return "Perlu Perbaikan";
-            case "inactive":
-                return "Nonaktif";
-            case "under_repair":
-                return "Sedang Perbaikan";
-            default:
-                return status ?? 'Unknown';
-        }
-    };
-
-    const handleQrCodeError = (): void => {
-        console.error("QR Code failed to load");
-        setQrCodeError(true);
-    };
-
-    const loading = aparLoading;
-
-    if (loading) {
+    if (aparLoading) {
         return (
             <div className="flex items-center justify-center min-h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#11468F]"></div>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-2 border-slate-200 border-t-[#11468F] mx-auto mb-3" />
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Memuat detail APAR...
+                    </p>
+                </div>
             </div>
         );
     }
 
     if (!apar) {
         return (
-            <div className="text-center py-12">
-                <FireIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                    APAR tidak ditemukan
+            <div className="text-center py-12 bg-white border border-slate-200 rounded-[8px] p-8">
+                <FireIcon className="mx-auto h-12 w-12 text-slate-400 mb-2" />
+                <h3 className="text-base font-bold text-slate-800">
+                    APAR Tidak Ditemukan
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                    APAR yang Anda cari tidak dapat ditemukan.
+                <p className="text-xs text-slate-500 mt-1 mb-4">
+                    Data tabung pemadam api tidak ditemukan dalam sistem.
                 </p>
+                <Link
+                    to="/apar"
+                    className="inline-flex items-center px-4 py-2 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#11468F] rounded-[6px]"
+                >
+                    Kembali ke Daftar APAR
+                </Link>
             </div>
         );
     }
 
+    const statusConfig = getAparStatusConfig(apar.status);
+    const locationConfig = getLocationTypeConfig(apar.location_type);
+    const isExpired =
+        apar.expired_at && new Date(apar.expired_at) < new Date();
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 max-w-6xl mx-auto pb-12 px-1 sm:px-0">
             {/* Header */}
-            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
-                <div className="px-4 py-5 sm:p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">
+            <div className="bg-white border border-slate-200 rounded-[8px] p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-[6px] bg-[#041562] text-white flex items-center justify-center font-bold shadow-sm flex-shrink-0">
+                        <FireIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight break-all">
                                 APAR {apar.serial_number}
                             </h1>
-                            <p className="text-gray-600">Detail lengkap APAR</p>
-                        </div>
-                        <div className="flex space-x-3">
-                            <Link
-                                to={
-                                    apar?.id
-                                        ? `/apar/${apar.id}/edit`
-                                        : "/apar"
-                                }
-                                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-[6px] text-sm font-semibold text-white bg-[#11468F] hover:bg-[#0d3873] shadow-sm transition-colors ${
-                                    !apar?.id
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                }`}
-                                onClick={(e) => {
-                                    if (!apar?.id) {
-                                        e.preventDefault();
-                                        console.error(
-                                            "Invalid APAR data, cannot navigate to edit page"
-                                        );
-                                        showError(
-                                            "Data APAR tidak valid, tidak dapat mengedit"
-                                        );
-                                    }
-                                }}
+                            <span
+                                className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-[4px] text-[11px] sm:text-xs font-semibold border ${statusConfig.color} flex-shrink-0`}
                             >
-                                Edit APAR
-                            </Link>
-                            <Link
-                                to="/apar"
-                                className="inline-flex items-center px-4 py-2 border border-slate-300 rounded-[6px] text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition-colors"
-                            >
-                                Kembali
-                            </Link>
+                                <span
+                                    className={`w-1.5 h-1.5 rounded-full mr-1.5 ${statusConfig.dotColor}`}
+                                />
+                                {statusConfig.text}
+                            </span>
                         </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Spesifikasi fisik, status kesiapan, kode QR terenkripsi, dan lokasi toleransi geofence
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            {/* APAR Information */}
-            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
-                <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                        Informasi APAR
-                    </h3>
-                    <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Nomor Seri
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.serial_number}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Jenis
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.apar_type?.name?.toUpperCase() || 'Unknown'}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Kapasitas
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.capacity} {/* Format capacity accordingly */}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Status
-                            </dt>
-                            <dd className="mt-1">
-                                <span
-                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                                        apar.status
-                                    )}`}
-                                >
-                                    {getStatusText(apar.status)}
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Tanggal Manufaktur
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.manufactured_date
-                                    ? new Date(
-                                          apar.manufactured_date
-                                      ).toLocaleDateString("id-ID")
-                                    : "-"}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Tanggal Kadaluarsa
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.expired_at
-                                    ? new Date(
-                                          apar.expired_at
-                                      ).toLocaleDateString("id-ID")
-                                    : "-"}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Lokasi
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.location_name}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">
-                                Tipe Lokasi
-                            </dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                                {apar.location_type === "statis"
-                                    ? "Statis"
-                                    : "Mobil"}
-                            </dd>
-                        </div>
-                        {apar.tank_truck && (
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">
-                                    Mobil Tangki
-                                </dt>
-                                <dd className="mt-1 text-sm text-gray-900">
-                                    {apar.tank_truck.plate_number} - {apar.tank_truck.driver_name}
-                                </dd>
-                            </div>
-                        )}
-                        {apar.latitude && apar.longitude && (
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">
-                                    Koordinat
-                                </dt>
-                                <dd className="mt-1 text-sm text-gray-900">
-                                    {apar.latitude}, {apar.longitude} {/* Coordinates */}
-                                </dd>
-                            </div>
-                        )}
-                    </dl>
+                <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                    {(user?.role === "admin" || user?.role === "supervisor") && (
+                        <Link
+                            to="/apar/$id/edit"
+                            params={{ id: String(apar.id) }}
+                            className="inline-flex items-center justify-center flex-1 sm:flex-initial px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#11468F] hover:bg-[#0d3873] rounded-[6px] shadow-sm transition-colors"
+                        >
+                            <PencilIcon className="w-4 h-4 mr-1.5" />
+                            Edit APAR
+                        </Link>
+                    )}
+                    <Link
+                        to="/apar"
+                        className="inline-flex items-center justify-center flex-1 sm:flex-initial px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-[6px] shadow-xs transition-colors"
+                    >
+                        <ArrowLeftIcon className="w-4 h-4 mr-1.5" />
+                        Kembali
+                    </Link>
                 </div>
             </div>
 
-            {/* QR Code */}
-            <div className="bg-white shadow-sm border border-slate-200 rounded-[6px]">
-                <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">
-                        QR Code
-                    </h3>
-                    <div className="flex justify-center">
-                        <div className="bg-white p-4 rounded-[6px] border border-slate-200">
-                            {!qrCodeError ? (
-                                qrQuery.isLoading ? (
-                                    <div className="w-48 h-48 flex items-center justify-center">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#11468F]"></div>
-                                    </div>
-                                ) : qrCodeUrl ? (
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                {/* Left Col: Spec & Location */}
+                <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                    {/* Specifications Card */}
+                    <div className="bg-white border border-slate-200 rounded-[8px] p-4 sm:p-6 shadow-sm space-y-4">
+                        <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                            <ScaleIcon className="w-5 h-5 text-[#11468F]" />
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                                Identitas & Spesifikasi Fisik
+                            </h2>
+                        </div>
+
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Nomor Seri
+                                </dt>
+                                <dd className="font-mono font-bold text-xs sm:text-sm text-slate-900 break-all">
+                                    {apar.serial_number}
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Jenis Media Pemadam
+                                </dt>
+                                <dd className="font-bold text-xs sm:text-sm text-slate-900">
+                                    {apar.apar_type?.name || "Standar"}
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Kapasitas Berat
+                                </dt>
+                                <dd className="font-mono font-bold text-xs sm:text-sm text-slate-900">
+                                    {apar.capacity} kg
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Status Kesiapan
+                                </dt>
+                                <dd className="mt-0.5">
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-semibold border ${statusConfig.color}`}
+                                    >
+                                        {statusConfig.text}
+                                    </span>
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Tanggal Produksi / Pembelian
+                                </dt>
+                                <dd className="font-mono font-semibold text-slate-800 break-words">
+                                    {apar.manufactured_date
+                                        ? new Date(apar.manufactured_date).toLocaleDateString("id-ID", {
+                                              year: "numeric",
+                                              month: "long",
+                                              day: "numeric",
+                                          })
+                                        : "-"}
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Masa Berlaku / Kadaluarsa
+                                </dt>
+                                <dd
+                                    className={`font-mono font-semibold break-words ${
+                                        isExpired ? "text-rose-600 font-bold" : "text-slate-800"
+                                    }`}
+                                >
+                                    {apar.expired_at
+                                        ? new Date(apar.expired_at).toLocaleDateString("id-ID", {
+                                              year: "numeric",
+                                              month: "long",
+                                              day: "numeric",
+                                          })
+                                        : "-"}
+                                    {isExpired && " (Kadaluarsa)"}
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+
+                    {/* Geofence & Location Card */}
+                    <div className="bg-white border border-slate-200 rounded-[8px] p-4 sm:p-6 shadow-sm space-y-4">
+                        <div className="flex items-center space-x-2 border-b border-slate-100 pb-3">
+                            <MapPinIcon className="w-5 h-5 text-[#11468F]" />
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                                Lokasi Penempatan & Validasi Geofence
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+                            <div className="sm:col-span-2 bg-slate-50 p-3 sm:p-3.5 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-1">
+                                    Nama Titik Lokasi
+                                </dt>
+                                <dd className="text-sm font-bold text-slate-900 break-words">
+                                    {apar.location_name}
+                                </dd>
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                    <span
+                                        className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${locationConfig.color}`}
+                                    >
+                                        {apar.location_type === "mobile" ? (
+                                            <TruckIcon className="w-3 h-3 mr-1" />
+                                        ) : (
+                                            <MapPinIcon className="w-3 h-3 mr-1" />
+                                        )}
+                                        {locationConfig.text}
+                                    </span>
+                                    {apar.tank_truck && (
+                                        <span className="text-[10px] font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded-[3px] border border-slate-200">
+                                            Mobil Tangki: {apar.tank_truck.plate_number}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Koordinat Latitude & Longitude
+                                </dt>
+                                <dd className="font-mono font-semibold text-xs sm:text-sm text-slate-900 break-all">
+                                    {apar.latitude && apar.longitude
+                                        ? `${apar.latitude}, ${apar.longitude}`
+                                        : "Belum diset"}
+                                </dd>
+                            </div>
+
+                            <div className="bg-slate-50 p-3 rounded-[6px] border border-slate-100">
+                                <dt className="text-slate-500 font-semibold mb-0.5">
+                                    Toleransi Radius GPS
+                                </dt>
+                                <dd className="font-mono font-semibold text-xs sm:text-sm text-slate-900">
+                                    {apar.valid_radius || 50} meter
+                                </dd>
+                            </div>
+                        </div>
+
+                        {apar.notes && (
+                            <div className="mt-4 p-3 sm:p-3.5 bg-blue-50/60 rounded-[6px] border border-blue-100">
+                                <div className="text-[11px] font-bold uppercase tracking-wider text-[#11468F] mb-1">
+                                    Catatan Khusus:
+                                </div>
+                                <p className="text-xs text-slate-700 leading-relaxed break-words">
+                                    {apar.notes}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right Col: QR Code Card */}
+                <div className="space-y-4 sm:space-y-6">
+                    <div className="bg-white border border-slate-200 rounded-[8px] p-4 sm:p-6 shadow-sm text-center">
+                        <div className="flex items-center justify-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                            <QrCodeIcon className="w-5 h-5 text-[#041562]" />
+                            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                                Label QR Code
+                            </h2>
+                        </div>
+
+                        {qrCodeUrl ? (
+                            <div className="space-y-4">
+                                <div className="p-3 sm:p-4 bg-white border border-slate-200 rounded-[8px] inline-block shadow-xs max-w-full">
                                     <img
                                         src={qrCodeUrl}
-                                        alt="QR Code"
-                                        className="w-48 h-48"
-                                        onError={handleQrCodeError}
+                                        alt={`QR Code APAR ${apar.serial_number}`}
+                                        className="w-40 h-40 sm:w-48 sm:h-48 mx-auto object-contain"
                                     />
-                                ) : (
-                                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-[6px]">
-                                        <div className="text-gray-400 text-sm">QR Code tidak tersedia</div>
-                                    </div>
-                                )
-                            ) : (
-                                <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-[6px]">
-                                    <div className="text-center">
-                                        <div className="text-gray-400 text-sm">
-                                            QR Code tidak tersedia
-                                        </div>
-                                        <div className="text-gray-300 text-xs mt-1">
-                                            Endpoint belum dikonfigurasi
-                                        </div>
-                                    </div>
                                 </div>
-                            )}
-                        </div>
+                                <div className="font-mono text-xs font-bold text-slate-700 break-all px-2">
+                                    {apar.qr_code_token || apar.serial_number}
+                                </div>
+                                <p className="text-[11px] text-slate-500 leading-relaxed px-1">
+                                    Pindai kode QR ini menggunakan modul scanner kamera teknisi untuk memulai inspeksi berkala.
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                                    <button
+                                        type="button"
+                                        onClick={handleDownloadPng}
+                                        className="inline-flex items-center justify-center flex-1 px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-white bg-[#041562] hover:bg-[#11468F] rounded-[6px] shadow-sm transition-colors cursor-pointer"
+                                    >
+                                        <ArrowDownTrayIcon className="w-4 h-4 mr-1.5" />
+                                        Unduh PNG
+                                    </button>
+                                    <a
+                                        href={qrCodeUrl}
+                                        download={`QR_${apar.serial_number}.svg`}
+                                        className="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-[6px] shadow-xs transition-colors"
+                                    >
+                                        <ArrowDownTrayIcon className="w-4 h-4 mr-1.5" />
+                                        Unduh SVG
+                                    </a>
+                                </div>
+                            </div>
+                        ) : qrCodeError ? (
+                            <div className="py-6 sm:py-8 text-center space-y-2.5">
+                                <p className="text-xs text-rose-600 font-semibold">
+                                    Gagal memuat pratinjau QR Code.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => qrQuery.refetch()}
+                                    className="inline-flex items-center px-3.5 py-2 min-h-[40px] text-xs font-bold uppercase tracking-wider text-[#11468F] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-[6px] transition-colors"
+                                >
+                                    Coba Muat Ulang
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="py-8 text-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-[#11468F] mx-auto mb-2" />
+                                <span className="text-xs text-slate-500">
+                                    Membuat QR Code...
+                                </span>
+                            </div>
+                        )}
                     </div>
-                    <p className="mt-2 text-sm text-gray-500 text-center">
-                        Scan QR Code ini untuk melakukan inspeksi
-                    </p>
                 </div>
             </div>
-
-
         </div>
     );
 };
