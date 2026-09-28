@@ -1,0 +1,97 @@
+service: cakapftmaos
+image: 1iseo/cakapftmaos
+
+servers:
+  web:
+    - 43.173.15.72
+
+proxy:
+  ssl: true
+  host: fiscakap-pertamina.com
+  app_port: 80
+  healthcheck:
+    path: /up
+    interval: 5
+    timeout: 5
+
+registry:
+  server: ghcr.io
+  username: 1iseo
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+ssh:
+  user: ubuntu
+
+env:
+  clear:
+    APP_NAME: "CAKAP FT MAOS"
+    APP_ENV: production
+    APP_DEBUG: false
+    APP_URL: "https://fiscakap-pertamina.com"
+    APP_TIMEZONE: "Asia/Jakarta"
+    APP_LOCALE: id
+    APP_FALLBACK_LOCALE: en
+    DB_CONNECTION: mysql
+    DB_HOST: cakapftmaos-mysql
+    DB_PORT: 3306
+    DB_DATABASE: cakap_pertamina
+    DB_USERNAME: cakap_user
+    CACHE_STORE: redis
+    SESSION_DRIVER: redis
+    QUEUE_CONNECTION: redis
+    REDIS_HOST: cakapftmaos-redis
+    REDIS_PORT: 6379
+    AUTO_MIGRATE: "true"
+    CACHE_ON_STARTUP: "true"
+    MAIL_MAILER: smtp
+    MAIL_SCHEME: smtps
+    MAIL_HOST: smtp.gmail.com
+    MAIL_PORT: 587
+    MAIL_USERNAME: cakappertamina@gmail.com
+    MAIL_FROM_ADDRESS: "cakappertamina@gmail.com"
+    MAIL_FROM_NAME: "CAKAP FT MAOS"
+  secret:
+    - APP_KEY
+    - DB_PASSWORD
+    - DB_ROOT_PASSWORD
+    - MYSQL_PASSWORD
+    - MYSQL_ROOT_PASSWORD
+    - JWT_SECRET
+    - MAIL_PASSWORD
+
+volumes:
+  - "/home/ubuntu/data/cakap_storage:/var/www/html/storage/app/public"
+
+accessories:
+  mysql:
+    image: mysql:8.0
+    host: 43.173.15.72
+    port: "127.0.0.1:3306:3306"
+    cmd: "--default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"
+    env:
+      clear:
+        MYSQL_DATABASE: cakap_pertamina
+        MYSQL_USER: cakap_user
+      secret:
+        - MYSQL_ROOT_PASSWORD
+        - MYSQL_PASSWORD
+    directories:
+      - "/home/ubuntu/data/mysql:/var/lib/mysql"
+
+  redis:
+    image: redis:7-alpine
+    host: 43.173.15.72
+    port: "127.0.0.1:6379:6379"
+    cmd: "redis-server --appendonly yes"
+    directories:
+      - "/home/ubuntu/data/redis:/data"
+
+aliases:
+  migrate: bin/artisan migrate --force
+  seed: bin/artisan db:seed --force
+  storage_link: bin/artisan storage:link --force
+  tinker: bin/artisan tinker
