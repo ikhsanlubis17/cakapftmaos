@@ -14,7 +14,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # Copy frontend source files and compile production bundle
-COPY vite.config.js tsconfig.json ./
+COPY vite.config.js tsconfig.json postcss.config.js tailwind.config.js ./
 COPY resources ./resources
 COPY public ./public
 RUN npm run build
