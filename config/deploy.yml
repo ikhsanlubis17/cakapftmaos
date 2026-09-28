@@ -2,7 +2,7 @@
   server_ip = ENV["SERVER_IP"] || (defined?(Kamal::Secrets) ? Kamal::Secrets.new(destination: nil)["SERVER_IP"] : nil)
 %>
 service: cakapftmaos
-image: 1iseo/cakapftmaos
+image: ikhsanlubis17/cakapftmaos
 
 servers:
   web:
@@ -19,7 +19,7 @@ proxy:
 
 registry:
   server: ghcr.io
-  username: 1iseo
+  username: ikhsanlubis17
   password:
     - KAMAL_REGISTRY_PASSWORD
 
