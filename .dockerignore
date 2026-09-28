@@ -20,6 +20,8 @@ storage/framework/views/*
 !storage/framework/views/.gitignore
 storage/app/public/*
 !storage/app/public/.gitignore
+bootstrap/cache/*
+!bootstrap/cache/.gitignore
 public/storage
 public/build
 public/hot

@@ -51,6 +51,7 @@ jobs:
 
       - name: Prepare Kamal Secrets
         env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           APP_KEY: ${{ secrets.APP_KEY }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -62,6 +63,7 @@ jobs:
         run: |
           mkdir -p .kamal
           cat << 'EOF' > .kamal/secrets
+          SERVER_IP=$SERVER_IP
           KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD
           APP_KEY=$APP_KEY
           DB_PASSWORD=$DB_PASSWORD
@@ -75,6 +77,7 @@ jobs:
 
       - name: Ensure Accessories are Running
         env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           APP_KEY: ${{ secrets.APP_KEY }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -89,6 +92,7 @@ jobs:
 
       - name: Deploy Application with Kamal
         env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           APP_KEY: ${{ secrets.APP_KEY }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}

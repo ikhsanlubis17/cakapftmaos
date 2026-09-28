@@ -104,7 +104,8 @@ COPY --chown=www-data:www-data --from=frontend-builder /app/public/build ./publi
 
 # Finalize Composer classmap optimization
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
+RUN rm -f bootstrap/cache/*.php \
+    && composer dump-autoload --optimize --classmap-authoritative --no-dev \
     && rm /usr/bin/composer
 
 # Prepare storage directories and file permissions

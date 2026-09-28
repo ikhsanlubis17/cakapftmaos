@@ -1,9 +1,12 @@
+<%
+  server_ip = ENV["SERVER_IP"] || (defined?(Kamal::Secrets) ? Kamal::Secrets.new(destination: nil)["SERVER_IP"] : nil)
+%>
 service: cakapftmaos
 image: 1iseo/cakapftmaos
 
 servers:
   web:
-    - 43.173.15.72
+    - <%= server_ip %>
 
 proxy:
   ssl: true
@@ -69,7 +72,7 @@ volumes:
 accessories:
   mysql:
     image: mysql:8.0
-    host: 43.173.15.72
+    host: <%= server_ip %>
     port: "127.0.0.1:3306:3306"
     cmd: "--default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"
     env:
@@ -84,7 +87,7 @@ accessories:
 
   redis:
     image: redis:7-alpine
-    host: 43.173.15.72
+    host: <%= server_ip %>
     port: "127.0.0.1:6379:6379"
     cmd: "redis-server --appendonly yes"
     directories:
