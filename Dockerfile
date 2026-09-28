@@ -14,7 +14,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # Copy frontend source files and compile production bundle
-COPY vite.config.js tsconfig.json ./
+COPY vite.config.js tsconfig.json postcss.config.js tailwind.config.js ./
 COPY resources ./resources
 COPY public ./public
 RUN npm run build
@@ -53,6 +53,7 @@ RUN apk add --no-cache \
     libpng \
     libzip \
     icu-libs \
+    sqlite-libs \
     oniguruma
 
 # Build and configure PHP extensions (Intervention Image, MySQL, SQLite, Redis, Opcache)
@@ -63,6 +64,7 @@ RUN apk add --no-cache --virtual .build-deps \
         libpng-dev \
         libzip-dev \
         icu-dev \
+        sqlite-dev \
         oniguruma-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
@@ -102,7 +104,8 @@ COPY --chown=www-data:www-data --from=frontend-builder /app/public/build ./publi
 
 # Finalize Composer classmap optimization
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
+RUN rm -f bootstrap/cache/*.php \
+    && composer dump-autoload --optimize --classmap-authoritative --no-dev \
     && rm /usr/bin/composer
 
 # Prepare storage directories and file permissions

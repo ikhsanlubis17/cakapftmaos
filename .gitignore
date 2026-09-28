@@ -5,6 +5,8 @@
 .env.production
 .env.local
 .env.*.local
+.kamal/secrets
+!.kamal/secrets.example
 .phpactor.json
 .phpunit.result.cache
 /.fleet
