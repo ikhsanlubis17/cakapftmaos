@@ -53,6 +53,7 @@ RUN apk add --no-cache \
     libpng \
     libzip \
     icu-libs \
+    sqlite-libs \
     oniguruma
 
 # Build and configure PHP extensions (Intervention Image, MySQL, SQLite, Redis, Opcache)
@@ -63,6 +64,7 @@ RUN apk add --no-cache --virtual .build-deps \
         libpng-dev \
         libzip-dev \
         icu-dev \
+        sqlite-dev \
         oniguruma-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
