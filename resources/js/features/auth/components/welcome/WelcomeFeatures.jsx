@@ -50,11 +50,11 @@ const WelcomeFeatures = ({ settings }) => {
     ];
 
     return (
-        <section id="features" className="py-20 bg-white text-slate-900 border-t border-b border-[#EEEEEE]">
+        <section id="features" className="py-16 sm:py-20 lg:py-24 bg-white text-slate-900 border-t border-b border-[#EEEEEE] scroll-mt-16 lg:scroll-mt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Section Header */}
-                <div className="text-center mb-14">
-                    <div className="inline-flex items-center px-3 py-1 bg-[#EEEEEE] border border-slate-200 rounded-[6px] mb-3">
+                <div className="text-center mb-12 sm:mb-14">
+                    <div className="inline-flex items-center px-3 py-1 bg-[#EEEEEE] border border-slate-200 rounded-[6px] mb-3 shadow-2xs">
                         <span className="text-xs font-semibold text-[#041562] tracking-wider uppercase">
                             Fitur Inti Sistem
                         </span>
@@ -62,33 +62,33 @@ const WelcomeFeatures = ({ settings }) => {
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#041562] tracking-tight leading-tight mb-3">
                         Dirancang Khusus untuk Standar Keamanan Tinggi
                     </h2>
-                    <p className="text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
+                    <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
                         Fitur dirancang untuk menyederhanakan tugas lapangan teknisi sekaligus memberikan data yang tak terbantahkan bagi manajemen.
                     </p>
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                     {features.map((feature, index) => (
                         <div
                             key={index}
-                            className="bg-white rounded-[6px] p-6 border border-[#EEEEEE] hover:border-slate-300 hover:shadow-md transition-all duration-150 flex flex-col justify-between"
+                            className="bg-white rounded-[8px] p-5 sm:p-6 border border-[#EEEEEE] hover:border-slate-300 hover:shadow-md transition-all duration-150 flex flex-col justify-between"
                         >
                             <div>
-                                <div className="flex items-center justify-between mb-5">
-                                    <div className="w-11 h-11 rounded-[6px] bg-blue-50 border border-blue-100 flex items-center justify-center text-[#11468F]">
+                                <div className="flex items-center justify-between mb-4 sm:mb-5">
+                                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-[6px] bg-blue-50 border border-blue-100 flex items-center justify-center text-[#11468F]">
                                         <feature.icon className="h-5 w-5" />
                                     </div>
-                                    <span className="px-2.5 py-0.5 rounded-[3px] text-[10px] font-semibold bg-[#EEEEEE] text-slate-700 uppercase tracking-wider">
+                                    <span className="px-2.5 py-0.5 rounded-[4px] text-[10px] font-semibold bg-[#EEEEEE] text-slate-700 uppercase tracking-wider">
                                         {feature.badge}
                                     </span>
                                 </div>
 
-                                <h3 className="text-base font-bold text-[#041562] mb-2 tracking-tight">
+                                <h3 className="text-sm sm:text-base font-bold text-[#041562] mb-2 tracking-tight">
                                     {feature.title}
                                 </h3>
 
-                                <p className="text-sm text-slate-600 leading-relaxed font-normal">
+                                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                                     {feature.description}
                                 </p>
                             </div>

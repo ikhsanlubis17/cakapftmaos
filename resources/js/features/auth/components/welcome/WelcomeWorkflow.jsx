@@ -43,10 +43,10 @@ const WelcomeWorkflow = () => {
     ];
 
     return (
-        <section id="workflow" className="py-20 bg-[#EEEEEE] text-slate-900 border-b border-slate-200">
+        <section id="workflow" className="py-16 sm:py-20 lg:py-24 bg-[#EEEEEE] text-slate-900 border-b border-slate-200 scroll-mt-16 lg:scroll-mt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
-                <div className="text-center mb-14">
+                <div className="text-center mb-12 sm:mb-14">
                     <div className="inline-flex items-center px-3 py-1 bg-white border border-slate-300 rounded-[6px] mb-3 shadow-2xs">
                         <span className="text-xs font-semibold text-[#041562] tracking-wider uppercase">
                             Alur Pelaksanaan
@@ -55,22 +55,22 @@ const WelcomeWorkflow = () => {
                     <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#041562] tracking-tight leading-tight mb-3">
                         Alur Kerja Cepat & Anti-Manipulasi
                     </h2>
-                    <p className="text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
+                    <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed">
                         Standar operasional terstruktur untuk memastikan setiap inspeksi terekam dengan akurat hanya dalam hitungan menit.
                     </p>
                 </div>
 
                 {/* Desktop Workflow */}
-                <div className="hidden lg:grid grid-cols-5 gap-4 relative">
+                <div className="hidden lg:grid grid-cols-5 gap-3.5 xl:gap-4 relative">
                     {workflowSteps.map((step, index) => (
                         <div key={index} className="relative group">
-                            <div className="h-full bg-white rounded-[6px] p-5 border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
+                            <div className="h-full bg-white rounded-[8px] p-5 border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-150 flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-xs font-mono font-bold text-white bg-[#11468F] px-2 py-0.5 rounded-[4px]">
                                             {step.step}
                                         </span>
-                                        <div className="w-9 h-9 rounded-[6px] bg-blue-50 border border-blue-100 flex items-center justify-center text-[#11468F]">
+                                        <div className="w-8 h-8 rounded-[6px] bg-blue-50 border border-blue-100 flex items-center justify-center text-[#11468F]">
                                             <step.icon className="h-4 w-4" />
                                         </div>
                                     </div>
@@ -97,14 +97,14 @@ const WelcomeWorkflow = () => {
                     ))}
                 </div>
 
-                {/* Mobile Workflow */}
+                {/* Mobile / Tablet Workflow */}
                 <div className="lg:hidden space-y-3">
                     {workflowSteps.map((step, index) => (
                         <div 
                             key={index}
-                            className="bg-white rounded-[6px] p-4 border border-slate-200 flex items-start gap-3.5 shadow-2xs"
+                            className="bg-white rounded-[8px] p-4 border border-slate-200 flex items-start gap-3.5 shadow-2xs"
                         >
-                            <span className="text-xs font-mono font-bold text-white bg-[#11468F] px-2.5 py-1 rounded-[4px] flex-shrink-0">
+                            <span className="text-xs font-mono font-bold text-white bg-[#11468F] px-2.5 py-1 rounded-[4px] shrink-0 mt-0.5">
                                 {step.step}
                             </span>
                             <div className="flex-1">

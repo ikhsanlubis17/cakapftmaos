@@ -295,7 +295,7 @@ return [
             'validation' => 'nullable|string|max:255',
         ],
         'footer_copyright' => [
-            'default' => '© 2025 CAKAP FT MAOS. All rights reserved.',
+            'default' => 'All rights reserved.',
             'type' => 'string',
             'group' => 'general',
             'label' => 'Teks Hak Cipta Footer',

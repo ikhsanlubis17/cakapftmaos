@@ -127,7 +127,7 @@ class Setting extends Model
             'contact_email' => $merged['contact_email'] ?? 'cakap@pertamina.com',
             'contact_phone' => $merged['contact_phone'] ?? '+62 282 123456',
             'contact_address' => $merged['contact_address'] ?? 'Jl. Stasiun No. 1, Maos, Cilacap, Jawa Tengah',
-            'footer_copyright' => $merged['footer_copyright'] ?? '© 2025 CAKAP FT MAOS. All rights reserved.',
+            'footer_copyright' => $merged['footer_copyright'] ?? 'All rights reserved.',
         ];
     }
 

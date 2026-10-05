@@ -4,15 +4,15 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useSiteSettings } from '../../../contexts/SiteSettingsContext';
 import WelcomeNav from '../components/welcome/WelcomeNav';
 import WelcomeHero from '../components/welcome/WelcomeHero';
+import WelcomeAbout from '../components/welcome/WelcomeAbout';
 import WelcomeFeatures from '../components/welcome/WelcomeFeatures';
 import WelcomeWorkflow from '../components/welcome/WelcomeWorkflow';
 import WelcomeRoles from '../components/welcome/WelcomeRoles';
-import WelcomeAbout from '../components/welcome/WelcomeAbout';
 import WelcomeFooter from '../components/welcome/WelcomeFooter';
 
 const Welcome = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [activeSection, setActiveSection] = useState('');
+    const [activeSection, setActiveSection] = useState('hero');
     const [scrollY, setScrollY] = useState(0);
     const { settings } = useSiteSettings();
     const { isAuthenticated, user } = useAuth();
@@ -29,8 +29,8 @@ const Welcome = () => {
         const handleScroll = () => {
             setScrollY(window.scrollY);
             
-            const sections = ['hero', 'features', 'workflow', 'roles', 'about'];
-            const scrollPosition = window.scrollY + 100;
+            const sections = ['hero', 'about', 'features', 'workflow', 'roles'];
+            const scrollPosition = window.scrollY + 120;
 
             for (const section of sections) {
                 const element = document.getElementById(section);
@@ -46,7 +46,7 @@ const Welcome = () => {
             }
         };
 
-        window.addEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -59,7 +59,7 @@ const Welcome = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 selection:bg-[#11468F] selection:text-white">
+        <div className="min-h-screen bg-white text-slate-900 selection:bg-[#11468F] selection:text-white antialiased">
             <WelcomeNav
                 scrollY={scrollY}
                 activeSection={activeSection}
@@ -72,15 +72,15 @@ const Welcome = () => {
                 scrollToSection={scrollToSection}
                 settings={settings}
             />
+            <WelcomeAbout
+                scrollToSection={scrollToSection}
+                settings={settings}
+            />
             <WelcomeFeatures
                 settings={settings}
             />
             <WelcomeWorkflow />
             <WelcomeRoles />
-            <WelcomeAbout
-                scrollToSection={scrollToSection}
-                settings={settings}
-            />
             <WelcomeFooter
                 scrollToSection={scrollToSection}
                 settings={settings}
