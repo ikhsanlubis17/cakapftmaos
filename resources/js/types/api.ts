@@ -26,6 +26,7 @@ export interface Apar {
     latitude?: number | string;
     longitude?: number | string;
     qr_code?: string | null;
+    qr_code_token?: string | null;
 }
 
 export interface ApiResponse<T = any> {

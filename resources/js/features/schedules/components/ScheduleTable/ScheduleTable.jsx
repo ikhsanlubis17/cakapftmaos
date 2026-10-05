@@ -15,6 +15,7 @@ import {
     CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { getFrequencyText, getStatusColor, getStatusText, getStatusIcon } from "../../utils/scheduleUtils";
+import { formatDate } from "@/utils/dateUtils";
 
 /**
  * ScheduleTable Component
@@ -188,18 +189,7 @@ const ScheduleTable = ({
                                                     <div className="flex items-center gap-2">
                                                         <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
                                                         <span>
-                                                            {schedule.scheduled_date
-                                                                ? new Date(
-                                                                      schedule.scheduled_date
-                                                                  ).toLocaleDateString(
-                                                                      "id-ID",
-                                                                      {
-                                                                          day: "numeric",
-                                                                          month: "short",
-                                                                          year: "numeric",
-                                                                      }
-                                                                  )
-                                                                : "Tanggal tidak valid"}
+                                                            {formatDate(schedule.scheduled_date)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2">

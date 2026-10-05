@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AparController;
@@ -196,11 +195,8 @@ Route::middleware('auth:api')->group(function () {
 
     // Notification routes
     Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::get('/notifications/unread', [NotificationController::class, 'unread']);
     Route::post('/notifications/bulk', [NotificationController::class, 'sendBulkNotifications']);
     Route::post('/notifications/bulk-all', [NotificationController::class, 'sendBulkNotificationsAll']);
-    Route::patch('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead']);
-    Route::patch('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
 
     // Settings routes (Admin only)
     Route::middleware(['role:admin'])->group(function () {

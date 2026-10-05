@@ -160,7 +160,7 @@ export const TankTruckList = () => {
     };
 
     return (
-        <Fragment>
+        <>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="bg-white border border-slate-200 rounded-[8px] p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -311,7 +311,7 @@ export const TankTruckList = () => {
                 cancelText={config.cancelText}
                 confirmButtonColor={config.confirmButtonColor}
             />
-        </Fragment>
+        </>
     );
 };
 

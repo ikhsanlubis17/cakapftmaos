@@ -86,30 +86,18 @@ export const getStatusColor = (schedule) => {
     }
 
     // Priority order: today_ongoing > today_not_started > overdue > upcoming
-
-    // Check if schedule is today and ongoing (within time window) - HIGHEST PRIORITY
-    if (
-        scheduledDate === now.toISOString().split("T")[0] &&
-        now >= scheduledDateTime &&
-        now <= scheduledEndDateTime
-    ) {
+    if (isScheduleToday(schedule) && isScheduleOngoing(schedule)) {
         return "bg-amber-100 text-amber-700";
     }
 
-    // Check if schedule is today but not started yet - SECOND PRIORITY
-    if (
-        scheduledDate === now.toISOString().split("T")[0] &&
-        now < scheduledDateTime
-    ) {
+    if (isScheduleToday(schedule) && !isScheduleOverdue(schedule)) {
         return "bg-blue-100 text-blue-700";
     }
 
-    // Check if schedule is overdue (past start time) - THIRD PRIORITY
-    if (scheduledDateTime < now) {
+    if (isScheduleOverdue(schedule)) {
         return "bg-red-100 text-red-700";
     }
 
-    // Future schedule - LOWEST PRIORITY
     return "bg-emerald-100 text-emerald-700";
 };
 

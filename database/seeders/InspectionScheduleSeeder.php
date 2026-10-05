@@ -137,11 +137,11 @@ class InspectionScheduleSeeder extends Seeder
     private function getRandomNotes(): string
     {
         $notes = [
-            'Inspeksi rutin untuk memastikan APAR dalam kondisi baik',
-            'Periksa tekanan dan kondisi fisik APAR',
-            'Verifikasi tanggal kadaluarsa dan label APAR',
-            'Inspeksi berkala sesuai standar keselamatan',
-            'Pemeriksaan kondisi APAR dan area sekitarnya'
+            'Inspeksi kesiapan operasional APAR fasilitas PT Pertamina Patra Niaga FT Maos',
+            'Pemeriksaan tekanan tabung, pin segel, dan selang discharge nozzle',
+            'Verifikasi masa berlaku sertifikasi & stiker masa kedaluwarsa APAR armada MT',
+            'Pemeriksaan berkala sarana proteksi kebakaran sesuai standar HSSE Obvitnas',
+            'Inspeksi visual fisik tabung dari potensi korosi dan kelayakan akses darurat'
         ];
         return $notes[array_rand($notes)];
     }

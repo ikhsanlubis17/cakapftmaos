@@ -17,6 +17,7 @@ import AuditLogCleanupModal from "../components/AuditLogCleanupModal";
 import ReportsTab from "../components/tabs/ReportsTab";
 import AuditLogTab from "../components/tabs/AuditLogTab";
 import MaintenanceTab from "../components/tabs/MaintenanceTab";
+import { downloadBlob } from "@/utils/downloadUtils";
 
 const STORAGE_TAB_KEY = "cakap_reports_active_tab";
 const STORAGE_PERIOD_KEY = "cakap_reports_period";
@@ -215,18 +216,11 @@ const ReportsAndAudit = () => {
                 return;
             }
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
             const extension = reportFormat === "excel" ? "xlsx" : reportFormat;
-            link.setAttribute(
-                "download",
+            downloadBlob(
+                response.data,
                 `laporan-${reportType}-${dateRange}-${new Date().toISOString().split("T")[0]}.${extension}`
             );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
 
             showSuccess(`Laporan berhasil diunduh (${reportFormat.toUpperCase()}).`);
         } catch (error) {
@@ -251,20 +245,10 @@ const ReportsAndAudit = () => {
             );
 
             const formattedData = JSON.stringify(response.data, null, 2);
-            const blob = new Blob([formattedData], {
-                type: "application/json",
-            });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute(
-                "download",
+            downloadBlob(
+                new Blob([formattedData], { type: "application/json" }),
                 `audit_logs_${new Date().toISOString().split("T")[0]}.json`
             );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
 
             showSuccess("Data audit log berhasil diekspor.");
         } catch (error) {

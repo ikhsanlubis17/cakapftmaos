@@ -22,6 +22,7 @@ import {
     ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import { formatStorageUrl } from '@/utils/imageUrl';
+import { formatDate } from '@/utils/dateUtils';
 import RepairActionModal from '../components/RepairActionModal';
 
 const RepairApprovalDetail = () => {
@@ -327,16 +328,12 @@ const RepairApprovalDetail = () => {
                                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tanggal Inspeksi</p>
                                     <div className="flex items-center gap-2">
                                         <CalendarIcon className="h-4 w-4 text-slate-400" />
-                                        <p className="font-medium text-slate-800 text-sm">{
-                                            approval.inspection?.created_at 
-                                            ? new Date(approval.inspection.created_at).toLocaleDateString('id-ID', {
-                                                weekday: 'long', 
-                                                year: 'numeric', 
-                                                month: 'long', 
-                                                day: 'numeric'
-                                              })
-                                            : '-'
-                                        }</p>
+                                        <p className="font-medium text-slate-800 text-sm">
+                                            {formatDate(approval.inspection?.created_at, {
+                                                weekday: 'long',
+                                                month: 'long',
+                                            })}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -594,11 +591,7 @@ const RepairApprovalDetail = () => {
                                     <p className="text-sm font-semibold text-slate-900">Inspeksi Selesai</p>
                                     <div className="text-xs text-slate-500 mt-1 gap-1 flex flex-col">
                                         <span>{approval.inspection?.user?.name}</span>
-                                        <span>{
-                                            approval.inspection?.created_at 
-                                            ? new Date(approval.inspection.created_at).toLocaleDateString()
-                                            : '-'
-                                        }</span>
+                                        <span>{formatDate(approval.inspection?.created_at)}</span>
                                     </div>
                                 </div>
                             </div>

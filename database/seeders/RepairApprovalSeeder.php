@@ -2,87 +2,81 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\RepairApproval;
 use App\Models\Inspection;
+use App\Models\RepairApproval;
 use App\Models\User;
-use App\Models\Apar;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class RepairApprovalSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Mengaitkan tiket persetujuan perbaikan dengan temuan riil inspeksi lapangan.
      */
     public function run(): void
     {
-        // Get inspections that represent repair-worthy conditions
-        $inspections = Inspection::whereIn('condition', ['damaged', 'expired'])->take(20)->get();
-        $users = User::take(3)->get();
+        // Bersihkan data dummy perbaikan lama
+        RepairApproval::query()->forceDelete();
 
-        if ($users->isEmpty()) {
-            $this->command->info('RepairApprovalSeeder skipped: not enough users to associate approvals.');
+        $supervisor = User::where('role', 'supervisor')->first();
+        if (! $supervisor) {
+            $this->command?->warn('RepairApprovalSeeder dilewati: Supervisor belum terdaftar.');
             return;
         }
 
-        if ($inspections->isEmpty()) {
-            $this->command->info('No inspections with repairable condition found. Generating sample inspections...');
+        // Ambil inspeksi yang membutuhkan perbaikan
+        $repairInspections = Inspection::where('requires_repair', true)->get();
 
-            $apars = Apar::take(5)->get();
-
-            if ($apars->isEmpty()) {
-                $this->command->info('RepairApprovalSeeder skipped: no APAR records available to create sample inspections.');
-                return;
-            }
-
-            $newInspections = collect();
-            $repairConditions = ['damaged', 'expired'];
-
-            for ($i = 0; $i < 6; $i++) {
-                $apar = $apars->random();
-                $user = $users->random();
-                $condition = $repairConditions[array_rand($repairConditions)];
-                $timestamp = Carbon::now()->subDays(rand(3, 14));
-
-                $inspection = Inspection::create([
-                    'apar_id' => $apar->id,
-                    'user_id' => $user->id,
-                    'photo_url' => '/storage/photos/sample_inspection.jpg',
-                    'condition' => $condition,
-                    'notes' => 'Generated for repair approval seeding',
-                    'status' => 'completed',
-                    'requires_repair' => true,
-                    'repair_status' => 'pending_approval',
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ]);
-
-                $newInspections->push($inspection);
-            }
-
-            $inspections = $newInspections;
+        if ($repairInspections->isEmpty()) {
+            $this->command?->info('Tidak ada temuan inspeksi yang memerlukan perbaikan.');
+            return;
         }
 
-        // Create repair approvals with different statuses
-        $statuses = ['pending', 'approved', 'rejected', 'completed'];
-        
-        for ($i = 0; $i < 20; $i++) {
-            $inspection = $inspections->random();
-            $user = $users->random();
-            $status = $statuses[array_rand($statuses)];
-            $date = Carbon::now()->subDays(rand(1, 30));
-            
+        $createdCount = 0;
+        foreach ($repairInspections as $index => $inspection) {
+            $inspDate = $inspection->created_at ?? Carbon::now()->subDays(5);
+            $isOld = $inspDate->copy()->diffInDays(Carbon::now()) > 7;
+
+            // Status: inspeksi lampau diselesaikan (completed), yang terkini disetujui (approved/pending)
+            if ($isOld || $index % 3 === 0) {
+                $status = 'completed';
+                $approvedAt = $inspDate->copy()->addDay();
+                $completedAt = $inspDate->copy()->addDays(2);
+                $adminNotes = 'Disetujui untuk penggantian tabung APAR cadangan dari Workshop DCM.';
+                $repairNotes = 'Pergantian tabung cadangan telah selesai dilakukan oleh tim bengkel mitra MT FT Maos.';
+                $inspection->update(['repair_status' => 'completed']);
+            } elseif ($index % 2 === 0) {
+                $status = 'approved';
+                $approvedAt = $inspDate->copy()->addHours(6);
+                $completedAt = null;
+                $adminNotes = 'Disetujui. Silakan teknisi mengambil tabung cadangan siap pakai di Gudang DCM.';
+                $repairNotes = null;
+                $inspection->update(['repair_status' => 'in_progress']);
+            } else {
+                $status = 'pending';
+                $approvedAt = null;
+                $completedAt = null;
+                $adminNotes = null;
+                $repairNotes = null;
+                $inspection->update(['repair_status' => 'pending_approval']);
+            }
+
             RepairApproval::create([
                 'inspection_id' => $inspection->id,
-                'approved_by' => $status === 'pending' ? null : $users->random()->id,
+                'approved_by' => $status === 'pending' ? null : $supervisor->id,
                 'status' => $status,
-                'admin_notes' => $status === 'rejected' ? 'Biaya terlalu tinggi atau tidak mendesak' : 'Disetujui untuk perbaikan',
-                'repair_notes' => $status === 'completed' ? 'Perbaikan telah selesai dilakukan' : null,
-                'approved_at' => $status === 'pending' ? null : $date->copy()->addDays(rand(1, 5)),
-                'completed_at' => $status === 'completed' ? $date->copy()->addDays(rand(6, 10)) : null,
-                'created_at' => $date,
-                'updated_at' => $date,
+                'admin_notes' => $adminNotes,
+                'repair_notes' => $repairNotes,
+                'approved_at' => $approvedAt,
+                'completed_at' => $completedAt,
+                'created_at' => $inspDate,
+                'updated_at' => $completedAt ?: ($approvedAt ?: $inspDate),
             ]);
+
+            $createdCount++;
         }
+
+        $this->command?->info("✓ Berhasil membuat {$createdCount} data persetujuan perbaikan riil.");
     }
 }

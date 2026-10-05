@@ -36,9 +36,6 @@ class DashboardTestSeeder extends Seeder
             'needs_refill' => 1
         ]);
 
-        // Tuesday - No inspections
-        // $this->createDayInspections($currentWeek->copy()->addDays(1), $apars, $users, []);
-
         // Wednesday - Good inspections
         $this->createDayInspections($currentWeek->copy()->addDays(2), $apars, $users, [
             'good' => 2,
@@ -58,9 +55,6 @@ class DashboardTestSeeder extends Seeder
             'damaged' => 1,
             'expired' => 1
         ]);
-
-        // Saturday - No inspections
-        // $this->createDayInspections($currentWeek->copy()->addDays(5), $apars, $users, []);
 
         // Sunday - One good inspection
         $this->createDayInspections($currentWeek->copy()->addDays(6), $apars, $users, [

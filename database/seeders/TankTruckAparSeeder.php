@@ -31,10 +31,20 @@ class TankTruckAparSeeder extends Seeder
             }
         }
 
-        // Read CSV file
+        // Prioritas 1: Baca file Excel terbaru jika ada
+        $excelFile = base_path('UPDATE EXP APAR BBM MAOS & CILACAP.xlsx');
+        if (file_exists($excelFile)) {
+            Log::info("Found updated Excel file for BBM Maos: {$excelFile}. Running sync command...");
+            \Illuminate\Support\Facades\Artisan::call('apar:sync-bbm-maos', ['--file' => $excelFile]);
+            Log::info("TankTruckAparSeeder completed using Excel sync command.");
+
+            return;
+        }
+
+        // Prioritas 2 (Fallback): Read CSV file
         $csvFile = base_path('APAR Maos.csv');
         if (! file_exists($csvFile)) {
-            Log::error("CSV file not found: {$csvFile}");
+            Log::error("Neither Excel nor CSV file found");
 
             return;
         }

@@ -17,6 +17,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AparFilterBar from "../components/AparFilterBar";
 import AparTable from "../components/AparTable";
 import AparQrDownloadModal from "../components/AparQrDownloadModal";
+import { downloadBlob } from "@/utils/downloadUtils";
 
 export const AparList: React.FC = () => {
     const { user, apiClient } = useAuth();
@@ -231,23 +232,16 @@ export const AparList: React.FC = () => {
                 { responseType: "blob" }
             );
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement("a");
-            link.href = url;
             const filenamePrefix =
                 printFormat === "qr_only"
                     ? "qr-code-apar"
                     : printFormat === "serial_only"
                     ? "nomor-seri-apar"
                     : "label-apar";
-            link.setAttribute(
-                "download",
+            downloadBlob(
+                response.data,
                 `${filenamePrefix}-${new Date().toISOString().split("T")[0]}.pdf`
             );
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
 
             showSuccess("Dokumen label APAR berhasil diunduh!");
             setShowQrDownloadModal(false);

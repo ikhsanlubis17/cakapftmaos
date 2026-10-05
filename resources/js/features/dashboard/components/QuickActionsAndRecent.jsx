@@ -13,7 +13,7 @@ import {
     CogIcon,
     QrCodeIcon,
 } from "@heroicons/react/24/outline";
-import { Badge } from "@/components/ui/Badge";
+import { formatDateTime } from "@/utils/dateUtils";
 
 /**
  * QuickActionsCard Component
@@ -240,12 +240,7 @@ export const RecentInspectionsCard = ({ recentInspections = [] }) => {
                                             </span>
                                             <span className="text-slate-300 text-[10px]">•</span>
                                             <span className="text-[10px] text-slate-400 font-mono">
-                                                {new Date(inspection.created_at).toLocaleDateString("id-ID", {
-                                                    day: "numeric",
-                                                    month: "short",
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                })}
+                                                {formatDateTime(inspection.created_at, { year: undefined })}
                                             </span>
                                         </div>
                                     </div>

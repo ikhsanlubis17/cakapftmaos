@@ -5,7 +5,6 @@ import { useToast } from "../../contexts/ToastContext"
 import { useSiteSettings } from "../../contexts/SiteSettingsContext"
 import { useConfirmDialog } from "../../hooks/useConfirmDialog"
 import ConfirmDialog from "../common/ConfirmDialog"
-import { tokenStorage } from "../../services/tokenStorage"
 import { getRoleDisplayName } from "../../utils/roleUtils"
 import {
   HomeIcon,

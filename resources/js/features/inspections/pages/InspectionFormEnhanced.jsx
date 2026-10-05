@@ -4,16 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-    MapPinIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
     FireIcon,
     ShieldCheckIcon,
-    InformationCircleIcon,
-    UserIcon,
-    CalendarIcon,
-    ClockIcon,
-    WrenchScrewdriverIcon,
     EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 import { AparSelector } from '../components/AparSelector';
@@ -21,6 +15,8 @@ import Header from '../components/InspectionHeader';
 import APARPhotoCapture from '../components/APARPhotoCapture';
 import SelfieCapture from '../components/SelfieCapture';
 import DamageSection from '../components/DamageSection';
+import SupervisorAssignmentSection from '../components/SupervisorAssignmentSection';
+import LocationVerificationSection from '../components/LocationVerificationSection';
 import { calculateDistance } from '@/utils/geolocation';
 
 
@@ -1197,275 +1193,34 @@ const InspectionFormEnhanced = () => {
                         />
                     )}
 
-                    {/* Penugasan Perbaikan Khusus Supervisor */}
-                    {condition === 'damaged' && isSupervisor && (
-                        <div className="bg-white p-4 sm:p-5 rounded-[8px] border-2 border-[#11468F]/30 shadow-xs space-y-4">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <div className="flex items-center space-x-2.5">
-                                    <div className="h-8 w-8 rounded-[6px] bg-[#11468F] text-white flex items-center justify-center flex-shrink-0">
-                                        <WrenchScrewdriverIcon className="h-4.5 w-4.5" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center">
-                                            Penugasan Teknisi & Jadwal Perbaikan
-                                            <span className="text-[#DA1212] ml-1">*</span>
-                                        </h3>
-                                        <p className="text-[11px] text-slate-500">
-                                            Sebagai Supervisor, tentukan teknisi pelaksana yang bebas bentrok jadwal operasional
-                                        </p>
-                                    </div>
-                                </div>
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-blue-100 text-[#041562] border border-blue-200">
-                                    Wewenang Supervisor
-                                </span>
-                            </div>
-
-                            <div className="bg-blue-50/70 border border-blue-200/80 rounded-[8px] p-3.5 flex items-start space-x-3 text-xs text-[#041562]">
-                                <InformationCircleIcon className="h-5 w-5 text-[#11468F] flex-shrink-0 mt-0.5" />
-                                <div className="space-y-0.5">
-                                    <p className="font-bold">SOP Pelaksanaan HSSE Terminal:</p>
-                                    <p className="text-slate-600 leading-relaxed">
-                                        Supervisor tidak melakukan perbaikan fisik tabung secara langsung. Sistem memvalidasi ketersediaan waktu teknisi terpilih secara real-time untuk memastikan tidak ada tumpang tindih penugasan.
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Date & Time Selection Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
-                                        <CalendarIcon className="h-3.5 w-3.5 text-[#11468F]" />
-                                        Tanggal Pelaksanaan Perbaikan <span className="text-[#DA1212]">*</span>
-                                    </label>
-                                    <input
-                                        type="date"
-                                        min={new Date().toISOString().split('T')[0]}
-                                        value={scheduleDate}
-                                        onChange={(e) => setScheduleDate(e.target.value)}
-                                        className="w-full h-11 px-3.5 text-xs sm:text-sm font-medium border border-slate-300 rounded-[6px] focus:ring-2 focus:ring-[#11468F] focus:border-transparent bg-white shadow-2xs"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
-                                        <ClockIcon className="h-3.5 w-3.5 text-[#11468F]" />
-                                        Waktu Mulai Perbaikan (WIB) <span className="text-[#DA1212]">*</span>
-                                    </label>
-                                    <input
-                                        type="time"
-                                        value={scheduleTime}
-                                        onChange={(e) => setScheduleTime(e.target.value)}
-                                        className="w-full h-11 px-3.5 text-xs sm:text-sm font-medium border border-slate-300 rounded-[6px] focus:ring-2 focus:ring-[#11468F] focus:border-transparent bg-white shadow-2xs"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Technician Selection */}
-                            <div className="space-y-2">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5">
-                                        <UserIcon className="h-3.5 w-3.5 text-[#11468F]" />
-                                        Pilih Teknisi Pelaksana Perbaikan <span className="text-[#DA1212]">*</span>
-                                    </span>
-                                    {availableTechniciansQuery.isLoading && (
-                                        <span className="text-[11px] font-normal text-[#11468F] animate-pulse">
-                                            Memeriksa jadwal teknisi...
-                                        </span>
-                                    )}
-                                </label>
-
-                                {availableTechniciansQuery.isLoading ? (
-                                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-[8px] text-center text-xs text-slate-500">
-                                        Memeriksa ketersediaan jadwal teknisi...
-                                    </div>
-                                ) : (availableTechniciansQuery.data || []).length === 0 ? (
-                                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-[8px] text-xs text-amber-900 flex items-start gap-2.5">
-                                        <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                                        <div>
-                                            <p className="font-bold text-amber-900">Tidak ada teknisi yang tersedia pada waktu ini.</p>
-                                            <p className="mt-0.5 text-amber-800 text-[11px] leading-relaxed">
-                                                Semua teknisi sedang memiliki jadwal tugas lain pada {scheduleDate} pukul {scheduleTime}. Silakan pilih tanggal atau jam perbaikan yang berbeda di atas.
-                                            </p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                                        {(availableTechniciansQuery.data || []).map((tech) => {
-                                            const isSelected = String(assignedTeknisiId) === String(tech.id);
-
-                                            return (
-                                                <button
-                                                    key={tech.id}
-                                                    type="button"
-                                                    onClick={() => setAssignedTeknisiId(tech.id)}
-                                                    className={`p-3 rounded-[8px] border text-left flex flex-col justify-between transition-all select-none cursor-pointer ${
-                                                        isSelected
-                                                            ? 'border-[#11468F] bg-blue-50/70 ring-2 ring-[#11468F]/30 shadow-xs'
-                                                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60 shadow-2xs'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-slate-900 truncate">
-                                                                {tech.name}
-                                                            </p>
-                                                            <p className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
-                                                                {tech.phone ? `${tech.phone} • ` : ''}{tech.email}
-                                                            </p>
-                                                        </div>
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[4px] shrink-0 border bg-emerald-50 text-emerald-700 border-emerald-200">
-                                                            Tersedia
-                                                        </span>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Supervisor Notes for Repair */}
-                            <div className="space-y-1.5">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                    Instruksi & Catatan Khusus untuk Teknisi
-                                </label>
-                                <textarea
-                                    value={supervisorNotes}
-                                    onChange={(e) => setSupervisorNotes(e.target.value)}
-                                    rows={2}
-                                    className="w-full border border-slate-300 rounded-[6px] px-3 py-2 text-xs sm:text-sm focus:ring-2 focus:ring-[#11468F] focus:border-transparent resize-none bg-white shadow-2xs placeholder:text-slate-400"
-                                    placeholder="Instruksi spesifik bagian mana yang harus diganti atau diperbaiki oleh teknisi..."
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Alur Tindak Lanjut Penugasan Perbaikan untuk Teknisi Lapangan */}
-                    {condition === 'damaged' && !isSupervisor && (
-                        <div className="bg-amber-50/60 border border-amber-200/80 rounded-[8px] p-4 sm:p-4.5 flex items-start space-x-3.5 shadow-2xs">
-                            <div className="h-8 w-8 rounded-[6px] bg-amber-100 text-amber-800 ring-1 ring-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <InformationCircleIcon className="h-4.5 w-4.5" />
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center space-x-2">
-                                    <h4 className="text-xs sm:text-sm font-bold text-amber-950 uppercase tracking-wider">
-                                        Alur Tindak Lanjut Penugasan Perbaikan
-                                    </h4>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-amber-100 text-amber-800 border border-amber-200">
-                                        SOP HSSE
-                                    </span>
-                                </div>
-                                <p className="text-xs text-amber-800 leading-relaxed">
-                                    Temuan kerusakan fisik yang dilaporkan akan otomatis diteruskan ke portal <strong>Supervisor</strong> untuk peninjauan teknis, persetujuan tindakan, dan penetapan jadwal penugasan teknisi perbaikan.
-                                </p>
-                            </div>
-                        </div>
-                    )}
+                    {/* Supervisor Assignment / Technician Notice Section */}
+                    <SupervisorAssignmentSection
+                        isSupervisor={isSupervisor}
+                        condition={condition}
+                        scheduleDate={scheduleDate}
+                        setScheduleDate={setScheduleDate}
+                        scheduleTime={scheduleTime}
+                        setScheduleTime={setScheduleTime}
+                        assignedTeknisiId={assignedTeknisiId}
+                        setAssignedTeknisiId={setAssignedTeknisiId}
+                        supervisorNotes={supervisorNotes}
+                        setSupervisorNotes={setSupervisorNotes}
+                        availableTechniciansQuery={availableTechniciansQuery}
+                    />
 
                     {/* Section 5: Location Status */}
-                    <div className="bg-white p-4 sm:p-5 rounded-[8px] border border-slate-200 shadow-xs space-y-3.5">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div className="flex items-center space-x-2.5">
-                                <div className="h-8 w-8 rounded-[6px] bg-blue-50 text-[#11468F] ring-1 ring-blue-200 flex items-center justify-center flex-shrink-0">
-                                    <MapPinIcon className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm sm:text-base font-bold text-slate-900 flex items-center">
-                                        Validasi Geofence & Lokasi GPS
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500">
-                                        Integritas anti-fraud koordinat lokasi inspeksi
-                                    </p>
-                                </div>
-                            </div>
-                            {locationLoading ? (
-                                <span className="inline-flex items-center text-xs text-[#11468F] font-bold">
-                                    <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-[#11468F] border-t-transparent mr-1.5" />
-                                    Mencari GPS...
-                                </span>
-                            ) : (
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600">
-                                    Anti-Fraud GPS
-                                </span>
-                            )}
-                        </div>
-
-                        {currentLocation ? (
-                            <div className="space-y-2.5">
-                                <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-[6px] border border-slate-100 text-xs">
-                                    <span className="text-slate-500 font-medium">Koordinat Terdeteksi:</span>
-                                    <span className="font-mono font-bold text-slate-800 break-all">
-                                        {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}
-                                    </span>
-                                </div>
-
-                                {apar?.latitude && apar?.longitude && (
-                                    <div
-                                        data-testid="gps-status-badge"
-                                        className={`flex items-start p-3 rounded-[6px] border ${
-                                            locationValid
-                                                ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-                                                : 'bg-rose-50 text-rose-900 border-rose-200'
-                                        }`}
-                                    >
-                                        {locationValid ? (
-                                            <CheckCircleIcon className="h-5 w-5 mr-2.5 flex-shrink-0 text-emerald-600 mt-0.5" />
-                                        ) : (
-                                            <ExclamationTriangleIcon className="h-5 w-5 mr-2.5 flex-shrink-0 text-[#DA1212] mt-0.5" />
-                                        )}
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-xs sm:text-sm font-bold">
-                                                {locationValid ? 'Lokasi Valid' : 'Lokasi Tidak Valid'}
-                                            </p>
-                                            <p className="text-xs mt-0.5 leading-relaxed">
-                                                Jarak ke APAR: <strong className="font-mono">{locationDistance}m</strong> (Toleransi Maks: <span className="font-mono">{locationValidRadius}m</span>)
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : locationSkipped ? (
-                            <div className="bg-slate-50 border border-slate-200 rounded-[6px] p-3 text-xs flex items-start">
-                                <ExclamationTriangleIcon className="h-4 w-4 text-slate-500 mr-2 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="font-bold text-slate-800">Lokasi Dilewati</p>
-                                    <p className="text-slate-600 mt-0.5">Inspeksi akan disimpan tanpa verifikasi koordinat GPS.</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-amber-50 border border-amber-200 rounded-[6px] p-3 text-xs flex items-start">
-                                <ExclamationTriangleIcon className="h-4 w-4 text-amber-600 mr-2 mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <p className="font-bold text-amber-900">Lokasi GPS Belum Terdeteksi</p>
-                                    <p className="text-amber-800 mt-0.5">{locationError || 'Pastikan GPS perangkat aktif dan izin lokasi telah diberikan.'}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                            <button
-                                type="button"
-                                onClick={getCurrentLocation}
-                                disabled={locationLoading}
-                                className="inline-flex items-center justify-center flex-1 px-4 py-2.5 min-h-[44px] border border-slate-300 rounded-[6px] text-xs font-bold uppercase tracking-wider text-slate-700 bg-white hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer disabled:opacity-50"
-                            >
-                                <MapPinIcon className="w-4 h-4 mr-1.5 text-[#11468F]" />
-                                {locationLoading ? 'Mencari Lokasi...' : 'Perbarui Lokasi GPS'}
-                            </button>
-
-                            {!currentLocation && !locationLoading && (
-                                <button
-                                    type="button"
-                                    onClick={skipLocation}
-                                    className="inline-flex items-center justify-center px-4 py-2.5 min-h-[44px] border border-slate-200 rounded-[6px] text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
-                                >
-                                    Lanjutkan Tanpa Lokasi
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    <LocationVerificationSection
+                        locationLoading={locationLoading}
+                        currentLocation={currentLocation}
+                        apar={apar}
+                        locationValid={locationValid}
+                        locationDistance={locationDistance}
+                        locationValidRadius={locationValidRadius}
+                        locationSkipped={locationSkipped}
+                        locationError={locationError}
+                        getCurrentLocation={getCurrentLocation}
+                        skipLocation={skipLocation}
+                    />
 
                     {/* Section 6: Notes */}
                     <div className="bg-white p-4 sm:p-5 rounded-[8px] border border-slate-200 shadow-xs space-y-2.5">

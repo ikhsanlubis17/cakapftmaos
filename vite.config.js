@@ -13,5 +13,10 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        watch: {
+            ignored: ['**/*.xlsx', '**/*.csv', '**/*.log', '**/storage/**'],
+        },
+    },
 });
 

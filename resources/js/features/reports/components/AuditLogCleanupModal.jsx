@@ -1,5 +1,6 @@
 import React from 'react';
 import { XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { formatDate } from '@/utils/dateUtils';
 
 const AuditLogCleanupModal = ({
     isOpen,
@@ -80,14 +81,7 @@ const AuditLogCleanupModal = ({
                             <p>
                                 • Tanggal cutoff:{" "}
                                 <span className="font-bold text-slate-900">
-                                    {new Date(
-                                        Date.now() -
-                                            cleanupDays *
-                                                24 *
-                                                60 *
-                                                60 *
-                                                1000
-                                    ).toLocaleDateString("id-ID")}
+                                    {formatDate(Date.now() - cleanupDays * 24 * 60 * 60 * 1000)}
                                 </span>
                             </p>
                         </div>

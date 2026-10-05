@@ -15,6 +15,7 @@ import {
     ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { getAparStatusConfig, getLocationTypeConfig } from "@/utils/statusUtils";
+import { formatDate } from "@/utils/dateUtils";
 
 const AparDetail: React.FC = () => {
     const route = getRouteApi("/authenticated/apar/$id");
@@ -260,13 +261,7 @@ const AparDetail: React.FC = () => {
                                     Tanggal Produksi / Pembelian
                                 </dt>
                                 <dd className="font-mono font-semibold text-slate-800 break-words">
-                                    {apar.manufactured_date
-                                        ? new Date(apar.manufactured_date).toLocaleDateString("id-ID", {
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                          })
-                                        : "-"}
+                                    {formatDate(apar.manufactured_date, { month: 'long' })}
                                 </dd>
                             </div>
 
@@ -279,13 +274,7 @@ const AparDetail: React.FC = () => {
                                         isExpired ? "text-rose-600 font-bold" : "text-slate-800"
                                     }`}
                                 >
-                                    {apar.expired_at
-                                        ? new Date(apar.expired_at).toLocaleDateString("id-ID", {
-                                              year: "numeric",
-                                              month: "long",
-                                              day: "numeric",
-                                          })
-                                        : "-"}
+                                    {formatDate(apar.expired_at, { month: 'long' })}
                                     {isExpired && " (Kadaluarsa)"}
                                 </dd>
                             </div>
@@ -382,7 +371,7 @@ const AparDetail: React.FC = () => {
                                     />
                                 </div>
                                 <div className="font-mono text-xs font-bold text-slate-700 break-all px-2">
-                                    {apar.qr_code_token || apar.serial_number}
+                                    {apar.qr_code || apar.qr_code_token || apar.serial_number}
                                 </div>
                                 <p className="text-[11px] text-slate-500 leading-relaxed px-1">
                                     Pindai kode QR ini menggunakan modul scanner kamera teknisi untuk memulai inspeksi berkala.

@@ -8,7 +8,6 @@ import {
     CheckCircleIcon,
     XMarkIcon,
     MapPinIcon,
-    ArrowPathIcon,
     ArrowRightIcon,
     ArrowLeftIcon,
     WrenchScrewdriverIcon,
@@ -17,9 +16,11 @@ import {
     CheckIcon,
     ExclamationTriangleIcon,
     InformationCircleIcon,
-    ArrowsRightLeftIcon,
 } from '@heroicons/react/24/outline';
 import { formatStorageUrl } from '@/utils/imageUrl';
+import { fetchCurrentCoordinates } from '@/utils/geolocation';
+import { RepairCameraModal } from '../components/RepairCameraModal';
+import { RepairDamageStep } from '../components/RepairDamageStep';
 
 const QUICK_REPAIR_CHIPS = [
     'Pembersihan nozzle dan saluran corong lancar',
@@ -137,25 +138,20 @@ const RepairReportForm = () => {
         }
     }, [cameraTarget, cameraLoading]);
 
-    const getCurrentLocation = () => {
-        if (!navigator.geolocation) return;
+    const getCurrentLocation = async () => {
         setGpsLoading(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude, accuracy } = position.coords;
-                setCurrentLocation({
-                    lat: latitude,
-                    lng: longitude,
-                    accuracy: Math.round(accuracy || 0),
-                });
-                setGpsLoading(false);
-            },
-            (error) => {
-                console.warn('GPS location detection warning:', error.message);
-                setGpsLoading(false);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
-        );
+        try {
+            const coords = await fetchCurrentCoordinates({ enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+            setCurrentLocation({
+                lat: coords.latitude,
+                lng: coords.longitude,
+                accuracy: Math.round(coords.accuracy || 0),
+            });
+        } catch (error) {
+            console.warn('GPS location detection warning:', error.message);
+        } finally {
+            setGpsLoading(false);
+        }
     };
 
     // --- Safe Camera Lifecycle Functions ---
@@ -800,217 +796,17 @@ const RepairReportForm = () => {
                     {/* STEP 2: TINDAKAN PERBAIKAN KERUSAKAN (PER ITEM)                */}
                     {/* ============================================================== */}
                     {currentStep === 2 && (
-                        <div className="space-y-6 animate-fadeIn">
-                            {/* Summary Progress Card */}
-                            <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                                                Tahap 2: Verifikasi Fisik Kerusakan
-                                            </span>
-                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                                                isAllDamagesCompleted
-                                                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                                    : 'bg-amber-50 text-amber-800 border border-amber-200'
-                                            }`}>
-                                                {completedDamagesCount} / {damages.length} Selesai
-                                            </span>
-                                        </div>
-                                        <h3 className="text-base font-bold text-slate-900 mt-1">
-                                            Daftar Kerusakan Yang Harus Diperbaiki
-                                        </h3>
-                                        <p className="text-xs text-slate-500 mt-0.5">
-                                            Ambil foto bukti perbaikan untuk masing-masing kerusakan yang telah diselesaikan.
-                                        </p>
-                                    </div>
-
-                                    {/* Progress Meter */}
-                                    <div className="w-full sm:w-44 bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                                        <div
-                                            className="bg-emerald-600 h-full transition-all duration-300"
-                                            style={{
-                                                width: `${damages.length > 0 ? (completedDamagesCount / damages.length) * 100 : 100}%`,
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Damage Items List */}
-                            <div className="space-y-4">
-                                {damages.map((damage, index) => {
-                                    const damagePhoto = damageRepairPhotos[damage.id];
-                                    const isDone = !!damagePhoto?.blob;
-
-                                    return (
-                                        <div
-                                            key={damage.id}
-                                            className={`bg-white rounded-lg border p-4 sm:p-5 shadow-sm transition-all ${
-                                                isDone
-                                                    ? 'border-emerald-200 bg-gradient-to-r from-emerald-50/20 to-white'
-                                                    : 'border-slate-200 hover:border-slate-300'
-                                            }`}
-                                        >
-                                            {/* Item Header */}
-                                            <div className="flex flex-wrap items-start justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs font-mono font-bold flex items-center justify-center">
-                                                        #{index + 1}
-                                                    </span>
-                                                    <div>
-                                                        <h4 className="text-sm font-bold text-slate-900">
-                                                            {damage.damage_category?.name || 'Komponen Rusak'}
-                                                        </h4>
-                                                        <p className="text-xs text-slate-500 italic mt-0.5">
-                                                            "{damage.notes || 'Tidak ada catatan spesifik dari inspektor'}"
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded">
-                                                        Tingkat: {damage.severity || 'Medium'}
-                                                    </span>
-                                                    {isDone ? (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded flex items-center gap-1">
-                                                            <CheckCircleIcon className="h-3.5 w-3.5" /> Selesai
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded">
-                                                            Wajib Foto
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Side-by-side Visual Comparison */}
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                {/* Left: Before Photo (From Inspection) */}
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                                            Sebelum (Saat Ditemukan)
-                                                        </span>
-                                                        <span className="text-[10px] font-medium text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded">
-                                                            Kondisi Rusak
-                                                        </span>
-                                                    </div>
-
-                                                    <div
-                                                        onClick={() => setPreviewModalUrl(formatStorageUrl(damage.damage_photo_url))}
-                                                        className="aspect-video rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative group cursor-pointer"
-                                                    >
-                                                        <img
-                                                            src={formatStorageUrl(damage.damage_photo_url)}
-                                                            alt="Foto Temuan Kerusakan"
-                                                            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
-                                                            Klik untuk Perbesar
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right: After Photo (Proof of Repair) */}
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                                            Sesudah (Bukti Perbaikan)
-                                                        </span>
-                                                        {isDone && (
-                                                            <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
-                                                                Tindakan Selesai
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {isDone ? (
-                                                        <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-200 bg-black group">
-                                                            <img
-                                                                src={damagePhoto.previewUrl}
-                                                                alt="Bukti Perbaikan"
-                                                                className="w-full h-full object-cover cursor-pointer"
-                                                                onClick={() => setPreviewModalUrl(damagePhoto.previewUrl)}
-                                                            />
-                                                            <div className="absolute top-2 right-2 flex items-center gap-1.5">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => openCamera({
-                                                                        type: 'damage',
-                                                                        damageId: damage.id,
-                                                                        title: `Bukti Perbaikan: ${damage.damage_category?.name || 'Kerusakan'}`
-                                                                    })}
-                                                                    className="p-1.5 bg-slate-900/80 hover:bg-black text-white rounded shadow text-xs"
-                                                                    title="Foto Ulang"
-                                                                >
-                                                                    <ArrowPathIcon className="h-4 w-4" />
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => removeDamagePhoto(damage.id)}
-                                                                    className="p-1.5 bg-rose-600/90 hover:bg-rose-700 text-white rounded shadow text-xs"
-                                                                    title="Hapus Foto"
-                                                                >
-                                                                    <XMarkIcon className="h-4 w-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openCamera({
-                                                                type: 'damage',
-                                                                damageId: damage.id,
-                                                                title: `Bukti Perbaikan: ${damage.damage_category?.name || 'Kerusakan'}`
-                                                            })}
-                                                            className="w-full aspect-video border-2 border-dashed border-blue-200 rounded-lg flex flex-col items-center justify-center bg-blue-50/40 hover:bg-blue-50 hover:border-[#11468F] transition-all text-[#11468F] group"
-                                                        >
-                                                            <div className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
-                                                                <CameraIcon className="h-5 w-5 text-[#11468F]" />
-                                                            </div>
-                                                            <span className="text-xs font-bold uppercase tracking-wider">
-                                                                Ambil Foto Bukti Perbaikan
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-500 mt-0.5">
-                                                                Buka kamera lapangan
-                                                            </span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Step 2 Navigation Buttons */}
-                            <div className="flex items-center justify-between pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setCurrentStep(1)}
-                                    className="h-12 px-5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-2"
-                                >
-                                    <ArrowLeftIcon className="h-4 w-4" />
-                                    <span>Kembali ke Langkah 1</span>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        if (!isAllDamagesCompleted) {
-                                            showError(`Harap lengkapi semua foto bukti perbaikan (${completedDamagesCount}/${damages.length} selesai)`);
-                                            return;
-                                        }
-                                        setCurrentStep(3);
-                                    }}
-                                    className="h-12 px-6 bg-[#11468F] hover:bg-[#0d3873] text-white font-bold text-sm uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-2"
-                                >
-                                    <span>Lanjut ke Hasil Akhir</span>
-                                    <ArrowRightIcon className="h-4 w-4" />
-                                </button>
-                            </div>
-                        </div>
+                        <RepairDamageStep
+                            damages={damages}
+                            damageRepairPhotos={damageRepairPhotos}
+                            isAllDamagesCompleted={isAllDamagesCompleted}
+                            completedDamagesCount={completedDamagesCount}
+                            setPreviewModalUrl={setPreviewModalUrl}
+                            openCamera={openCamera}
+                            removeDamagePhoto={removeDamagePhoto}
+                            setCurrentStep={setCurrentStep}
+                            showError={showError}
+                        />
                     )}
 
                     {/* ============================================================== */}
@@ -1281,96 +1077,16 @@ const RepairReportForm = () => {
                 {/* ============================================================== */}
                 {/* DEDICATED FIELD CAMERA VIEWFINDER MODAL (BUG-FREE LIFECYCLE)   */}
                 {/* ============================================================== */}
-                {cameraTarget && (
-                    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col justify-between p-4 sm:p-6 animate-fadeIn">
-                        {/* Top Viewfinder Bar */}
-                        <div className="flex items-center justify-between text-white max-w-xl mx-auto w-full">
-                            <div className="flex items-center space-x-2">
-                                <div className="h-3 w-3 rounded-full bg-rose-500 animate-pulse" />
-                                <h3 className="text-sm font-bold truncate max-w-[200px] sm:max-w-md">
-                                    {cameraTarget.title || 'Kamera Lapangan'}
-                                </h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={closeCamera}
-                                className="p-2 text-slate-300 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition-all"
-                                title="Tutup Kamera"
-                            >
-                                <XMarkIcon className="h-6 w-6" />
-                            </button>
-                        </div>
-
-                        {/* Video Viewport Area */}
-                        <div className="relative flex-1 max-w-xl mx-auto w-full my-4 flex items-center justify-center bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                            {/* Always keep video element mounted so ref and stream remain persistent */}
-                            <video
-                                ref={(el) => {
-                                    videoRef.current = el;
-                                    if (el && streamRef.current && el.srcObject !== streamRef.current) {
-                                        attachStreamToVideo(el, streamRef.current);
-                                    }
-                                }}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover"
-                            />
-
-                            {/* Viewfinder Target Reticle Overlay */}
-                            <div className="absolute inset-8 sm:inset-12 border-2 border-white/30 rounded-lg pointer-events-none flex items-center justify-center">
-                                <div className="h-4 w-4 border-t-2 border-l-2 border-white absolute -top-0.5 -left-0.5" />
-                                <div className="h-4 w-4 border-t-2 border-r-2 border-white absolute -top-0.5 -right-0.5" />
-                                <div className="h-4 w-4 border-b-2 border-l-2 border-white absolute -bottom-0.5 -left-0.5" />
-                                <div className="h-4 w-4 border-b-2 border-r-2 border-white absolute -bottom-0.5 -right-0.5" />
-                            </div>
-
-                            {/* Camera Loading Overlay */}
-                            {cameraLoading && (
-                                <div className="absolute inset-0 bg-black/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-3 text-white z-10">
-                                    <div className="h-10 w-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                                    <p className="text-xs font-semibold text-slate-300">Menghubungkan sensor kamera...</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Bottom Shutter Controls */}
-                        <div className="flex items-center justify-around max-w-xl mx-auto w-full pb-2">
-                            {/* Cancel Button */}
-                            <button
-                                type="button"
-                                onClick={closeCamera}
-                                className="h-11 px-4 text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all"
-                            >
-                                Batal
-                            </button>
-
-                            {/* Main Shutter Button */}
-                            <button
-                                type="button"
-                                disabled={cameraLoading}
-                                onClick={capturePhoto}
-                                className="h-16 w-16 rounded-full bg-white hover:bg-slate-200 text-[#041562] p-1 shadow-lg ring-4 ring-white/30 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50"
-                                title="Ambil Foto"
-                            >
-                                <div className="h-13 w-13 rounded-full border-2 border-[#041562] flex items-center justify-center">
-                                    <CameraIcon className="h-7 w-7 text-[#041562]" />
-                                </div>
-                            </button>
-
-                            {/* Switch Camera Button (Facing Mode) */}
-                            <button
-                                type="button"
-                                onClick={toggleCameraFacingMode}
-                                className="h-11 px-4 text-xs font-bold uppercase tracking-wider text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all flex items-center gap-1.5"
-                                title="Balik Kamera"
-                            >
-                                <ArrowsRightLeftIcon className="h-4 w-4" />
-                                <span className="hidden sm:inline">Kamera</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <RepairCameraModal
+                    cameraTarget={cameraTarget}
+                    closeCamera={closeCamera}
+                    videoRef={videoRef}
+                    streamRef={streamRef}
+                    attachStreamToVideo={attachStreamToVideo}
+                    cameraLoading={cameraLoading}
+                    capturePhoto={capturePhoto}
+                    toggleCameraFacingMode={toggleCameraFacingMode}
+                />
 
                 {/* ============================================================== */}
                 {/* PHOTO FULLSCREEN PREVIEW MODAL                                 */}

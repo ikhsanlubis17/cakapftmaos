@@ -15,8 +15,17 @@ import {
     TrashIcon,
     EyeIcon,
     PencilIcon,
+    ShieldCheckIcon,
+    ShieldExclamationIcon,
+    ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
-import { getAparStatusConfig } from "@/utils/statusUtils";
+import {
+    getAparStatusConfig,
+    getAparExpiryConfig,
+    getTruckAparPosition,
+    getTruckComplianceSummary,
+} from "@/utils/statusUtils";
+import { formatDate } from "@/utils/dateUtils";
 import AssignAparModal from "../components/AssignAparModal";
 
 export const TankTruckDetail = () => {
@@ -53,6 +62,7 @@ export const TankTruckDetail = () => {
 
     const tankTruck = truckResponse?.data || truckResponse || null;
     const apars = tankTruck?.apars || [];
+    const compliance = getTruckComplianceSummary(apars);
     const allApars = aparsResponse?.data || aparsResponse || [];
     const availableApars = allApars.filter(
         (apar) =>
@@ -202,6 +212,50 @@ export const TankTruckDetail = () => {
                 </div>
             </div>
 
+            {/* HSSE Safety & Compliance Banner */}
+            <div
+                className={`p-4 rounded-[8px] border shadow-xs flex items-start gap-3.5 ${
+                    !compliance.isFitToWork
+                        ? "bg-rose-50/80 border-rose-200 text-rose-900"
+                        : compliance.warning > 0
+                        ? "bg-amber-50/80 border-amber-200 text-amber-900"
+                        : "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                }`}
+            >
+                <div className="mt-0.5 shrink-0">
+                    {!compliance.isFitToWork ? (
+                        <ShieldExclamationIcon className="w-5 h-5 text-rose-600" />
+                    ) : compliance.warning > 0 ? (
+                        <ExclamationTriangleIcon className="w-5 h-5 text-amber-600" />
+                    ) : (
+                        <ShieldCheckIcon className="w-5 h-5 text-emerald-600" />
+                    )}
+                </div>
+                <div className="flex-1 text-xs">
+                    <div className="font-bold uppercase tracking-wider flex flex-wrap items-center gap-2">
+                        <span>
+                            {!compliance.isFitToWork
+                                ? "Kelaikan HSSE: Perhatian Khusus (Not Fit to Work)"
+                                : compliance.warning > 0
+                                ? "Kelaikan HSSE: Peringatan Kedaluwarsa Segera"
+                                : "Kelaikan HSSE: Memenuhi Syarat Operasi (Fit to Work)"}
+                        </span>
+                        <span
+                            className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${compliance.badge.color}`}
+                        >
+                            {compliance.badge.text}
+                        </span>
+                    </div>
+                    <p className="mt-1 text-slate-700 leading-relaxed">
+                        {!compliance.isFitToWork
+                            ? `Armada ini memiliki ${compliance.expired} tabung APAR kedaluwarsa atau ${compliance.needsRepair} tabung yang memerlukan perbaikan. Harap lakukan penggantian dengan APAR Cadangan sebelum pengisian BBM.`
+                            : compliance.warning > 0
+                            ? `Terdapat ${compliance.warning} tabung APAR yang akan kedaluwarsa dalam 30 hari ke depan. Disarankan mempersiapkan tabung pengganti dari Buffer Stock FT Maos.`
+                            : `Seluruh tabung pemadam api (${apars.length} unit) dalam kondisi aktif dan memenuhi regulasi keselamatan Objek Vital Nasional Pertamina.`}
+                    </p>
+                </div>
+            </div>
+
             {/* Info Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Truck Details */}
@@ -249,7 +303,7 @@ export const TankTruckDetail = () => {
                                 APAR Terpasang ({apars.length})
                             </h3>
                             <p className="text-[11px] text-slate-500">
-                                Tabung pemadam api yang wajib berada di armada ini
+                                Tabung pemadam api dan posisi slot pemasangan di armada
                             </p>
                         </div>
                         <button
@@ -276,17 +330,20 @@ export const TankTruckDetail = () => {
                         <div className="divide-y divide-slate-100">
                             {apars.map((apar) => {
                                 const statusConfig = getAparStatusConfig(apar.status);
+                                const position = getTruckAparPosition(apar.serial_number);
+                                const expiryConfig = getAparExpiryConfig(apar.expired_at);
+
                                 return (
                                     <div
                                         key={apar.id}
-                                        className="py-3.5 flex items-center justify-between hover:bg-slate-50/80 transition-colors"
+                                        className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-slate-50/80 transition-colors px-2 rounded-[6px]"
                                     >
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-8 h-8 rounded-[6px] bg-red-50 text-[#DA1212] border border-red-200 flex items-center justify-center font-bold text-xs">
-                                                <FireIcon className="w-4 h-4" />
+                                        <div className="flex items-start space-x-3">
+                                            <div className="w-9 h-9 rounded-[6px] bg-red-50 text-[#DA1212] border border-red-200 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                                                <FireIcon className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex flex-wrap items-center gap-2">
                                                     <Link
                                                         to="/apar/$id"
                                                         params={{ id: String(apar.id) }}
@@ -295,18 +352,29 @@ export const TankTruckDetail = () => {
                                                         {apar.serial_number}
                                                     </Link>
                                                     <span
+                                                        className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${position.tagColor}`}
+                                                    >
+                                                        {position.slot} • {position.zone}
+                                                    </span>
+                                                    <span
                                                         className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${statusConfig.color}`}
                                                     >
                                                         {statusConfig.text}
                                                     </span>
                                                 </div>
-                                                <div className="text-xs text-slate-500 mt-0.5">
-                                                    {apar.apar_type?.name || "Standar"} &bull; {apar.capacity} kg
+                                                <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                    <span>{apar.apar_type?.name || "Standar"} ({position.type})</span>
+                                                    <span>&bull;</span>
+                                                    <span>Kapasitas: {apar.capacity} {apar.apar_type?.name === 'foam' ? 'L' : 'kg'}</span>
+                                                    <span>&bull;</span>
+                                                    <span className={`font-semibold inline-flex items-center px-1.5 py-0.2 rounded text-[11px] border ${expiryConfig.color}`}>
+                                                        Exp: {formatDate(apar.expired_at)} ({expiryConfig.shortText || expiryConfig.text})
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center space-x-1.5">
+                                        <div className="flex items-center space-x-1.5 self-end sm:self-center">
                                             <Link
                                                 to="/apar/$id"
                                                 params={{ id: String(apar.id) }}

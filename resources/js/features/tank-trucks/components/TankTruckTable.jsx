@@ -9,6 +9,7 @@ import {
     PencilIcon,
     TrashIcon,
 } from "@heroicons/react/24/outline";
+import { getTruckComplianceSummary } from "@/utils/statusUtils";
 
 export const TankTruckTable = ({
     tankTrucks,
@@ -155,18 +156,34 @@ export const TankTruckTable = ({
                                         )}
                                     </td>
 
-                                    {/* Attached APAR count */}
+                                    {/* Attached APAR count & HSSE Compliance */}
                                     <td className="px-5 py-4">
-                                        <span
-                                            className={`inline-flex items-center px-2.5 py-1 rounded-[4px] text-xs font-semibold border ${
-                                                aparCount > 0
-                                                    ? "bg-blue-50 text-[#11468F] border-blue-200"
-                                                    : "bg-slate-100 text-slate-500 border-slate-200"
-                                            }`}
-                                        >
-                                            <FireIcon className="w-3.5 h-3.5 mr-1" />
-                                            {aparCount} APAR
-                                        </span>
+                                        {(() => {
+                                            const compliance = getTruckComplianceSummary(truck.apars || []);
+                                            return (
+                                                <div className="space-y-1">
+                                                    <span
+                                                        className={`inline-flex items-center px-2.5 py-1 rounded-[4px] text-xs font-semibold border ${
+                                                            aparCount > 0
+                                                                ? "bg-blue-50 text-[#11468F] border-blue-200"
+                                                                : "bg-slate-100 text-slate-500 border-slate-200"
+                                                        }`}
+                                                    >
+                                                        <FireIcon className="w-3.5 h-3.5 mr-1" />
+                                                        {aparCount} APAR
+                                                    </span>
+                                                    {aparCount > 0 && (
+                                                        <div>
+                                                            <span
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border ${compliance.badge.color}`}
+                                                            >
+                                                                {compliance.badge.text}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </td>
 
                                     {/* Status badge */}

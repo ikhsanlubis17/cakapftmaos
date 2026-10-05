@@ -12,6 +12,7 @@ import {
     PlusIcon,
 } from "@heroicons/react/24/outline";
 import { getAparStatusConfig, getLocationTypeConfig } from "@/utils/statusUtils";
+import { formatDate } from "@/utils/dateUtils";
 
 interface AparTableProps {
     apars: Apar[];
@@ -189,13 +190,7 @@ export const AparTable: React.FC<AparTableProps> = ({
                                                             : "text-slate-800"
                                                     }`}
                                                 >
-                                                    {new Date(
-                                                        apar.expired_at
-                                                    ).toLocaleDateString("id-ID", {
-                                                        year: "numeric",
-                                                        month: "short",
-                                                        day: "numeric",
-                                                    })}
+                                                    {formatDate(apar.expired_at)}
                                                 </span>
                                                 {isExpired && (
                                                     <div className="inline-flex items-center text-[10px] font-bold text-rose-600 mt-0.5">

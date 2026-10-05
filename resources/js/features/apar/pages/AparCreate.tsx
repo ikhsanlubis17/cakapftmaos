@@ -16,6 +16,7 @@ import { useToast } from '@/contexts/ToastContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AparType } from '@/types/api';
+import { fetchCurrentCoordinates } from '@/utils/geolocation';
 
 const DEFAULT_FT_MAOS_LAT = '-7.604500';
 const DEFAULT_FT_MAOS_LNG = '109.153400';
@@ -65,59 +66,35 @@ const AparCreate = () => {
         return list.filter((type: AparType) => Boolean(type && type.is_active));
     }, [rawAparTypes]);
 
-    const getCurrentLocation = (highAccuracy = true) => {
-        if (!navigator.geolocation) {
-            showError('Geolocation tidak didukung oleh peramban ini.');
-            return;
-        }
-
+    const getCurrentLocation = async (highAccuracy = true) => {
         setGettingLocation(true);
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                setFormData(prev => ({
-                    ...prev,
-                    latitude: latitude.toFixed(6),
-                    longitude: longitude.toFixed(6)
-                }));
-                showSuccess(
-                    highAccuracy 
-                        ? 'Koordinat GPS akurat berhasil diperoleh!' 
-                        : 'Koordinat GPS berhasil diperoleh (mode perkiraan jaringan).'
-                );
-                setGettingLocation(false);
-            },
-            (error) => {
-                if (highAccuracy && error.code !== error.PERMISSION_DENIED) {
-                    setTimeout(() => {
-                        getCurrentLocation(false);
-                    }, 800);
-                    return;
-                }
-
-                setGettingLocation(false);
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        showError('Izin lokasi ditolak. Aktifkan GPS atau izinkan akses lokasi di browser.');
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        showError('Sinyal GPS tidak terdeteksi. Silakan masukkan koordinat manual atau gunakan tombol FT Maos.');
-                        break;
-                    case error.TIMEOUT:
-                        showError('Waktu permintaan koordinat habis. Silakan coba kembali.');
-                        break;
-                    default:
-                        showError('Gagal memperoleh koordinat otomatis.');
-                        break;
-                }
-            },
-            {
+        try {
+            const coords = await fetchCurrentCoordinates({
                 enableHighAccuracy: highAccuracy,
                 timeout: 20000,
-                maximumAge: highAccuracy ? 0 : Infinity
+                maximumAge: highAccuracy ? 0 : Infinity,
+            });
+            setFormData(prev => ({
+                ...prev,
+                latitude: coords.latitude.toFixed(6),
+                longitude: coords.longitude.toFixed(6),
+            }));
+            showSuccess(
+                highAccuracy 
+                    ? 'Koordinat GPS akurat berhasil diperoleh!' 
+                    : 'Koordinat GPS berhasil diperoleh (mode perkiraan jaringan).'
+            );
+        } catch (error: any) {
+            if (highAccuracy) {
+                setTimeout(() => {
+                    getCurrentLocation(false);
+                }, 800);
+                return;
             }
-        );
+            showError(error?.message || 'Gagal memperoleh koordinat otomatis.');
+        } finally {
+            setGettingLocation(false);
+        }
     };
 
     const setFtMaosCoordinates = () => {

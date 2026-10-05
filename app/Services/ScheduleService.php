@@ -379,8 +379,6 @@ class ScheduleService
             ];
         }
 
-        // Send reminder email (commented out for now)
-        // $this->notificationService->sendScheduleReminder($schedule);
 
         Log::info("Reminder email sent successfully for schedule ID: {$schedule->id} to user: {$schedule->assignedUser->email}");
 

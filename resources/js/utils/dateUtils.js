@@ -54,7 +54,7 @@ export const formatDateTime = (dateString, options = {}) => {
             ...options
         };
 
-        return date.toLocaleDateString('id-ID', defaultOptions);
+        return date.toLocaleString('id-ID', defaultOptions);
     } catch {
         return '-';
     }

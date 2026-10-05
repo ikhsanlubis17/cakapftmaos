@@ -9,6 +9,7 @@ import {
     PencilIcon,
 } from "@heroicons/react/24/outline";
 import { getFrequencyText, getStatusColor, getStatusText } from "../../utils/scheduleUtils";
+import { formatDate } from "@/utils/dateUtils";
 
 /**
  * ScheduleDetailModal Component
@@ -102,16 +103,10 @@ const ScheduleDetailModal = ({ schedule, isOpen, onClose, onEdit }) => {
                                         Tanggal
                                     </p>
                                     <p className="text-sm font-medium text-slate-900 mt-0.5">
-                                        {schedule.scheduled_date
-                                            ? new Date(
-                                                  schedule.scheduled_date
-                                              ).toLocaleDateString("id-ID", {
-                                                  weekday: "long",
-                                                  year: "numeric",
-                                                  month: "long",
-                                                  day: "numeric",
-                                              })
-                                            : "Tanggal tidak valid"}
+                                        {formatDate(schedule.scheduled_date, {
+                                            weekday: "long",
+                                            month: "long",
+                                        })}
                                     </p>
                                 </div>
                                 <div>

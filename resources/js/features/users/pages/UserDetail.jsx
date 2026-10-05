@@ -22,6 +22,7 @@ import {
     CheckCircleIcon,
     XCircleIcon,
 } from "@heroicons/react/24/outline";
+import { formatDate, formatDateTime } from "@/utils/dateUtils";
 
 const UserDetail = () => {
     const { id } = useParams({ strict: false });
@@ -157,7 +158,7 @@ const UserDetail = () => {
     const StatusIcon = getStatusIcon(user.is_active);
 
     return (
-        <Fragment>
+        <>
             <div className="space-y-6">
                 {/* Header */}
                 <div className="bg-white rounded-[6px] shadow-sm border border-[#EEEEEE] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -253,13 +254,9 @@ const UserDetail = () => {
                                     Tanggal Bergabung
                                 </dt>
                                 <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
-                                    {new Date(
-                                        user.created_at
-                                    ).toLocaleDateString("id-ID", {
+                                    {formatDate(user.created_at, {
                                         weekday: "long",
-                                        year: "numeric",
                                         month: "long",
-                                        day: "numeric",
                                     })}
                                 </dd>
                             </div>
@@ -276,15 +273,9 @@ const UserDetail = () => {
                                     Terakhir Diperbarui
                                 </dt>
                                 <dd className="mt-1 text-sm font-medium text-slate-900 sm:mt-0 sm:col-span-2">
-                                    {new Date(
-                                        user.updated_at
-                                    ).toLocaleDateString("id-ID", {
+                                    {formatDateTime(user.updated_at, {
                                         weekday: "long",
-                                        year: "numeric",
                                         month: "long",
-                                        day: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
                                     })}
                                 </dd>
                             </div>
@@ -351,7 +342,7 @@ const UserDetail = () => {
                 onClose={config.onCancel || close}
                 onConfirm={config.onConfirm}
             />
-        </Fragment>
+        </>
     );
 };
 

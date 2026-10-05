@@ -150,11 +150,6 @@ class ReinspectionService
                 'technician_id' => $technician->id,
                 'supervisor_id' => $supervisor->id,
             ]);
-            
-            // TODO: Broadcast WebSocket notification for real-time updates
-            // This would require WebSocket implementation
-            // broadcast(new RepairRejectedEvent($inspection, $approval, $reinspectionSchedule));
-            
         } catch (\Exception $e) {
             Log::error('Failed to send rejection notification', [
                 'inspection_id' => $inspection->id,
@@ -202,10 +197,6 @@ class ReinspectionService
                 'technician_id' => $technician->id,
                 'supervisor_id' => $supervisor->id,
             ]);
-            
-            // TODO: Broadcast WebSocket notification for real-time updates
-            // broadcast(new RepairApprovedEvent($inspection, $approval));
-            
         } catch (\Exception $e) {
             Log::error('Failed to send approval notification', [
                 'inspection_id' => $inspection->id,

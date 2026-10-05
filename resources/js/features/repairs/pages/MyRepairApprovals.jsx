@@ -13,6 +13,7 @@ import {
     WrenchScrewdriverIcon,
     ArrowPathIcon,
 } from '@heroicons/react/24/outline';
+import { formatDate } from '@/utils/dateUtils';
 
 const MyRepairApprovals = () => {
     const { user } = useAuth();
@@ -228,7 +229,7 @@ const MyRepairApprovals = () => {
                                         </div>
                                         <div className="flex items-center text-slate-600">
                                             <ClockIcon className="h-4 w-4 mr-2 text-[#11468F] flex-shrink-0" />
-                                            <span className="font-medium text-slate-600">{new Date(approval.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                            <span className="font-medium text-slate-600">{formatDate(approval.created_at)}</span>
                                         </div>
                                     </div>
 

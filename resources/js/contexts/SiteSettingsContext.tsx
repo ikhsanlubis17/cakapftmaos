@@ -12,7 +12,7 @@ export interface SiteSettings {
     footer_copyright: string;
 }
 
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {
+const DEFAULT_SITE_SETTINGS: SiteSettings = {
     site_name: 'CAKAP FT MAOS',
     site_tagline: 'Sistem Monitoring & Inspeksi APAR',
     site_description: 'Sistem Monitoring APAR Terintegrasi Fuel Terminal Maos. Pantau kesiapan alat pemadam api ringan secara real-time, akurat, dan terstandarisasi.',
